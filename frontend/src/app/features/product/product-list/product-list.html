@@ -1,0 +1,271 @@
+<div class="w-full bg-[#f4f6f8] dark:bg-background-dark transition-colors duration-500 pt-10 pb-32">
+  <div class="max-w-7xl mx-auto px-6">
+    <!-- Breadcrumbs -->
+    <nav
+      class="flex items-center gap-3 mb-10 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+    >
+      <a routerLink="/" class="hover:text-primary transition-colors">{{ 'common.home' | translate }}</a>
+      <span class="material-symbols-outlined text-sm">chevron_right</span>
+      <span class="text-slate-900 dark:text-white">{{ 'product.list_title' | translate }}</span>
+    </nav>
+
+    <div class="grid grid-cols-12 gap-10 items-start">
+      <!-- Sidebar Filters: Gearvn Style -->
+      <aside class="col-span-12 lg:col-span-3 space-y-8 sticky top-32">
+        <!-- Search within results -->
+        <div
+          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
+        >
+          <h3
+            class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6 border-b border-slate-50 dark:border-white/5 pb-4"
+          >
+            {{ 'product.filter_search' | translate }}
+          </h3>
+          <div class="relative">
+            <input
+              type="text"
+              [placeholder]="'product.filter_search_placeholder' | translate"
+              class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
+            />
+            <span
+              class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+              >search</span
+            >
+          </div>
+        </div>
+
+        <!-- Price Range -->
+        <div
+          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
+        >
+          <h3
+            class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6 border-b border-slate-50 dark:border-white/5 pb-4"
+          >
+            {{ 'product.filter_price' | translate }}
+          </h3>
+          <div class="space-y-4">
+            @for (range of priceRanges; track range.key) {
+              <label class="flex items-center gap-4 group cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="size-5 rounded-lg border-2 border-slate-200 dark:border-slate-700 checked:bg-primary transition-all cursor-pointer"
+                />
+                <span
+                  class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors"
+                  >{{ range.key | translate }}</span
+                >
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- Brand Filter -->
+        <div
+          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
+        >
+          <h3
+            class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6 border-b border-slate-50 dark:border-white/5 pb-4"
+          >
+            {{ 'product.filter_brand' | translate }}
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            @for (brand of ['ASUS', 'MSI', 'GIGABYTE', 'INTEL', 'AMD', 'NVIDIA']; track brand) {
+              <button
+                class="px-3 py-3 rounded-xl border border-slate-100 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-primary hover:text-primary transition-all"
+              >
+                {{ brand }}
+              </button>
+            }
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Results -->
+      <main class="col-span-12 lg:col-span-9 space-y-8">
+        <!-- Sort & View Controls -->
+        <div
+          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6"
+        >
+          <div class="flex items-center gap-8">
+            <span class="text-xs font-black text-slate-400 uppercase tracking-widest"
+              >{{ 'product.sort_by' | translate }}</span
+            >
+            <div class="flex items-center gap-4">
+              @for (sort of sortOptions; track sort.key) {
+                <button
+                  class="px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                  [class]="
+                    sort.key === 'product.sort_newest'
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'text-slate-500 hover:text-primary'
+                  "
+                >
+                  {{ sort.key | translate }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="flex items-center gap-4 text-slate-400">
+            <span class="text-xs font-bold">{{ filteredProducts.length }} {{ 'common.items' | translate }}</span>
+            <div class="h-6 w-px bg-slate-100 dark:bg-white/5 mx-2"></div>
+            <button class="material-symbols-outlined text-primary">grid_view</button>
+            <button class="material-symbols-outlined">view_list</button>
+          </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          @for (product of filteredProducts; track product.id) {
+            <div
+              class="bg-white dark:bg-surface-dark rounded-3xl p-6 border border-slate-100 dark:border-white/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 group flex flex-col h-full cursor-pointer"
+              [routerLink]="['/product', product.id]"
+            >
+              <div
+                class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl p-6 mb-6 overflow-hidden relative"
+              >
+                <img
+                  [src]="product.image"
+                  class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                  [alt]="product.name"
+                />
+
+                <div class="absolute top-3 left-3 flex flex-col gap-2">
+                  <span
+                    class="bg-primary text-white text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg"
+                    >{{ 'common.new' | translate }}</span
+                  >
+                </div>
+
+                <div
+                  class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <button
+                    class="size-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-400 hover:text-primary transition-colors active:scale-90"
+                    (click)="toggleCompare($event, product)"
+                  >
+                    <span class="material-symbols-outlined text-lg">{{
+                      isProductSelected(product.id) ? 'check' : 'compare_arrows'
+                    }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex-1 flex flex-col px-2">
+                <span class="text-[9px] font-black text-primary uppercase tracking-[0.3em] mb-2">{{
+                  product.category
+                }}</span>
+                <h3
+                  class="text-slate-900 dark:text-white font-bold text-sm line-clamp-2 mb-6 group-hover:text-primary transition-colors leading-relaxed h-10"
+                >
+                  {{ product.name }}
+                </h3>
+
+                <div class="mt-auto">
+                  <div class="flex flex-col mb-6">
+                    <span class="text-primary font-display font-bold text-xl leading-none"
+                      >{{ product.price | number: '1.0-0' }}đ</span
+                    >
+                    <span class="text-[10px] text-slate-400 line-through mt-1"
+                      >{{ product.price * 1.15 | number: '1.0-0' }}đ</span
+                    >
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <div
+                      class="flex items-center gap-2 text-[8px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 uppercase tracking-widest"
+                    >
+                      <span class="material-symbols-outlined text-[10px]">check_circle</span>
+                      {{ 'product.status_stock' | translate }}
+                    </div>
+                    <button
+                      class="size-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <span class="material-symbols-outlined">add_shopping_cart</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-center pt-10">
+          <div
+            class="flex gap-4 p-2 bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/10 rounded-3xl shadow-sm"
+          >
+            <button
+              class="size-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+            >
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <div class="flex gap-2">
+              <button
+                class="size-12 rounded-2xl bg-primary text-white font-black text-sm shadow-lg shadow-primary/20"
+              >
+                1
+              </button>
+              <button
+                class="size-12 rounded-2xl text-slate-500 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5"
+              >
+                2
+              </button>
+              <button
+                class="size-12 rounded-2xl text-slate-500 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5"
+              >
+                3
+              </button>
+            </div>
+            <button
+              class="size-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+            >
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Module -->
+@if (comparisonService.selectedCount() > 0) {
+  <div
+    class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-surface-dark border border-slate-100 dark:border-primary/30 rounded-[2.5rem] shadow-2xl px-10 py-6 flex items-center gap-10 animate-in fade-in slide-in-from-bottom-10 duration-500"
+  >
+    <!-- same inner as before -->
+    <div class="flex items-center gap-6 border-r border-slate-100 dark:border-white/10 pr-10">
+      <div
+        class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"
+      >
+        <span class="material-symbols-outlined text-3xl font-black">compare_arrows</span>
+      </div>
+      <div>
+        <p class="text-slate-900 dark:text-white font-black text-sm uppercase tracking-widest">
+          {{ 'product.compare_status' | translate }}
+        </p>
+        <p
+          class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest font-orbitron"
+        >
+          {{ comparisonService.selectedCount() }} / 2 {{ 'common.components' | translate }}
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <button
+        class="px-10 py-4 rounded-2xl font-black transition-all flex items-center gap-3 active:scale-95 shadow-xl bg-primary text-white shadow-primary/30 cursor-pointer hover:bg-primary/90"
+        (click)="goToCompare()"
+      >
+        <span class="text-[10px] uppercase tracking-[0.2em]">{{ 'product.compare_start' | translate }}</span>
+        <span class="material-symbols-outlined text-lg">fact_check</span>
+      </button>
+      <button
+        class="size-12 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all cursor-pointer border border-red-100 dark:border-red-500/20 active:scale-90"
+        (click)="comparisonService.clearAll()"
+      >
+        <span class="material-symbols-outlined">delete_sweep</span>
+      </button>
+    </div>
+  </div>
+}

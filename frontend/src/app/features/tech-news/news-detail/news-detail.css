@@ -1,0 +1,17 @@
+.animate-pulse-slow {
+    animation: pulse-slow 20s infinite alternate;
+}
+
+@keyframes pulse-slow {
+    0% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.first-letter-drop::first-letter {
+    font-size: 3.75rem; /* 6xl */
+    font-weight: 900; /* black */
+    color: var(--primary);
+    margin-right: 0.75rem;
+    float: left;
+    line-height: 0.8;
+}

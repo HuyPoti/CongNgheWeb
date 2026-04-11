@@ -1,0 +1,27 @@
+/* Admin Layout Styles - Forced Dark Environment */
+:host {
+    display: block;
+    background-color: var(--color-background-dark);
+    color: var(--color-slate-100);
+}
+
+.admin-glass {
+    background: rgba(18, 24, 39, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-border {
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.admin-card {
+    background: #121827;
+    border: 1px solid rgba(0, 102, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.admin-card:hover {
+    border-color: rgba(0, 102, 255, 0.4);
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.1);
+}

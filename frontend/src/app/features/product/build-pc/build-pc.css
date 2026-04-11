@@ -1,0 +1,13 @@
+/* Build PC Styles */
+.glass-effect {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .glass-effect {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.shadow-primary-glow {
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.4);
+}

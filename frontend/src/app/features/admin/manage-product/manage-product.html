@@ -1,0 +1,427 @@
+<div class="p-8">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-slate-100 mb-2">{{ 'admin.manage.prod_title' | translate }}</h2>
+      <p class="text-slate-500">{{ products().length }} {{ 'common.items' | translate }}</p>
+    </div>
+    <button
+      (click)="openCreate()"
+      class="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+    >
+      <span class="material-symbols-outlined text-sm">add</span> {{ 'admin.manage.add_prod' | translate }}
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="flex items-center justify-center p-20">
+      <div
+        class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
+      ></div>
+      <span class="ml-3 text-slate-400">{{ 'common.loading' | translate }}</span>
+    </div>
+  } @else {
+    <div class="bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-primary/10 text-left">
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.product' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.manage.sku' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.manage.category' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.manage.brand' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.manage.price' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.manage.sale_price' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.manage.stock' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {{ 'admin.status' | translate }}
+            </th>
+            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
+              {{ 'admin.manage.actions' | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.productId) {
+            <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
+              <td class="px-4 py-3">
+                <p class="text-slate-100 font-bold text-sm">{{ product.name }}</p>
+                <p class="text-xs text-slate-500 mt-1">BH: {{ product.warrantyMonths }} {{ 'common.month' | translate }}</p>
+              </td>
+              <td class="px-4 py-3 text-xs text-slate-400 font-mono">{{ product.sku || '—' }}</td>
+              <td class="px-4 py-3 text-xs text-slate-400">{{ product.categoryName }}</td>
+              <td class="px-4 py-3 text-xs text-slate-400">
+                {{ getBrandName(product.brandId) }}
+              </td>
+              <td class="px-4 py-3 text-slate-300">
+                {{ product.regularPrice | number: '1.0-0' }}đ
+              </td>
+              <td class="px-4 py-3">
+                @if (product.salePrice) {
+                  <span class="text-primary font-bold"
+                    >{{ product.salePrice | number: '1.0-0' }}đ</span
+                  >
+                } @else {
+                  <span class="text-slate-500">—</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-slate-300">{{ product.stockQuantity }}</td>
+              <td class="px-4 py-3">
+                <span 
+                  class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter"
+                  [ngClass]="product.status === 2 ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'"
+                >
+                  {{ (product.status === 2 ? 'admin.manage.active' : 'admin.manage.inactive') | translate }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end">
+                  <button
+                    (click)="openEdit(product)"
+                    class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-all active:scale-90"
+                    [title]="'user.edit' | translate"
+                  >
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @if (products().length === 0) {
+            <tr>
+              <td colspan="9" class="text-center py-12 text-slate-500">{{ 'admin.manage.no_products' | translate }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal Create/Edit -->
+@if (showModal()) {
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    (click)="closeModal()"
+    (keyup.escape)="closeModal()"
+    tabindex="-1"
+  >
+    <div
+      class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()"
+      (keyup)="$event.stopPropagation()"
+      tabindex="0"
+    >
+      <div
+        class="p-6 border-b border-primary/10 flex items-center justify-between sticky top-0 bg-surface-dark z-10"
+      >
+        <h3 class="text-lg font-bold text-slate-100">
+          {{ (editingProduct() ? 'admin.manage.edit_prod' : 'admin.manage.add_prod') | translate }}
+        </h3>
+        <button (click)="closeModal()" class="text-slate-400 hover:text-white" [title]="'cart.close' | translate">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <!-- Tên & Slug -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label
+              for="p-name"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.name_label' | translate }}</label
+            >
+            <input
+              id="p-name"
+              [(ngModel)]="form.name"
+              (ngModelChange)="autoSlug()"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label
+              for="p-slug"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.slug_label' | translate }}</label
+            >
+            <input
+              id="p-slug"
+              [(ngModel)]="form.slug"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary font-mono"
+            />
+          </div>
+          <div>
+            <label
+              for="p-sku"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.sku_label' | translate }}</label
+            >
+            <input
+              id="p-sku"
+              [(ngModel)]="form.sku"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary font-mono"
+              [placeholder]="'admin.manage.placeholder_sku' | translate"
+            />
+          </div>
+        </div>
+
+        <!-- Danh mục & Thương hiệu -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label
+              for="p-cat"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.cat_label' | translate }}</label
+            >
+            <select
+              id="p-cat"
+              [(ngModel)]="form.categoryId"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+            >
+              <option value="">-- {{ 'product.filter_category' | translate }} --</option>
+              @for (cat of categories(); track cat.categoryId) {
+                <option [ngValue]="cat.categoryId">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label
+              for="p-brand"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.brand_label' | translate }}</label
+            >
+            <select
+              id="p-brand"
+              [(ngModel)]="form.brandId"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+            >
+              <option value="">-- {{ 'product.filter_brand' | translate }} --</option>
+              @for (brand of brands(); track brand.brandId) {
+                <option [ngValue]="brand.brandId">{{ brand.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Giá -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label
+              for="p-price"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.price_label' | translate }}</label
+            >
+            <input
+              id="p-price"
+              [(ngModel)]="form.regularPrice"
+              type="number"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label
+              for="p-sale"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.sale_label' | translate }}</label
+            >
+            <input
+              id="p-sale"
+              [(ngModel)]="form.salePrice"
+              type="number"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+              [placeholder]="'admin.manage.placeholder_sale' | translate"
+            />
+          </div>
+        </div>
+
+        <!-- Tồn kho, Bảo hành, Trạng thái -->
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label
+              for="p-stock"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.stock_label' | translate }}</label
+            >
+            <input
+              id="p-stock"
+              [(ngModel)]="form.stockQuantity"
+              type="number"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label
+              for="p-warranty"
+              class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+              >{{ 'admin.manage.warranty_label' | translate }}</label
+            >
+            <input
+              id="p-warranty"
+              [(ngModel)]="form.warrantyMonths"
+              type="number"
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+            />
+          </div>
+          <!-- Status Toggle -->
+          <div class="flex items-center justify-between p-4 bg-slate-900/50 border border-primary/10 rounded-2xl">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs font-black text-slate-100 uppercase tracking-tight">{{ 'admin.manage.status_label' | translate }}</span>
+              <p class="text-[9px] text-slate-500 tracking-wide italic">{{ 'admin.manage.status_desc' | translate }}</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                [checked]="form.status === 2"
+                (change)="form.status = $any($event.target).checked ? 2 : 1"
+                class="sr-only peer"
+              >
+              <div class="w-12 h-7 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:rotate-0 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary/40 peer-checked:after:bg-primary"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mô tả -->
+        <div>
+          <label
+            for="p-desc"
+            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >{{ 'admin.manage.desc_label' | translate }}</label
+          >
+          <textarea
+            id="p-desc"
+            [(ngModel)]="form.description"
+            rows="3"
+            class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Hình ảnh -->
+        <div>
+          <label for="p-img" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >{{ 'admin.manage.img_label' | translate }}</label
+          >
+          <div class="flex flex-wrap gap-3 mb-3">
+            @for (img of form.imageUrls; track $index; let i = $index) {
+              <div class="relative group">
+                <img
+                  [src]="img.url"
+                  alt="Product image"
+                  class="w-20 h-20 rounded-lg object-contain bg-white p-1 border"
+                  [class.border-primary]="img.isPrimary"
+                  [class.border-slate-700]="!img.isPrimary"
+                />
+                @if (img.isPrimary) {
+                  <span
+                    class="absolute -top-1 -left-1 bg-primary text-[8px] text-white px-1.5 py-0.5 rounded-full font-bold"
+                    >Main</span
+                  >
+                }
+                <button
+                  (click)="setPrimary(i)"
+                  class="absolute bottom-0 left-0 right-0 bg-primary/80 text-white text-[8px] text-center py-0.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-b-lg"
+                  title="Đặt làm ảnh chính"
+                >
+                  ★
+                </button>
+                <button
+                  (click)="removeImage(i)"
+                  class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ×
+                </button>
+              </div>
+            }
+          </div>
+          <div class="flex gap-2">
+            <input
+              [(ngModel)]="form.newImageUrl"
+              aria-label="URL hình ảnh"
+              class="flex-1 bg-slate-800 border border-primary/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-primary"
+              [placeholder]="'product.img_url' | translate"
+            />
+            <button
+              (click)="addImage()"
+              class="px-4 py-2 bg-primary/20 text-primary rounded-xl text-sm hover:bg-primary/30 transition-colors"
+            >
+              {{ 'admin.manage.add' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Thông số kỹ thuật -->
+        <div>
+          <label for="p-spec" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >{{ 'admin.manage.specs_label' | translate }}</label
+          >
+          <div class="space-y-2 mb-3">
+            @for (spec of form.specs; track $index; let i = $index) {
+              <div class="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
+                <span class="text-xs text-primary font-bold min-w-[120px]">{{ spec.key }}</span>
+                <span class="text-xs text-slate-300 flex-1">{{ spec.value }}</span>
+                <button (click)="removeSpec(i)" class="text-red-400 hover:text-red-300" title="Xóa">
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+            }
+          </div>
+          <div class="flex gap-2">
+            <input
+              [(ngModel)]="form.newSpecKey"
+              aria-label="Tên thông số"
+              class="w-1/3 bg-slate-800 border border-primary/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-primary"
+              [placeholder]="'admin.manage.placeholder_spec_key' | translate"
+            />
+            <input
+              [(ngModel)]="form.newSpecValue"
+              aria-label="Giá trị thông số"
+              class="flex-1 bg-slate-800 border border-primary/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-primary"
+              [placeholder]="'admin.manage.placeholder_spec_val' | translate"
+            />
+            <button
+              (click)="addSpec()"
+              class="px-4 py-2 bg-primary/20 text-primary rounded-xl text-sm hover:bg-primary/30 transition-colors"
+            >
+              {{ 'admin.manage.add' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="p-6 border-t border-primary/10 flex justify-end gap-3 sticky bottom-0 bg-surface-dark z-10"
+      >
+        <button
+          (click)="closeModal()"
+          class="px-6 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white"
+        >
+          {{ 'admin.manage.cancel' | translate }}
+        </button>
+        <button
+          (click)="save()"
+          [disabled]="isSaving()"
+          class="px-6 py-3 bg-primary hover:bg-primary/80 disabled:opacity-50 rounded-xl text-sm font-semibold text-white flex items-center gap-2"
+        >
+          @if (isSaving()) {
+            <div
+              class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+            ></div>
+          }
+          {{ (editingProduct() ? 'admin.manage.update' : 'admin.manage.create') | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

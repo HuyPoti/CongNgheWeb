@@ -1,0 +1,656 @@
+# 🏗️ PLAN: Refactor Kiến Trúc Backend (Áp Dụng Kỹ Thuật Từ Module 'map')
+
+Tài liệu này cung cấp kế hoạch refactor toàn diện (Massive Refactoring) cho dự án Backend dựa trên pattern cực kỳ gọn gàng và tối ưu được thấy trong thư mục mẫu `map`.
+
+## 📌 PHÂN TÍCH KỸ THUẬT TỪ THƯ MỤC `map`
+
+Pattern trong thư mục `map` có 3 ưu điểm vượt trội:
+1. **Generic Repository Projection:** Repository được Inject thẳng `IMapper` để dùng kỹ thuật `.ProjectTo<TOut>()` trực tiếp trên SQL Database. Query SQL sinh ra sẽ chỉ lấy đúng các cột cần thiết -> **Tối ưu RAM & Tốc độ truy vấn DB**.
+2. **Loại bỏ Custom Repositories:** Không cần tạo thêm các file `CategoryRepository.cs`, `BrandRepository.cs`. Thay vào đó, tất cả sẽ dùng chung `IRepository<T>` thông qua `IUnitOfWork`.
+3. **CancellationToken mặc định:** Mọi thao tác truy vấn đều hỗ trợ bỏ dở giữa chừng.
+
+---
+
+## 🚀 CHI TIẾT TỪNG BƯỚC THỰC HIỆN REFACTOR
+
+### BƯỚC 1: Xây lại Base `IRepository<T>` và `Repository<T>`
+
+**`backend/UnitOfWork/IRepository.cs`**
+```csharp
+using System.Linq.Expressions;
+
+namespace backend.UnitOfWork;
+
+public interface IRepository<T> where T : class
+{
+    // Cần TOut cho ProjectTo AutoMapper
+    Task<IEnumerable<TOut>> GetAllAsync<TOut>(CancellationToken cancellationToken);
+    Task<TOut> GetByIdAsync<TOut>(Guid id, CancellationToken cancellationToken);
+    Task<IEnumerable<TOut>> GetAsync<TOut>(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken);
+    
+    T Insert(T entity);
+    T Update(T entity);
+    Task<T?> DeleteAsync(Guid id, CancellationToken cancellationToken);
+    IQueryable<T> Query();
+}
+```
+
+**`backend/UnitOfWork/Repository.cs`**
+```csharp
+using System.Linq.Expressions;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.UnitOfWork;
+
+public class Repository<T>(DbContext dbContext, IMapper mapper) : IRepository<T> where T : class
+{
+    public async Task<IEnumerable<TOut>> GetAllAsync<TOut>(CancellationToken cancellationToken)
+    {
+        return await dbContext.Set<T>().ProjectTo<TOut>(mapper.ConfigurationProvider).ToListAsync(cancellationToken);
+    }
+
+    public async Task<TOut> GetByIdAsync<TOut>(Guid id, CancellationToken cancellationToken)
+    {
+        var keyProperty = dbContext.Model.FindEntityType(typeof(T))?.FindPrimaryKey()?.Properties.FirstOrDefault();
+        var keyName = keyProperty?.Name ?? typeof(T).Name + "Id";
+        return await dbContext.Set<T>().Where(e => EF.Property<Guid>(e, keyName) == id).ProjectTo<TOut>(mapper.ConfigurationProvider).FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<TOut>> GetAsync<TOut>(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken)
+    {
+        return await dbContext.Set<T>().Where(predicate).ProjectTo<TOut>(mapper.ConfigurationProvider).ToListAsync(cancellationToken);
+    }
+
+    public T Insert(T entity) { dbContext.Set<T>().Add(entity); return entity; }
+    public T Update(T entity) { dbContext.Set<T>().Update(entity); return entity; }
+
+    public async Task<T?> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);
+        if (entity is not null) dbContext.Remove(entity);
+        return entity;
+    }
+
+    public IQueryable<T> Query() => dbContext.Set<T>();
+}
+```
+
+### BƯỚC 2: Cập Nhật `IUnitOfWork` và Khai Tử Các Custom Repositories
+
+1. **Thêm Entities vào `backend/UnitOfWork/IUnitOfWork.cs`:**
+```csharp
+IRepository<Product> Products { get; }
+IRepository<Category> Categories { get; }
+IRepository<Brand> Brands { get; }
+IRepository<Banner> Banners { get; }
+IRepository<User> Users { get; }
+IRepository<ProductImage> ProductImages { get; }
+IRepository<ProductSpec> ProductSpecs { get; }
+IRepository<News> News { get; }
+Task<int> SaveAsync(CancellationToken cancellationToken);
+```
+
+2. **Cập nhật `backend/UnitOfWork/UnitOfWork.cs`:**
+```csharp
+using AutoMapper;
+using backend.Data;
+using backend.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.UnitOfWork;
+
+public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
+{
+    public IRepository<Product> Products { get; } = new Repository<Product>(dbContext, mapper);
+    public IRepository<Category> Categories { get; } = new Repository<Category>(dbContext, mapper);
+    public IRepository<Brand> Brands { get; } = new Repository<Brand>(dbContext, mapper);
+    public IRepository<Banner> Banners { get; } = new Repository<Banner>(dbContext, mapper);
+    public IRepository<User> Users { get; } = new Repository<User>(dbContext, mapper);
+    public IRepository<ProductImage> ProductImages { get; } = new Repository<ProductImage>(dbContext, mapper);
+    public IRepository<ProductSpec> ProductSpecs { get; } = new Repository<ProductSpec>(dbContext, mapper);
+    public IRepository<News> News { get; } = new Repository<News>(dbContext, mapper);
+
+    public async Task<int> SaveAsync(CancellationToken cancellationToken)
+    {
+       return await dbContext.SaveChangesAsync(cancellationToken);
+    }
+}
+```
+
+3. **XÓA TOÀN BỘ FILES REPOSITORY THỪA:** Từ thư mục `backend/Repositories`. Giải phóng dependency ở `Program.cs`.
+
+---
+
+### BƯỚC 3: Dọn dẹp `Program.cs`
+Xóa đăng ký Repository:
+```diff
+- builder.Services.AddScoped<IUserRepository, UserRepository>();
+- builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+- builder.Services.AddScoped<IBannerRepository, BannerRepository>();
+- builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+```
+
+---
+
+### BƯỚC 4: Toàn bộ File Các Service (COPY TOÀN BỘ)
+
+**4.1. `backend/Services/CategoryService.cs`**
+```csharp
+using AutoMapper;
+using backend.DTOs;
+using backend.Models;
+using backend.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services;
+
+public class CategoryService(IUnitOfWork uow, IMapper mapper) : ICategoryService
+{
+    public async Task<List<CategoryDto>> GetAllAsync(CancellationToken ct)
+    {
+        var items = await uow.Categories.GetAllAsync<CategoryDto>(ct);
+        return items.ToList();
+    }
+
+    public async Task<CategoryDto?> GetByIdAsync(Guid id, CancellationToken ct) => await uow.Categories.GetByIdAsync<CategoryDto>(id, ct);
+
+    public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto, CancellationToken ct)
+    {
+        var existing = await uow.Categories.GetAsync<CategoryDto>(c => c.Slug == dto.Slug, ct);
+        if (existing.Any()) return null;
+        if (dto.ParentId.HasValue && await uow.Categories.GetByIdAsync<CategoryDto>(dto.ParentId.Value, ct) == null) return null;
+
+        var entity = mapper.Map<Category>(dto);
+        uow.Categories.Insert(entity); 
+        await uow.SaveAsync(ct);
+        return mapper.Map<CategoryDto>(entity);
+    }
+
+    public async Task<CategoryDto?> UpdateAsync(Guid id, UpdateCategoryDto dto, CancellationToken ct)
+    {
+        var entity = await uow.Categories.Query().FirstOrDefaultAsync(c => c.CategoryId == id, ct);
+        if (entity == null) return null;
+        
+        if (dto.Slug != null)
+        {
+            var existing = await uow.Categories.Query().FirstOrDefaultAsync(c => c.Slug == dto.Slug, ct);
+            if (existing != null && existing.CategoryId != id) return null;
+        }
+
+        mapper.Map(dto, entity);
+        uow.Categories.Update(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<CategoryDto>(entity);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var entity = await uow.Categories.Query().FirstOrDefaultAsync(c => c.CategoryId == id, ct);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        uow.Categories.Update(entity);
+        await uow.SaveAsync(ct);
+        return true;
+    }
+
+    public async Task<CategoryDto?> GetBySlugAsync(string slug, CancellationToken ct)
+    {
+        var result = await uow.Categories.GetAsync<CategoryDto>(c => c.Slug == slug, ct);
+        return result.FirstOrDefault();
+    }
+}
+```
+
+**4.2. `backend/Services/BrandService.cs`**
+```csharp
+using AutoMapper;
+using backend.DTOs;
+using backend.Models;
+using backend.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services;
+
+public class BrandService(IUnitOfWork uow, IMapper mapper) : IBrandService
+{
+    public async Task<List<BrandDto>> GetAllAsync(CancellationToken ct)
+    {
+        var brands = await uow.Brands.GetAllAsync<BrandDto>(ct);
+        return brands.ToList();
+    }
+
+    public async Task<BrandDto?> GetByIdAsync(Guid id, CancellationToken ct) => await uow.Brands.GetByIdAsync<BrandDto>(id, ct);
+
+    public async Task<BrandDto?> GetBySlugAsync(string slug, CancellationToken ct)
+    {
+        var result = await uow.Brands.GetAsync<BrandDto>(b => b.Slug == slug, ct);
+        return result.FirstOrDefault();
+    }
+
+    public async Task<BrandDto> CreateAsync(CreateBrandDto dto, CancellationToken ct)
+    {
+        var existing = await uow.Brands.GetAsync<BrandDto>(b => b.Slug == dto.Slug, ct);
+        if (existing.Any()) return null;
+
+        var entity = mapper.Map<Brand>(dto);
+        uow.Brands.Insert(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<BrandDto>(entity);
+    }
+
+    public async Task<BrandDto?> UpdateAsync(Guid id, UpdateBrandDto dto, CancellationToken ct)
+    {
+        var entity = await uow.Brands.Query().FirstOrDefaultAsync(b => b.BrandId == id, ct);
+        if (entity == null) return null;
+
+        if (dto.Slug != null)
+        {
+            var existing = await uow.Brands.Query().FirstOrDefaultAsync(b => b.Slug == dto.Slug, ct);
+            if (existing != null && existing.BrandId != id) return null;
+        }
+
+        mapper.Map(dto, entity);
+        uow.Brands.Update(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<BrandDto>(entity);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var deleted = await uow.Brands.DeleteAsync(id, ct);
+        if (deleted != null) await uow.SaveAsync(ct);
+        return deleted != null;
+    }
+}
+```
+
+**4.3. `backend/Services/UserService.cs`**
+```csharp
+using AutoMapper;
+using backend.DTOs;
+using backend.Models;
+using backend.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+
+namespace backend.Services;
+
+public class UserService(IUnitOfWork uow, IMapper mapper) : IUserService
+{
+    public async Task<List<UserDto>> GetAllAsync(CancellationToken ct)
+    {
+        var users = await uow.Users.GetAllAsync<UserDto>(ct);
+        return users.ToList();
+    }
+
+    public async Task<UserDto?> GetByIdAsync(Guid id, CancellationToken ct) => await uow.Users.GetByIdAsync<UserDto>(id, ct);
+
+    public async Task<UserDto?> CreateAsync(CreateUserDto dto, CancellationToken ct)
+    {
+        var existing = await uow.Users.GetAsync<UserDto>(u => u.Email == dto.Email, ct);
+        if (existing.Any()) return null;
+
+        var entity = mapper.Map<User>(dto);
+        entity.PasswordHash = HashPassword(dto.Password);
+        
+        uow.Users.Insert(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<UserDto>(entity);
+    }
+
+    public async Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto dto, CancellationToken ct)
+    {
+        var entity = await uow.Users.Query().FirstOrDefaultAsync(u => u.UserId == id, ct);
+        if (entity == null) return null;
+
+        if (dto.Email != null)
+        {
+            var existing = await uow.Users.Query().FirstOrDefaultAsync(u => u.Email == dto.Email, ct);
+            if (existing != null && existing.UserId != id) return null;
+        }
+
+        mapper.Map(dto, entity);
+        uow.Users.Update(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<UserDto>(entity);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var deleted = await uow.Users.DeleteAsync(id, ct);
+        if (deleted != null) await uow.SaveAsync(ct);
+        return deleted != null;
+    }
+
+    private static string HashPassword(string password)
+    {
+        var passwordHasher = new PasswordHasher<User>();
+        return passwordHasher.HashPassword(null, password); 
+    }
+}
+```
+
+**4.4. `backend/Services/BannerService.cs`**
+```csharp
+using AutoMapper;
+using backend.DTOs;
+using backend.Models;
+using backend.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services;
+
+public class BannerService(IUnitOfWork uow, IMapper mapper) : IBannerService
+{
+    public async Task<List<BannerDto>> GetAllAsync(CancellationToken ct) 
+    {
+        var banners = await uow.Banners.GetAllAsync<BannerDto>(ct);
+        return banners.ToList();
+    }
+
+    public async Task<List<BannerDto>> GetPublicAsync(CancellationToken ct)
+    {
+        var banners = await uow.Banners.GetAsync<BannerDto>(b => b.IsActive, ct);
+        return banners.Where(IsPublicBanner).ToList();
+    }
+
+    public async Task<BannerDto?> GetByIdAsync(Guid id, CancellationToken ct) => await uow.Banners.GetByIdAsync<BannerDto>(id, ct);
+
+    public async Task<BannerDto?> CreateAsync(CreateBannerDto dto, CancellationToken ct)
+    {   
+        if (!IsValidBannerWindow(dto.StartDate, dto.EndDate)) return null;
+        if (string.IsNullOrWhiteSpace(dto.Title) || string.IsNullOrWhiteSpace(dto.ImageUrl)) return null;
+
+        var entity = mapper.Map<Banner>(dto);
+        uow.Banners.Insert(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<BannerDto>(entity);
+    }
+
+    public async Task<BannerDto?> UpdateAsync(Guid id, UpdateBannerDto dto, CancellationToken ct)
+    {
+        var entity = await uow.Banners.Query().FirstOrDefaultAsync(b => b.BannerId == id, ct);
+        if (entity == null) return null;
+
+        if (!IsValidBannerWindow(dto.StartDate ?? entity.StartDate, dto.EndDate ?? entity.EndDate)) return null;
+
+        mapper.Map(dto, entity);
+        uow.Banners.Update(entity);
+        await uow.SaveAsync(ct);
+        return mapper.Map<BannerDto>(entity);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var entity = await uow.Banners.Query().FirstOrDefaultAsync(b => b.BannerId == id, ct);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        uow.Banners.Update(entity);
+        await uow.SaveAsync(ct);
+        return true;
+    }
+
+    private static bool IsPublicBanner(BannerDto banner)
+    {
+        if (!banner.IsActive) return false;
+        var today = DateTime.UtcNow.Date;
+        if (banner.StartDate.HasValue && banner.StartDate.Value.Date > today) return false;
+        if (banner.EndDate.HasValue && banner.EndDate.Value.Date < today) return false;
+        return true;
+    }
+
+    private static bool IsValidBannerWindow(DateTime? startDate, DateTime? endDate)
+    {
+        if (startDate.HasValue && endDate.HasValue) return startDate.Value.Date <= endDate.Value.Date;
+        return true;
+    }
+}
+```
+
+**4.5. `backend/Services/ProductImageService.cs`**
+```csharp
+using backend.DTOs;
+using backend.Models;
+using backend.UnitOfWork;
+using backend.Exceptions;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services;
+
+public class ProductImageService(IUnitOfWork uow, IMapper mapper) : IProductImageService
+{
+    public async Task<List<ProductImageDto>> GetByProductIdAsync(Guid productId, CancellationToken ct)
+    {
+        var exists = await uow.Products.GetByIdAsync<ProductDto>(productId, ct);
+        if (exists == null) throw new NotFoundException("Product not found");
+
+        var images = await uow.ProductImages.Query()
+            .Where(x => x.ProductId == productId)
+            .OrderBy(x => x.SortOrder)
+            .ToListAsync(ct);
+
+        return mapper.Map<List<ProductImageDto>>(images);
+    }
+
+    public async Task<ProductImageDto> AddAsync(Guid productId, CreateProductImageDto dto, CancellationToken ct)
+    {
+        var product = await uow.Products.GetByIdAsync<ProductDto>(productId, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        var image = mapper.Map<ProductImage>(dto);
+        image.ProductId = productId;
+        image.CreatedAt = DateTime.UtcNow;
+
+        if (dto.IsPrimary)
+        {
+            var oldPrimary = await uow.ProductImages.Query().Where(x => x.ProductId == productId && x.IsPrimary).ToListAsync(ct);
+            foreach (var img in oldPrimary) img.IsPrimary = false;
+        }
+
+        uow.ProductImages.Insert(image);
+        await uow.SaveAsync(ct);
+
+        return mapper.Map<ProductImageDto>(image);
+    }
+
+    public async Task DeleteAsync(Guid ProductImageId, CancellationToken ct)
+    {
+        var deleted = await uow.ProductImages.DeleteAsync(ProductImageId, ct);
+        if (deleted == null) throw new NotFoundException("Image not found");
+        await uow.SaveAsync(ct);
+    }
+}
+```
+
+**4.6. `backend/Services/ProductSpecService.cs`**
+```csharp
+using backend.DTOs;
+using backend.Models;
+using backend.UnitOfWork;
+using backend.Exceptions;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services;
+
+public class ProductSpecService(IUnitOfWork uow, IMapper mapper) : IProductSpecService
+{
+    public async Task<List<ProductSpecDto>> GetByProductIdAsync(Guid productId, CancellationToken ct)
+    {
+        var product = await uow.Products.GetByIdAsync<ProductDto>(productId, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        var specs = await uow.ProductSpecs.Query()
+            .Where(x => x.ProductId == productId)
+            .OrderBy(x => x.SpecKey)
+            .ToListAsync(ct);
+
+        return mapper.Map<List<ProductSpecDto>>(specs);
+    }
+
+    public async Task<ProductSpecDto> AddAsync(Guid productId, CreateProductSpecDto dto, CancellationToken ct)
+    {
+        var product = await uow.Products.GetByIdAsync<ProductDto>(productId, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        var spec = mapper.Map<ProductSpec>(dto);
+        spec.ProductId = productId;
+        spec.CreatedAt = DateTime.UtcNow;
+
+        uow.ProductSpecs.Insert(spec);
+        await uow.SaveAsync(ct);
+
+        return mapper.Map<ProductSpecDto>(spec);
+    }
+
+    public async Task<ProductSpecDto> UpdateAsync(Guid specId, CreateProductSpecDto dto, CancellationToken ct)
+    {
+        var spec = await uow.ProductSpecs.Query().FirstOrDefaultAsync(s => s.SpecId == specId, ct);
+        if (spec == null) throw new NotFoundException("Spec not found");
+
+        spec.SpecKey = dto.SpecKey;
+        spec.SpecValue = dto.SpecValue;
+
+        uow.ProductSpecs.Update(spec);
+        await uow.SaveAsync(ct);
+
+        return mapper.Map<ProductSpecDto>(spec);
+    }
+
+    public async Task DeleteAsync(Guid specId, CancellationToken ct)
+    {
+        var deleted = await uow.ProductSpecs.DeleteAsync(specId, ct);
+        if (deleted == null) throw new NotFoundException("Spec not found");
+        await uow.SaveAsync(ct);
+    }
+}
+```
+
+**4.7 `backend/Services/ProductService.cs` (Sửa logic CancellationToken cho hàm Create/Update/Delete)**
+```csharp
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using backend.DTOs;
+using backend.Exceptions;
+using backend.Models;
+using backend.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services;
+
+public class ProductService(
+    IUnitOfWork uow, 
+    IMapper mapper,
+    IProductImageService imageService,
+    IProductSpecService specService) : IProductService
+{
+    public async Task<PagedResult<ProductDto>> GetAllAsync(
+        string? keyword, Guid? categoryId, decimal? minPrice, decimal? maxPrice, 
+        CancellationToken ct, int page, int pageSize)
+    {
+        page = page <= 0 ? 1 : page; pageSize = pageSize <= 0 ? 10 : pageSize; pageSize = pageSize > 20 ? 20 : pageSize;
+        var query = uow.Products.Query().Include(p => p.Category).AsQueryable();
+
+        if (!string.IsNullOrEmpty(keyword)) {
+            var trimmed = keyword.Trim();
+            query = trimmed.Length <= 3 ? query.Where(p => EF.Functions.ILike(p.Name, $"{trimmed}%")) : query.Where(p => EF.Functions.ILike(p.Name, $"%{trimmed}%"));
+        }
+        if (categoryId.HasValue) query = query.Where(p => p.CategoryId == categoryId.Value);
+        if (minPrice.HasValue) query = query.Where(p => p.RegularPrice >= minPrice.Value);
+        if (maxPrice.HasValue) query = query.Where(p => p.RegularPrice <= maxPrice.Value);
+
+        var totalCount = await query.CountAsync(ct);
+        var items = await query.OrderByDescending(p => p.CreatedAt).Skip((page - 1) * pageSize).Take(pageSize).ProjectTo<ProductDto>(mapper.ConfigurationProvider).ToListAsync(ct);
+
+        return new PagedResult<ProductDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize };
+    }
+
+    public async Task<ProductFullDto> GetFullByIdAsync(Guid id, CancellationToken ct)
+    {
+        var product = await GetByIdAsync(id, ct);
+        var images = await imageService.GetByProductIdAsync(id, ct);
+        var specs = await specService.GetByProductIdAsync(id, ct);
+        return new ProductFullDto { Product = product!, Images = images, Specs = specs };
+    }
+
+    public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        var product = await uow.Products.Query().Include(p => p.Category).ProjectTo<ProductDto>(mapper.ConfigurationProvider).FirstOrDefaultAsync(p => p.ProductId == id, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+        return product;
+    }
+
+    public async Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken ct)
+    {
+        var product = await uow.Products.Query().Include(p => p.Category).ProjectTo<ProductDto>(mapper.ConfigurationProvider).FirstOrDefaultAsync(p => p.Slug == slug, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+        return product;
+    }
+
+    public async Task<ProductDto?> CreateAsync(CreateProductDto dto, CancellationToken ct)
+    {
+        var category = await uow.Categories.GetByIdAsync<CategoryDto>(dto.CategoryId, ct);
+        if (category == null) throw new NotFoundException("Category not found");
+        var existing = await uow.Products.Query().AnyAsync(p => p.Slug == dto.Slug, ct);
+        if (existing) throw new BadRequestException("Slug already exists");
+
+        var product = mapper.Map<Product>(dto);
+        product.CreatedAt = DateTime.UtcNow; product.UpdatedAt = DateTime.UtcNow;
+        product.Status = dto.Status > 0 ? dto.Status : 1; // 1: draft, 2: published
+
+        uow.Products.Insert(product);
+        await uow.SaveAsync(ct);
+        return mapper.Map<ProductDto>(product);
+    }
+
+    public async Task<ProductDto?> UpdateAsync(Guid id, UpdateProductDto dto, CancellationToken ct)
+    {
+        var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == id, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+        if (!string.IsNullOrEmpty(dto.Slug)) {
+            var exists = await uow.Products.Query().AnyAsync(p => p.Slug == dto.Slug && p.ProductId != id, ct);
+            if (exists) throw new BadRequestException("Slug already exists");
+        }
+        if (dto.CategoryId.HasValue) {
+            var category = await uow.Categories.GetByIdAsync<CategoryDto>(dto.CategoryId.Value, ct);
+            if (category == null) throw new NotFoundException("Category not found");
+        }
+
+        mapper.Map(dto, product);
+        product.UpdatedAt = DateTime.UtcNow;
+        uow.Products.Update(product);
+        await uow.SaveAsync(ct);
+        return mapper.Map<ProductDto>(product);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == id, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+
+        product.Status = 3; // 3: deleted (status là INT trong db)
+        product.UpdatedAt = DateTime.UtcNow;
+        uow.Products.Update(product);
+        await uow.SaveAsync(ct);
+    }
+
+    public async Task<PagedResult<ProductListItemDto>> GetProductListAsync(CancellationToken ct, int page, int pageSize)
+    {
+        page = page <= 0 ? 1 : page; pageSize = pageSize <= 0 ? 12 : pageSize; pageSize = pageSize > 50 ? 50 : pageSize;
+        var query = uow.Products.Query().Include(p => p.Category).AsQueryable();
+        var totalCount = await query.CountAsync(ct);
+        var items = await query.OrderByDescending(p => p.CreatedAt).Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(p => new ProductListItemDto {
+                Id = p.ProductId, Name = p.Name, Price = p.SalePrice ?? p.RegularPrice, CategoryName = p.Category.Name,
+                ThumbnailUrl = p.Images.Where(i => i.IsPrimary).OrderBy(i => i.SortOrder).Select(i => i.ImageUrl).FirstOrDefault() ?? p.Images.OrderBy(i => i.SortOrder).Select(i => i.ImageUrl).FirstOrDefault()
+            }).ToListAsync(ct);
+        return new PagedResult<ProductListItemDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize };
+    }
+}
+```

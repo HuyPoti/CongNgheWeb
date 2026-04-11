@@ -1,0 +1,222 @@
+<div class="p-8">
+  <!-- Tabs -->
+  <div class="flex items-center gap-6 border-b border-primary/10 mb-8">
+    <button (click)="activeTab.set('articles')" class="pb-4 text-sm font-semibold flex items-center gap-2 transition-all border-b-2"
+      [ngClass]="activeTab() === 'articles' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-300'">
+      <span class="material-symbols-outlined text-sm">article</span> Bài viết ({{ newsList().length }})
+    </button>
+    <button (click)="activeTab.set('categories')" class="pb-4 text-sm font-semibold flex items-center gap-2 transition-all border-b-2"
+      [ngClass]="activeTab() === 'categories' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-300'">
+      <span class="material-symbols-outlined text-sm">category</span> Danh mục tin ({{ newsCategories().length }})
+    </button>
+  </div>
+
+  <!-- Articles Tab -->
+  @if (activeTab() === 'articles') {
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h2 class="text-3xl font-black text-slate-100 mb-2">Quản lý Tin tức</h2>
+        <p class="text-slate-500">Tạo và quản lý bài viết trên blog</p>
+      </div>
+      <button (click)="openCreateArticle()" class="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
+        <span class="material-symbols-outlined text-sm">add</span> Viết bài mới
+      </button>
+    </div>
+
+    <div class="bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-primary/10 text-left">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ảnh</th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tiêu đề</th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Danh mục</th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lượt xem</th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (news of newsList(); track news.newId) {
+            <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
+              <td class="px-5 py-3">
+                @if (news.imageUrl) {
+                  <img [src]="news.imageUrl" [alt]="news.title" class="w-20 h-12 rounded-lg object-cover"/>
+                } @else {
+                  <div class="w-20 h-12 rounded-lg bg-slate-800 flex items-center justify-center"><span class="material-symbols-outlined text-slate-600 text-sm">image</span></div>
+                }
+              </td>
+              <td class="px-5 py-3">
+                <p class="text-slate-100 font-bold text-sm line-clamp-1">{{ news.title }}</p>
+                <p class="text-xs text-slate-500 mt-1 line-clamp-1">{{ news.excerpt }}</p>
+              </td>
+              <td class="px-5 py-3 text-xs text-slate-400">{{ news.categoryName || getCategoryName(news.categoryId) }}</td>
+              <td class="px-5 py-3 text-xs text-slate-400">{{ news.views | number }}</td>
+              <td class="px-5 py-3">
+                <div class="flex flex-col gap-1">
+                  <span class="text-[10px] font-bold px-3 py-1 rounded-full border w-fit"
+                    [ngClass]="{ 'bg-green-500/20 text-green-400 border-green-500/30': news.isPublished, 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30': !news.isPublished }">
+                    {{ news.isPublished ? 'Published' : 'Draft' }}
+                  </span>
+                  <span class="text-[10px] font-bold px-3 py-1 rounded-full border w-fit"
+                    [ngClass]="{ 'bg-green-500/20 text-green-400 border-green-500/30': news.isActive, 'bg-red-500/20 text-red-400 border-red-500/30': !news.isActive }">
+                    {{ news.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+              </td>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-1">
+                  <button (click)="openEditArticle(news)" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
+                  <button (click)="deleteArticle(news)" class="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-400"><span class="material-symbols-outlined text-sm">delete</span></button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Categories Tab -->
+  @if (activeTab() === 'categories') {
+    <div class="flex items-end justify-between mb-6">
+      <div>
+        <h2 class="text-3xl font-black text-slate-100 mb-2">Danh mục Tin tức</h2>
+        <p class="text-slate-500">Phân loại bài viết theo chủ đề</p>
+      </div>
+      <button (click)="openCreateCat()" class="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
+        <span class="material-symbols-outlined text-sm">add</span> Thêm danh mục
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (cat of newsCategories(); track cat.categoryId) {
+        <div class="bg-surface-dark/40 border border-primary/10 rounded-xl p-5 hover:border-primary/30 transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-100">{{ cat.name }}</h3>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+              [ngClass]="{ 'bg-green-500/20 text-green-400 border-green-500/30': cat.isActive, 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30': !cat.isActive }">
+              {{ cat.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mb-1 font-mono">slug: {{ cat.slug }}</p>
+          <p class="text-sm text-slate-400 mb-4">{{ cat.description || 'Chưa có mô tả' }}</p>
+          <div class="flex justify-end gap-2">
+            <button (click)="openEditCat(cat)" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button (click)="deleteCat(cat)" class="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-400"><span class="material-symbols-outlined text-sm">delete</span></button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Article Modal -->
+@if (showModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" 
+    (click)="closeModal()" (keydown.enter)="closeModal()" tabindex="0" role="button" aria-label="Close modal">
+    <div class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" 
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="-1" role="dialog">
+      <div class="p-6 border-b border-primary/10 flex items-center justify-between sticky top-0 bg-surface-dark z-10">
+        <h3 class="text-lg font-bold text-slate-100">{{ editingNews() ? 'Sửa Bài viết' : 'Viết Bài mới' }}</h3>
+        <button (click)="closeModal()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <label for="articleTitle" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tiêu đề *</label>
+          <input [(ngModel)]="form.title" (ngModelChange)="autoSlug()" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"/>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="articleSlug" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Slug</label>
+            <input [(ngModel)]="form.slug" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary font-mono"/>
+          </div>
+          <div>
+            <label for="articleCategory" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Danh mục *</label>
+            <select [(ngModel)]="form.categoryId" name="categoryId" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary">
+              <option value="" disabled>-- Chọn danh mục --</option>
+              @for (cat of newsCategories(); track cat.categoryId) {
+                <option [value]="cat.categoryId">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="articleExcerpt" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tóm tắt (excerpt)</label>
+          <textarea [(ngModel)]="form.excerpt" rows="2" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary resize-none"></textarea>
+        </div>
+        <div>
+          <label for="articleContent" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nội dung bài viết *</label>
+          <textarea [(ngModel)]="form.content" rows="8" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary resize-none"></textarea>
+        </div>
+        <div>
+          <label for="articleImage" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">URL Ảnh đại diện</label>
+          <input [(ngModel)]="form.imageUrl" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"/>
+        </div>
+        <!-- SEO -->
+        <div class="border-t border-primary/10 pt-5">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">SEO Meta Tags</h4>
+          <div class="space-y-4">
+            <div>
+              <label for="articleMetaTitle" class="block text-xs text-slate-500 mb-1">Meta Title</label>
+              <input [(ngModel)]="form.metaTitle" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"/>
+            </div>
+            <div>
+              <label for="articleMetaDescription" class="block text-xs text-slate-500 mb-1">Meta Description</label>
+              <textarea [(ngModel)]="form.metaDescription" rows="2" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-6">
+          <div class="flex items-center gap-3">
+            <input [(ngModel)]="form.isPublished" type="checkbox" id="newsPublished" class="accent-primary w-4 h-4"/>
+            <label for="newsPublished" class="text-sm text-slate-300">Xuất bản</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input [(ngModel)]="form.isActive" type="checkbox" id="newsActive" class="accent-primary w-4 h-4"/>
+            <label for="newsActive" class="text-sm text-slate-300">Hoạt động (Active)</label>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-primary/10 flex justify-end gap-3 sticky bottom-0 bg-surface-dark z-10">
+        <button (click)="closeModal()" class="px-6 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white">Hủy</button>
+        <button (click)="saveArticle()" class="px-6 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-semibold text-white">{{ editingNews() ? 'Cập nhật' : 'Đăng bài' }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Category Modal -->
+@if (showCatModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" 
+    (click)="closeCatModal()" (keydown.enter)="closeCatModal()" tabindex="0" role="button" aria-label="Close modal">
+    <div class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-lg" 
+      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="-1" role="dialog">
+      <div class="p-6 border-b border-primary/10 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-100">{{ editingCat() ? 'Sửa Danh mục' : 'Thêm Danh mục' }}</h3>
+        <button (click)="closeCatModal()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <label for="catName" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tên *</label>
+          <input [(ngModel)]="catForm.name" (ngModelChange)="autoCatSlug()" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"/>
+        </div>
+        <div>
+          <label for="catSlug" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Slug</label>
+          <input [(ngModel)]="catForm.slug" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary font-mono"/>
+        </div>
+        <div>
+          <label for="catDescription" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Mô tả</label>
+          <textarea [(ngModel)]="catForm.description" rows="2" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary resize-none"></textarea>
+        </div>
+        <div class="flex items-center gap-3">
+          <input [(ngModel)]="catForm.isActive" type="checkbox" id="newsCatActive" class="accent-primary w-4 h-4"/>
+          <label for="newsCatActive" class="text-sm text-slate-300">Hiển thị</label>
+        </div>
+      </div>
+      <div class="p-6 border-t border-primary/10 flex justify-end gap-3">
+        <button (click)="closeCatModal()" class="px-6 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white">Hủy</button>
+        <button (click)="saveCat()" class="px-6 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-semibold text-white">{{ editingCat() ? 'Cập nhật' : 'Tạo mới' }}</button>
+      </div>
+    </div>
+  </div>
+}

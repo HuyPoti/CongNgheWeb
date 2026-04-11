@@ -1,0 +1,13 @@
+bin/**
+obj/**
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+.vs/
+.vscode/
+*.csproj.user
+*.user
+*.suo
+*.sln.docstates
+.env
+*.log

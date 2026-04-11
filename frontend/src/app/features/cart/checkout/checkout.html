@@ -1,0 +1,189 @@
+<div class="layout-container flex flex-col min-h-screen bg-background-light dark:bg-background-dark transition-colors duration-500">
+<!-- Header -->
+
+<main class="flex-grow px-6 lg:px-20 py-12">
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Left Column: Checkout Steps -->
+<div class="lg:col-span-7 flex flex-col gap-8">
+      <!-- Step 1: Shipping Information -->
+      <div 
+        class="rounded-3xl overflow-hidden transition-all duration-500 border"
+        [class]="currentStep() === 1 
+          ? 'border-primary bg-white dark:bg-surface-dark shadow-2xl shadow-primary/10 scale-[1.02]' 
+          : 'border-slate-100 dark:border-white/5 bg-white/50 dark:bg-white/5 opacity-80'"
+        (click)="setStep(1)"
+      >
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-10">
+            <div class="flex items-center gap-5">
+              <span 
+                class="flex items-center justify-center w-10 h-10 rounded-2xl font-bold transition-all"
+                [class]="currentStep() >= 1 ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-100 dark:bg-white/10 text-slate-400'"
+              >
+                {{ currentStep() > 1 ? '✓' : '1' }}
+              </span>
+              <h2 class="text-2xl font-orbitron font-bold uppercase tracking-tight text-slate-900 dark:text-white" [class.opacity-40]="currentStep() !== 1">Shipping Address</h2>
+            </div>
+            @if (currentStep() > 1) {
+              <span class="material-symbols-outlined text-primary cursor-pointer hover:rotate-12 transition-transform">edit</span>
+            }
+          </div>
+          
+          <div [class.hidden]="currentStep() !== 1" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="col-span-1">
+                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">First Name</label>
+                <input class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white" placeholder="John" type="text"/>
+              </div>
+              <div class="col-span-1">
+                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">Last Name</label>
+                <input class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white" placeholder="Doe" type="text"/>
+              </div>
+              <div class="col-span-2">
+                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">Full Address</label>
+                <input class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white" placeholder="123 Cyber Street, Sector 7, Neo Tokyo" type="text"/>
+              </div>
+            </div>
+            <div class="flex justify-end mt-10">
+              <button 
+                (click)="$event.stopPropagation(); nextStep()"
+                class="px-10 py-4 bg-primary text-white font-bold rounded-2xl transition-all hover:scale-105 shadow-xl shadow-primary/30 flex items-center gap-3 cursor-pointer"
+              >
+                Next to Payment <span class="material-symbols-outlined text-lg">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Payment Method -->
+      <div 
+        class="rounded-3xl overflow-hidden transition-all duration-500 border"
+        [class]="currentStep() === 2 
+          ? 'border-primary bg-white dark:bg-surface-dark shadow-2xl shadow-primary/10 scale-[1.02]' 
+          : 'border-slate-100 dark:border-white/5 bg-white/50 dark:bg-white/5 opacity-60'"
+        [class.cursor-pointer]="currentStep() > 2"
+        (click)="setStep(2)"
+      >
+        <div class="p-8">
+          <div class="flex items-center justify-between mb-10">
+            <div class="flex items-center gap-5">
+              <span 
+                class="flex items-center justify-center w-10 h-10 rounded-2xl font-bold transition-all"
+                [class]="currentStep() >= 2 ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-100 dark:bg-white/10 text-slate-400'"
+              >
+                {{ currentStep() > 2 ? '✓' : '2' }}
+              </span>
+              <h2 class="text-2xl font-orbitron font-bold uppercase tracking-tight text-slate-900 dark:text-white" [class.opacity-40]="currentStep() !== 2">Payment Method</h2>
+            </div>
+          </div>
+
+          <div [class.hidden]="currentStep() !== 2" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              <!-- Credit Card -->
+              <button class="flex flex-col items-center gap-4 p-8 rounded-3xl border-2 border-primary bg-primary/5 shadow-lg shadow-primary/10 transition-all cursor-pointer group">
+                <span class="material-symbols-outlined text-primary text-4xl group-hover:scale-110 transition-transform">credit_card</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-900 dark:text-white">Credit Card</span>
+              </button>
+              <!-- PayPal -->
+              <button class="flex flex-col items-center gap-4 p-8 rounded-3xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:border-primary/50 transition-all cursor-pointer group">
+                <span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-4xl group-hover:scale-110 transition-transform">account_balance_wallet</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">PayPal</span>
+              </button>
+              <!-- Crypto -->
+              <button class="flex flex-col items-center gap-4 p-8 rounded-3xl border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:border-primary/50 transition-all cursor-pointer group">
+                <span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-4xl group-hover:scale-110 transition-transform">currency_bitcoin</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Crypto</span>
+              </button>
+            </div>
+            
+            <div class="flex justify-end">
+              <button 
+                (click)="$event.stopPropagation(); nextStep()"
+                class="px-10 py-4 bg-primary text-white font-bold rounded-2xl transition-all hover:scale-105 shadow-xl shadow-primary/30 flex items-center gap-3 cursor-pointer"
+              >
+                Review Summary <span class="material-symbols-outlined text-lg">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Review Order -->
+      <div 
+        class="rounded-3xl overflow-hidden transition-all duration-500 border border-slate-100 dark:border-white/5"
+        [class]="currentStep() === 3 
+          ? 'border-primary bg-white dark:bg-surface-dark shadow-2xl shadow-primary/10 scale-[1.02]' 
+          : 'bg-white/50 dark:bg-white/5 opacity-40'"
+      >
+        <div class="p-8">
+          <div class="flex items-center gap-5">
+            <span 
+              class="flex items-center justify-center w-10 h-10 rounded-2xl font-bold transition-all"
+              [class]="currentStep() === 3 ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-100 dark:bg-white/10 text-slate-400'"
+            >
+              3
+            </span>
+            <h2 class="text-2xl font-orbitron font-bold uppercase tracking-tight text-slate-900 dark:text-white" [class.opacity-40]="currentStep() !== 3">Final Review</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- Right Column: Order Summary -->
+<div class="lg:col-span-5">
+<div class="sticky top-28 bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-10 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+<h3 class="text-xl font-orbitron font-bold uppercase tracking-widest mb-10 pb-6 border-b border-slate-50 dark:border-white/5 text-slate-900 dark:text-white">Order Summary</h3>
+<div class="space-y-8 mb-10 max-h-[350px] overflow-y-auto pr-4 scrollbar-hide">
+<!-- Product 1 -->
+<div class="flex gap-5 group">
+<div class="w-24 h-24 rounded-3xl bg-slate-50 dark:bg-white/5 overflow-hidden flex-shrink-0 border border-slate-100 dark:border-white/5 group-hover:scale-105 transition-transform">
+<img class="w-full h-full object-cover" data-alt="Red high-tech performance running shoe" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyAkT7nnUZLeOJnmTzCBk00gjSbqebhH_9GWpoW-j-jUFUhGv6LRPKUV1xI9fbRQqiS5kS-e1Hdr1o7hlFiq1U1yNXedQUS30rBnqTNGGgphPwFeK1ASbKparsDyPPIYrvyxcwH5lbsJN24YL_MRf2X4voWGmdhyGg1tDL5cImB3p9I00Nb7Hry61umOxpkS7ijrC5yUFGtI7UsDS9wKbk5X-sadkfV5D6lhN1tSMB2a2E_KBlYUenLnD0ckbiVPKmog5KLjmEOlsl"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="font-bold text-slate-900 dark:text-white text-lg">ZX-9000 Phantom</p>
+<p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Neon Red | Size 42</p>
+<p class="text-primary font-total font-bold text-xl mt-2">$249.00</p>
+</div>
+</div>
+<!-- Product 2 -->
+<div class="flex gap-5 group">
+<div class="w-24 h-24 rounded-3xl bg-slate-50 dark:bg-white/5 overflow-hidden flex-shrink-0 border border-slate-100 dark:border-white/5 group-hover:scale-105 transition-transform">
+<img class="w-full h-full object-cover" data-alt="Minimalist white designer wristwatch" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLiuZsVEZuOnVGZdeeM4g57cbthtO73eHlqXwDGcW6ehe5U5goaEnVKuj7CmtaWJghl9YY61ROkg1BPsez8n5MXVUKqq9uEujHjYYnTgcF-HlqQJzRGxadfpRTs-rH2aoIPKTo_SJZKjnieL6sXCMcsIrxN6XOcTZOIP8_xtKgveRhYn7cefnDr_6b4BBg1-S-ixn-8nrmV-c8xq6ere7ad5qwG9e7oMtRIVylRyqQmlszg7iuoFZtJ3xsbiCSWeUsNiA4GhN9B85W"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="font-bold text-slate-900 dark:text-white text-lg">ZX Chrono White</p>
+<p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Special Edition</p>
+<p class="text-primary font-total font-bold text-xl mt-2">$189.00</p>
+</div>
+</div>
+</div>
+<div class="space-y-4 py-8 border-t border-slate-50 dark:border-white/5">
+<div class="flex justify-between text-sm font-bold">
+<span class="text-slate-400 uppercase tracking-widest">Subtotal</span>
+<span class="text-slate-900 dark:text-white">$438.00</span>
+</div>
+<div class="flex justify-between text-sm font-bold">
+<span class="text-slate-400 uppercase tracking-widest">Shipping</span>
+<span class="text-emerald-500 font-bold tracking-widest uppercase">Free</span>
+</div>
+<div class="flex justify-between text-sm font-bold">
+<span class="text-slate-400 uppercase tracking-widest">Tax</span>
+<span class="text-slate-900 dark:text-white">$35.04</span>
+</div>
+</div>
+<div class="flex justify-between items-center pt-8 border-t border-slate-100 dark:border-white/10 mb-10">
+<span class="text-lg font-orbitron font-bold uppercase tracking-[0.2em] text-slate-400">Total</span>
+<span class="font-total text-4xl text-slate-900 dark:text-white">$473.04</span>
+</div>
+<button class="w-full bg-primary py-5 rounded-2xl text-white font-bold uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 cursor-pointer">
+<span class="material-symbols-outlined">verified</span>
+<span>Place Order</span>
+</button>
+<p class="text-[10px] text-center mt-6 text-slate-400 uppercase tracking-widest leading-relaxed">
+                            Secure 256-bit SSL encrypted payment.<br>By placing order, you agree to our Terms.
+                        </p>
+</div>
+</div>
+</div>
+</main>
+</div>

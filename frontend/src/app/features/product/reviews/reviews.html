@@ -1,0 +1,238 @@
+<div class="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div>
+            <nav class="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                <a class="hover:text-primary transition-colors" routerLink="/">Home</a>
+                <span class="material-symbols-outlined text-xs">chevron_right</span>
+                <span class="text-primary">Reviews</span>
+            </nav>
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+                Customer Reviews
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 text-lg">Real experiences from our community of builders and gamers.</p>
+        </div>
+        <button 
+            class="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all neon-glow flex items-center gap-2 shrink-0"
+            (click)="toggleWriteReview()"
+        >
+            <span class="material-symbols-outlined">edit</span>
+            Write a Review
+        </button>
+    </div>
+
+    <!-- Rating Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+        <!-- Left: Summary -->
+        <div class="lg:col-span-4 bg-slate-100 dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark p-8 flex flex-col items-center justify-center text-center">
+            <div class="text-6xl font-bold text-slate-900 dark:text-white mb-2">{{ averageRating }}</div>
+            <div class="flex items-center gap-1 mb-3">
+                @for (star of getStarArray(5); track $index) {
+                    <span class="material-symbols-outlined text-2xl" [class]="$index < 4 ? 'text-amber-400 fill-1' : ($index === 4 ? 'text-amber-400/50 fill-1' : 'text-slate-600')">star</span>
+                }
+            </div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm">Based on <span class="font-bold text-slate-900 dark:text-white">{{ totalReviews }}</span> reviews</p>
+        </div>
+
+        <!-- Right: Distribution -->
+        <div class="lg:col-span-8 bg-slate-100 dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark p-8">
+            <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-6">Rating Distribution</h3>
+            <div class="space-y-3">
+                @for (item of ratingDistribution; track item.stars) {
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1 w-20 shrink-0">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white">{{ item.stars }}</span>
+                            <span class="material-symbols-outlined text-amber-400 text-sm fill-1">star</span>
+                        </div>
+                        <div class="flex-1 h-3 bg-slate-300 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div 
+                                class="h-full bg-gradient-to-r from-primary to-accent-cyan rounded-full transition-all duration-500"
+                                [style.width.%]="item.percentage"
+                            ></div>
+                        </div>
+                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400 w-16 text-right">{{ item.count }} ({{ item.percentage }}%)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Sort Bar -->
+    <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-200 dark:border-border-dark">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ totalReviews }} Reviews</h2>
+        <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 dark:text-slate-400">Sort by:</span>
+            <select class="bg-white dark:bg-surface-dark border border-slate-300 dark:border-border-dark rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
+                <option>Newest First</option>
+                <option>Highest Rated</option>
+                <option>Lowest Rated</option>
+                <option>Most Helpful</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Review Cards -->
+    <div class="space-y-8">
+        @for (review of reviews(); track review.id) {
+            <div class="bg-white dark:bg-surface-dark border border-slate-50 dark:border-white/5 rounded-[3rem] p-8 md:p-12 hover:border-primary/30 transition-all duration-500 group animate-in fade-in slide-in-from-bottom-8">
+                <div class="flex flex-col md:flex-row gap-10">
+                    <!-- User Side -->
+                    <div class="md:w-1/4 flex flex-col items-center md:items-start text-center md:text-left border-b md:border-b-0 md:border-r border-slate-50 dark:border-white/5 pb-8 md:pb-0 md:pr-10">
+                        <div class="size-20 rounded-3xl bg-gradient-to-br from-primary to-accent-cyan flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform mb-6">
+                            {{ review.userInitial }}
+                        </div>
+                        <h4 class="font-bold text-xl text-slate-900 dark:text-white mb-2">{{ review.userName }}</h4>
+                        <div class="flex items-center gap-2 mb-6">
+                            @if (review.verified) {
+                                <span class="material-symbols-outlined text-emerald-500 text-sm">verified</span>
+                                <span class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Verified Log</span>
+                            } @else {
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Public Review</span>
+                            }
+                        </div>
+                        <div class="mt-auto space-y-3 w-full">
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Unit Identified:</p>
+                            <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                                <p class="text-[10px] font-bold text-slate-900 dark:text-white line-clamp-1 uppercase tracking-tight">{{ review.product }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Side -->
+                    <div class="md:w-3/4 flex flex-col justify-between pt-4 md:pt-0">
+                        <div>
+                            <div class="flex flex-wrap items-center justify-between gap-6 mb-8">
+                                <div class="flex gap-1.5">
+                                    @for (star of getStarArray(5); track $index) {
+                                        <span class="material-symbols-outlined text-xl" 
+                                              [class]="$index < review.rating ? 'text-amber-400 fill-1' : 'text-slate-200 dark:text-white/10'">
+                                            star
+                                        </span>
+                                    }
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ review.date }}</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 leading-tight group-hover:text-primary transition-colors italic">"{{ review.title }}"</h3>
+                            <p class="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                {{ review.body }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-12 pt-8 border-t border-slate-50 dark:border-white/5">
+                            <div class="flex items-center gap-4">
+                                <button class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:border-primary transition-all">
+                                    <span class="material-symbols-outlined text-sm">thumb_up</span>
+                                    Protocol Helpful ({{ review.helpful }})
+                                </button>
+                                <button class="flex items-center justify-center size-10 rounded-full border border-slate-100 dark:border-white/5 text-slate-400 hover:text-red-500 transition-all">
+                                    <span class="material-symbols-outlined text-sm">flag</span>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-2 text-[10px] font-black text-slate-300 dark:text-white/20 uppercase tracking-[0.2em]">
+                                Ref: ZX-LOG-{{ review.id }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Load More -->
+    <div class="flex justify-center mt-10">
+        <button class="px-8 py-3 border border-slate-300 dark:border-border-dark text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary font-bold rounded-xl transition-all flex items-center gap-2">
+            Load More Reviews
+            <span class="material-symbols-outlined">expand_more</span>
+        </button>
+    </div>
+</div>
+
+<!-- Write Review Modal -->
+@if (isWriteReviewOpen()) {
+    <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="toggleWriteReview()" (keyup.escape)="toggleWriteReview()" tabindex="-1">
+        <div class="glass-effect bg-background-dark w-full max-w-2xl rounded-xl overflow-hidden flex flex-col" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" role="dialog">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 border-b border-primary/20">
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-2xl font-bold tracking-wider text-white uppercase">Write a Review</h1>
+                    <p class="text-slate-400 text-sm">Share your hardware experience with the ZX community</p>
+                </div>
+                <button class="p-2 hover:bg-primary/10 rounded-full transition-colors group" (click)="toggleWriteReview()">
+                    <span class="material-symbols-outlined text-slate-400 group-hover:text-white">close</span>
+                </button>
+            </div>
+            <!-- Content Area -->
+            <div class="p-6 space-y-8 overflow-y-auto max-h-[75vh]">
+                <!-- Rating Section -->
+                <div class="flex flex-col items-center gap-4">
+                    <h3 class="text-slate-200 font-medium text-center uppercase tracking-widest text-sm">Overall Satisfaction</h3>
+                    <div class="flex gap-3">
+                        @for (num of [1,2,3,4,5]; track num) {
+                            <button 
+                                class="group flex flex-col items-center gap-1"
+                                (click)="setRating(num)"
+                                (mouseenter)="setHoverRating(num)"
+                                (mouseleave)="setHoverRating(0)"
+                            >
+                                <span 
+                                    class="material-symbols-outlined text-4xl transition-all duration-300 cursor-pointer"
+                                    [class]="(hoverRating() > 0 ? num <= hoverRating() : num <= selectedRating()) 
+                                        ? 'text-amber-400 fill-1 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]' 
+                                        : 'text-slate-700 hover:text-amber-400/50'"
+                                >star</span>
+                                <span class="text-[10px] text-slate-500 font-bold">{{ num }}</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+                <!-- Form Fields -->
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label for="review-title" class="text-sm font-semibold text-slate-300">Review Title</label>
+                        <input 
+                            id="review-title"
+                            type="text" 
+                            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-white focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-600 transition-all" 
+                            placeholder="Summarize your experience..."
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <label for="review-body" class="text-sm font-semibold text-slate-300">Review Body</label>
+                        <textarea 
+                            id="review-body"
+                            class="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-white focus:ring-1 focus:ring-primary focus:border-primary min-h-[140px] resize-none placeholder:text-slate-600 transition-all" 
+                            placeholder="Tell us about the performance, build quality, and your overall experience..."
+                        ></textarea>
+                    </div>
+                    <!-- Upload Media -->
+                    <div class="space-y-2">
+                        <label for="review-media" class="text-sm font-semibold text-slate-300">Add Photos or Video</label>
+                        <input id="review-media" type="file" class="hidden" multiple accept="image/*,video/*">
+                        <div class="cyan-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-accent-cyan/5 transition-all group" (click)="mediaInput.click()" (keyup.enter)="mediaInput.click()" tabindex="0" #mediaInput>
+                            <div class="w-12 h-12 rounded-full bg-accent-cyan/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-accent-cyan">cloud_upload</span>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-slate-200 font-medium">Click to upload or drag and drop</p>
+                                <p class="text-slate-500 text-xs mt-1">PNG, JPG or MP4 (Max 50MB)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer Actions -->
+            <div class="p-6 border-t border-primary/20 flex items-center justify-end gap-4 bg-slate-900/30">
+                <button 
+                    class="px-6 py-2.5 rounded-lg font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                    (click)="toggleWriteReview()"
+                >
+                    Cancel
+                </button>
+                <button class="px-8 py-2.5 rounded-lg font-bold text-white bg-primary hover:bg-blue-600 shadow-[0_0_20px_rgba(0,85,255,0.4)] hover:shadow-[0_0_25px_rgba(0,85,255,0.6)] transition-all active:scale-95 flex items-center gap-2">
+                    Submit Review
+                    <span class="material-symbols-outlined text-sm">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+}

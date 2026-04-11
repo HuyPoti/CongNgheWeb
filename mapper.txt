@@ -1,0 +1,100 @@
+========== MÃ NGUỒN CÁC FILE MAPPER CÒN THIẾU ==========
+
+Dưới đây là mã nguồn cho các file Profile AutoMapper chưa có trong thư mục `backend/MapperProfiles`. Bạn có thể tạo từng file theo tên tương ứng:
+
+1. backend/MapperProfiles/UserProfile.cs
+```csharp
+using AutoMapper;
+using backend.Models;
+using backend.DTOs;
+
+namespace backend.MapperProfiles;
+
+public class UserProfile : Profile
+{
+    public UserProfile()
+    {
+        // Map từ Model ra DTO (Trả về API)
+        CreateMap<User, UserDto>();
+
+        // Map từ CreateDTO vào Model (Tạo mới)
+        CreateMap<CreateUserDto, User>();
+
+        // Map từ UpdateDTO vào Model (Cập nhật - Bỏ qua giá trị null)
+        CreateMap<UpdateUserDto, User>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+    }
+}
+```
+
+2. backend/MapperProfiles/BrandProfile.cs
+```csharp
+using AutoMapper;
+using backend.Models;
+using backend.DTOs;
+
+namespace backend.MapperProfiles;
+
+public class BrandProfile : Profile
+{
+    public BrandProfile()
+    {
+        CreateMap<Brand, BrandDto>();
+        
+        CreateMap<CreateBrandDto, Brand>();
+        
+        CreateMap<UpdateBrandDto, Brand>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+    }
+}
+```
+
+3. backend/MapperProfiles/BannerProfile.cs
+```csharp
+using AutoMapper;
+using backend.Models;
+using backend.DTOs;
+
+namespace backend.MapperProfiles;
+
+public class BannerProfile : Profile
+{
+    public BannerProfile()
+    {
+        CreateMap<Banner, BannerDto>();
+        
+        CreateMap<CreateBannerDto, Banner>();
+        
+        CreateMap<UpdateBannerDto, Banner>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+    }
+}
+```
+
+4. backend/MapperProfiles/NewsCategoryProfile.cs
+```csharp
+using AutoMapper;
+using backend.Models;
+using backend.DTOs;
+
+namespace backend.MapperProfiles;
+
+public class NewsCategoryProfile : Profile
+{
+    public NewsCategoryProfile()
+    {
+        CreateMap<NewsCategory, NewsCategoryDto>();
+        
+        CreateMap<CreateNewsCategoryDto, NewsCategory>();
+        
+        CreateMap<UpdateNewsCategoryDto, NewsCategory>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+    }
+}
+```
+
+---
+💡 Ghi chú quan trọng:
+- Đảm bảo bạn đã tạo các DTO tương ứng (`NewsCategoryDto`, `CreateNewsCategoryDto`...) trước khi dùng các Profile này.
+- Các hàm `.ForAllMembers(opt => opt.Condition(...))` rất quan trọng cho lệnh Update, giúp hệ thống không ghi đè giá trị cũ bằng giá trị NULL nếu Frontend không gởi trường đó lên.
+- Đừng quên Register AutoMapper trong `Program.cs` bằng lệnh: `builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());` (Bạn đã làm rồi).

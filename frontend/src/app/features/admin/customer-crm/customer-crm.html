@@ -1,0 +1,218 @@
+<div class="p-8">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-slate-100 mb-2">Quản lý Người dùng</h2>
+      <p class="text-slate-500">
+        {{ users().length }} người dùng · {{ getUserCountByRole('admin') }} admin ·
+        {{ getUserCountByRole('staff') }} staff · {{ getUserCountByRole('customer') }} khách
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <span
+          class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm"
+          >search</span
+        >
+        <input
+          [(ngModel)]="searchQuery"
+          class="bg-slate-800 border border-primary/10 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary w-64"
+          placeholder="Tìm theo tên, email, SĐT..."
+          aria-label="Tìm kiếm người dùng"
+        />
+      </div>
+      <!-- THÊM: Nút tạo mới user -->
+      <button
+        (click)="openCreate()"
+        class="px-6 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-semibold text-white flex items-center gap-2"
+      >
+        <span class="material-symbols-outlined text-sm">person_add</span>
+        Thêm người dùng
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-primary/10 text-left">
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            ID
+          </th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Họ tên
+          </th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Email
+          </th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Số điện thoại
+          </th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Vai trò
+          </th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Ngày tạo
+          </th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Thao tác
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of filteredUsers; track user.userId) {
+          <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
+            <td class="px-6 py-4 text-slate-500 font-mono text-xs">#{{ user.userId }}</td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs"
+                >
+                  {{ user.fullName.charAt(0) }}
+                </div>
+                <span class="text-slate-100 font-semibold">{{ user.fullName }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-400">{{ user.email }}</td>
+            <td class="px-6 py-4 text-slate-400">{{ user.phone || '—' }}</td>
+            <td class="px-6 py-4">
+              <span
+                class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase"
+                [ngClass]="{
+                  'bg-red-500/20 text-red-400 border-red-500/30': user.role === 'admin',
+                  'bg-blue-500/20 text-blue-400 border-blue-500/30': user.role === 'staff',
+                  'bg-slate-500/20 text-slate-400 border-slate-500/30': user.role === 'customer',
+                }"
+              >
+                {{ roleLabels[user.role] }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-500">
+              {{ user.createdAt | date: 'dd/MM/yyyy' }}
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="openEdit(user)"
+                  class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary"
+                >
+                  <span class="material-symbols-outlined text-sm">edit</span>
+                </button>
+                <button
+                  (click)="deleteUser(user)"
+                  class="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-400"
+                >
+                  <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Edit User -->
+@if (showModal()) {
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    (click)="closeModal()"
+    (keydown.escape)="closeModal()"
+    role="button"
+    tabindex="-1"
+  >
+    <div
+      class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-lg"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="p-6 border-b border-primary/10 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-100">{{ isCreating() ? 'Thêm người dùng' : 'Sửa thông tin người dùng}</h3>
+        <button (click)="closeModal()" class="text-slate-400 hover:text-white">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <label for="fullName" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >Họ tên</label
+          >
+          <input
+            id="fullName"
+            required
+            [(ngModel)]="form.fullName"
+            class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label for="email" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >Email</label
+          >
+          <input
+            id="email"
+            required
+            [(ngModel)]="form.email"
+            type="email"
+            class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label for="phone" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >Số điện thoại</label
+          >
+          <input
+            id="phone"
+            [(ngModel)]="form.phone"
+            class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+          />
+        </div>
+        <div>
+          <label for="role" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+            >Vai trò</label
+          >
+          <select
+            id="role"
+            [(ngModel)]="form.role"
+            class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"
+          >
+            <option value="customer">Khách hàng</option>
+            <option value="staff">Nhân viên</option>
+            <option value="admin">Quản trị</option>
+          </select>
+        </div>
+
+        @if (isCreating()) {
+          <div>
+            <label for="password" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Mật khẩu</label>
+            <input id="password" [(ngModel)]="form.password" type="password" required
+              class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary"/>
+          </div>
+        }
+      </div>
+      <div class="p-6 border-t border-primary/10 flex justify-end gap-3">
+        <button
+          (click)="closeModal()"
+          class="px-6 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white"
+        >
+          Hủy
+        </button>
+        <button
+          (click)="save()"
+          class="px-6 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-semibold text-white"
+        >
+          Cập nhật
+        </button>
+      </div>
+    </div>
+  </div>
+  
+}
+
+@if (isLoading()) {
+  <div class="flex items-center justify-center p-20">
+    <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
+    <span class="ml-3 text-slate-400">Đang tải dữ liệu...</span>
+  </div>
+}

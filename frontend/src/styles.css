@@ -1,0 +1,116 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import "tailwindcss";
+
+/* Enable dark mode class strategy for Tailwind CSS v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #0066ff;
+  --color-accent-cyan: #00E5FF;
+  --color-accent-blue: #0066ff;
+  --color-accent-yellow: #fbbf24;
+  --color-neon-cyan: #00E5FF;
+  --color-background-light: #fdfeff;
+  --color-background-dark: #070b14;
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #121827;
+  --color-border-light: #f1f5f9;
+  --color-border-dark: #1e293b;
+  --color-neutral-dark: #0f172a;
+  --font-display: "Inter", sans-serif;
+  --font-orbitron: "Inter", sans-serif;
+  --font-roboto: "Inter", sans-serif;
+}
+
+@layer utilities {
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+  }
+  
+  :where(.dark, .dark *) .glass-effect {
+    background: rgba(18, 24, 39, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 102, 255, 0.05);
+  }
+  
+  :where(.dark, .dark *) .glass-panel {
+    background: rgba(18, 24, 39, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .neon-glow:hover {
+    box-shadow: 0 0 15px rgba(0, 102, 255, 0.4);
+  }
+  .neon-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  }
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+  }
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.3);
+  }
+  .border-glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+  }
+  .neon-tag {
+    background: rgba(0, 229, 255, 0.08);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    transition: all 0.2s;
+  }
+  .neon-tag:hover {
+    background: rgba(0, 229, 255, 0.15);
+    border-color: rgba(0, 229, 255, 0.4);
+  }
+  .input-focus-cyan:focus {
+    border-color: #00E5FF !important;
+    box-shadow: 0 0 0 1px #00E5FF;
+  }
+  .cyan-dashed {
+    border: 2px dashed rgba(0, 229, 255, 0.3);
+  }
+  .fill-1 {
+    font-variation-settings: 'FILL' 1;
+  }
+  .fill-amber-400 {
+    font-variation-settings: 'FILL' 1;
+    color: #fbbf24;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.1);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 102, 255, 0.2);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 102, 255, 0.4);
+  }
+
+  .color-scheme-dark {
+    color-scheme: dark;
+  }
+}
+

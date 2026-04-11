@@ -1,0 +1,129 @@
+<div class="p-8">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-slate-100 mb-2">Quản lý Đơn hàng</h2>
+      <p class="text-slate-500">{{ getOrderStats().total }} đơn · Doanh thu: ${{ getOrderStats().revenue | number:'1.2-2' }}</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    @for (stat of [
+      { label: 'Tổng đơn', value: getOrderStats().total, icon: 'receipt_long', color: 'text-primary' },
+      { label: 'Chờ xử lý', value: getOrderStats().pending, icon: 'pending', color: 'text-yellow-400' },
+      { label: 'Đang giao', value: getOrderStats().shipping, icon: 'local_shipping', color: 'text-cyan-400' },
+      { label: 'Đã giao', value: getOrderStats().delivered, icon: 'check_circle', color: 'text-green-400' }
+    ]; track stat.label) {
+      <div class="bg-surface-dark/40 border border-primary/10 rounded-xl p-5 flex items-center gap-4">
+        <span class="material-symbols-outlined text-3xl" [class]="stat.color">{{ stat.icon }}</span>
+        <div>
+          <p class="text-2xl font-bold text-slate-100">{{ stat.value }}</p>
+          <p class="text-xs text-slate-500">{{ stat.label }}</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Table -->
+  <div class="bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-primary/10 text-left">
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mã đơn</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng tiền</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Thanh toán</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">TT Thanh toán</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày tạo</th>
+          <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.order_id) {
+          <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
+            <td class="px-5 py-4 text-primary font-mono font-bold text-xs">{{ order.order_code }}</td>
+            <td class="px-5 py-4 text-slate-200">{{ order.customer_name }}</td>
+            <td class="px-5 py-4 text-slate-100 font-bold">${{ order.total_amount | number:'1.2-2' }}</td>
+            <td class="px-5 py-4 text-slate-400 text-xs">{{ order.payment_method }}</td>
+            <td class="px-5 py-4">
+              <span class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase" [ngClass]="paymentColors[order.payment_status]">
+                {{ order.payment_status }}
+              </span>
+            </td>
+            <td class="px-5 py-4">
+              <select [ngModel]="order.status" (ngModelChange)="updateOrderStatus(order, $event)"
+                class="bg-transparent text-[10px] font-bold px-2 py-1 rounded-full border cursor-pointer focus:outline-none"
+                [ngClass]="statusColors[order.status]">
+                @for (s of statusOptions; track s) {
+                  <option [value]="s" class="bg-slate-800 text-slate-100">{{ statusLabels[s] }}</option>
+                }
+              </select>
+            </td>
+            <td class="px-5 py-4 text-xs text-slate-500">{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="px-5 py-4">
+              <button (click)="openDetail(order)" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary">
+                <span class="material-symbols-outlined text-sm">visibility</span>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+@if (showDetail()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="closeDetail()">
+    <div class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <div class="p-6 border-b border-primary/10 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-100">Chi tiết đơn {{ showDetail()!.order_code }}</h3>
+        <button (click)="closeDetail()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-6 space-y-6">
+        <!-- Order Info -->
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div><span class="text-slate-500">Khách hàng:</span> <span class="text-slate-100 ml-2 font-semibold">{{ showDetail()!.customer_name }}</span></div>
+          <div><span class="text-slate-500">Thanh toán:</span> <span class="text-slate-100 ml-2">{{ showDetail()!.payment_method }}</span></div>
+          <div class="col-span-2"><span class="text-slate-500">Địa chỉ:</span> <span class="text-slate-100 ml-2">{{ showDetail()!.shipping_address }}</span></div>
+          @if (showDetail()!.notes) {
+            <div class="col-span-2"><span class="text-slate-500">Ghi chú:</span> <span class="text-yellow-400 ml-2">{{ showDetail()!.notes }}</span></div>
+          }
+        </div>
+        <!-- Items -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Sản phẩm trong đơn</h4>
+          <div class="space-y-2">
+            @for (item of showDetail()!.items; track item.order_item_id) {
+              <div class="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-3">
+                <span class="text-sm text-slate-200">{{ item.product_name }}</span>
+                <div class="text-right">
+                  <span class="text-sm text-slate-300">x{{ item.quantity }}</span>
+                  <span class="text-sm text-primary font-bold ml-4">${{ item.unit_price | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        <!-- Payment Info -->
+        @if (showDetail()!.payment) {
+          <div>
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Thông tin thanh toán</h4>
+            <div class="bg-slate-800/50 rounded-lg p-4 text-sm space-y-2">
+              <div><span class="text-slate-500">Số tiền:</span> <span class="text-green-400 font-bold ml-2">${{ showDetail()!.payment!.amount | number:'1.2-2' }}</span></div>
+              <div><span class="text-slate-500">Mã giao dịch:</span> <span class="text-slate-200 font-mono ml-2">{{ showDetail()!.payment!.transaction_id }}</span></div>
+              <div><span class="text-slate-500">Trạng thái:</span> <span class="text-green-400 ml-2 uppercase font-bold text-xs">{{ showDetail()!.payment!.status }}</span></div>
+              <div><span class="text-slate-500">Thời gian:</span> <span class="text-slate-200 ml-2">{{ showDetail()!.payment!.paid_at | date:'dd/MM/yyyy HH:mm' }}</span></div>
+            </div>
+          </div>
+        }
+        <!-- Total -->
+        <div class="flex items-center justify-between pt-4 border-t border-primary/10">
+          <span class="text-slate-400 font-bold uppercase text-xs tracking-widest">Tổng cộng</span>
+          <span class="text-2xl font-bold text-primary">${{ showDetail()!.total_amount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}
