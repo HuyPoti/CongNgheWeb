@@ -24,5 +24,7 @@ public interface IProductService
     Task<PagedResult<ProductListItemDto>> GetProductListAsync(
         CancellationToken cancellationToken,
         int page,
-        int pageSize);
+        int pageSize,
+        string? categorySlug = null
+    );
 }
