@@ -95,7 +95,7 @@ git checkout -b WEB-123
 git checkout -b WEB-456
 ```
 
----
+----
 
 ## 📁 Cấu trúc .gitignore (Ignore)
 Dự án có các file `.gitignore` ở root và từng thư mục con để loại bỏ các file rác:
