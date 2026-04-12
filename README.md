@@ -86,7 +86,7 @@ feat(product): WEB-456 add filter by category
 ```
 
 ### 3. Quy tắc đặt tên Nhánh (Branching)
-Tên nhánh nên bao gồm loại công việc và Jira Key.
+Tên nhánh nên bao gồm loại công việc và Jira Key .
 
 **Định dạng:** `<jira-key>`
 **Ví dụ:**
