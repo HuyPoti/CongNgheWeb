@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
@@ -29,17 +29,14 @@ export class ProductService {
 
   // ── Client-facing ──────────────────────────────────────────────
 
-  fetchClientProducts(page = 1, pageSize = 12): Observable<ProductListResponse> {
-    const cacheKey = `${page}-${pageSize}`;
-    if (this.clientProductsCache.has(cacheKey)) {
-      return of(this.clientProductsCache.get(cacheKey)!);
+  fetchClientProducts(page = 1, pageSize = 12, categorySlug?: string): Observable<ProductListResponse> {
+    const cacheKey = `${page}-${pageSize}-${categorySlug || 'all'}`;
+    let url = `${this.baseUrl}/client?page=${page}&pageSize=${pageSize}`;
+    if (categorySlug) {
+      url += `&categorySlug=${categorySlug}`;
     }
-    return this.http.get<ProductListResponse>(
-      `${this.baseUrl}/client?page=${page}&pageSize=${pageSize}`,
-    ).pipe(
-      tap((res) => {
-        this.clientProductsCache.set(cacheKey, res);
-      })
+    return this.http.get<ProductListResponse>(url).pipe(
+      tap((res) => this.clientProductsCache.set(cacheKey, res))
     );
   }
 

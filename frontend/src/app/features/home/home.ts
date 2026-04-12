@@ -35,18 +35,43 @@ export class HomeComponent implements OnInit {
   private productService = inject(ProductService);
   private router = inject(Router);
   private categoryService = inject(CategoryService);
+  private mapToCard(p: ProductListItemDto): ProductCard {
+    return {
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.thumbnailUrl || 'path_to_default_img',
+      category: p.categoryName,
+      specs: {}
+    };
+  }
+  // 2. Viết hàm tải sản phẩm theo Category
+  // 2. Sửa lại hàm loadSection
+  productSections: Record<'cpu' | 'gpu' | 'ram' | 'mainboard', ProductCard[]> = {
+    cpu: [],
+    gpu: [],
+    ram: [],
+    mainboard: []
+  };
+  private loadSection(catSlug: string, target: keyof typeof this.productSections) {
+    this.productService.fetchClientProducts(1, 5, catSlug).subscribe({
+      next: (res) => {
+        this.productSections[target] = res.items.map(p => this.mapToCard(p));
+      }
+    });
+  }
   comparisonService = inject(ComparisonService);
 
-  mainCategories = [
-    { name: 'home.cat_laptop', icon: 'laptop_mac', slug: 'laptop' },
-    { name: 'home.cat_pc', icon: 'desktop_windows', slug: 'pc-gaming' },
-    { name: 'home.cat_components', icon: 'memory', slug: 'pc-components' },
-    { name: 'home.cat_monitors', icon: 'monitor', slug: 'monitors' },
-    { name: 'home.cat_keyboards', icon: 'keyboard', slug: 'keyboards' },
-    { name: 'home.cat_mice', icon: 'mouse', slug: 'mice' },
-    { name: 'home.cat_audio', icon: 'headset', slug: 'audio' },
-    { name: 'home.cat_furniture', icon: 'chair', slug: 'gaming-furniture' },
-  ];
+  // mainCategories = [
+  //   { name: 'home.cat_laptop', icon: 'laptop_mac', slug: 'laptop' },
+  //   { name: 'home.cat_pc', icon: 'desktop_windows', slug: 'pc-gaming' },
+  //   { name: 'home.cat_components', icon: 'memory', slug: 'pc-components' },
+  //   { name: 'home.cat_monitors', icon: 'monitor', slug: 'monitors' },
+  //   { name: 'home.cat_keyboards', icon: 'keyboard', slug: 'keyboards' },
+  //   { name: 'home.cat_mice', icon: 'mouse', slug: 'mice' },
+  //   { name: 'home.cat_audio', icon: 'headset', slug: 'audio' },
+  //   { name: 'home.cat_furniture', icon: 'chair', slug: 'gaming-furniture' },
+  // ];
 
   banners: ClientBanner[] = [];
   featuredProducts: ProductCard[] = [];
@@ -62,12 +87,18 @@ export class HomeComponent implements OnInit {
     this.loadBanners();
     this.loadFeaturedProducts();
     this.loadCategories();
+
+    // Tải sản phẩm theo từng danh mục cụ thể
+    this.loadSection('cpu', 'cpu');
+    this.loadSection('gpu', 'gpu');
+    this.loadSection('ram', 'ram');
+    this.loadSection('mainboard', 'mainboard');
   }
 
   private loadCategories(): void {
     this.categoryService.getAll().subscribe({
       next: (data) => {
-        this.dbCategories = data.filter(c => c.isActive);
+        this.dbCategories = data.filter(c => c.isActive && !c.parentId);
       },
       error: (err) => console.error('Lỗi khi fetch categories', err)
     })
@@ -172,6 +203,6 @@ export class HomeComponent implements OnInit {
   }
 
   goToCompare(): void {
-    this.router.navigate(['/product/comparison']);
+    this.router.navigate(['/comparison']);
   }
 }
