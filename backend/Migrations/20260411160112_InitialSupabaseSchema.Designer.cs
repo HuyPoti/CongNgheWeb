@@ -6,15 +6,14 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
-using backend.Models;
 
 #nullable disable
 
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260410140836_AddIsActiveToNews")]
-    partial class AddIsActiveToNews
+    [Migration("20260411160112_InitialSupabaseSchema")]
+    partial class InitialSupabaseSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,8 +23,6 @@ namespace backend.Migrations
                 .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "banner_position", new[] { "category_top", "homepage_mid", "homepage_slider", "news_top" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "banner_position", "banner_position", new[] { "homepage_slider", "homepage_mid", "category_top", "news_top" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("backend.Models.Banner", b =>
@@ -40,34 +37,38 @@ namespace backend.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<DateTime?>("EndDate")
-                        .HasColumnType("date")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_date");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasColumnType("text")
                         .HasColumnName("image_url");
 
                     b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
+                        .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
                     b.Property<string>("LinkUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
+                        .HasColumnType("text")
                         .HasColumnName("link_url");
 
-                    b.Property<BannerPosition>("Position")
-                        .HasColumnType("banner_position")
+                    b.Property<int>("Position")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
                         .HasColumnName("position");
 
                     b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
+                        .HasDefaultValue(0)
                         .HasColumnName("sort_order");
 
                     b.Property<DateTime?>("StartDate")
-                        .HasColumnType("date")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("start_date");
 
                     b.Property<string>("Subtitle")
@@ -131,6 +132,9 @@ namespace backend.Migrations
 
                     b.HasKey("BrandId");
 
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
                     b.ToTable("brands", (string)null);
                 });
 
@@ -186,7 +190,7 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.News", b =>
                 {
-                    b.Property<Guid>("NewId")
+                    b.Property<Guid>("NewsId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("news_id");
@@ -236,6 +240,9 @@ namespace backend.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("meta_title");
 
+                    b.Property<Guid?>("NewsCategoryCategoryId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("PublishedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("published_at");
@@ -260,13 +267,18 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("views");
 
-                    b.HasKey("NewId");
+                    b.HasKey("NewsId");
 
                     b.HasIndex("AuthorId");
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("news");
+                    b.HasIndex("NewsCategoryCategoryId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("news", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.NewsCategory", b =>
@@ -308,7 +320,10 @@ namespace backend.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("news_categories");
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("news_categories", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Product", b =>
@@ -325,6 +340,9 @@ namespace backend.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
+
+                    b.Property<Guid?>("CategoryId1")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -360,11 +378,12 @@ namespace backend.Migrations
                         .HasColumnName("slug");
 
                     b.Property<string>("Specifications")
-                        .HasColumnType("text")
-                        .HasColumnName("specifications");
+                        .HasColumnType("jsonb");
 
                     b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
+                        .HasDefaultValue(1)
                         .HasColumnName("status");
 
                     b.Property<int>("StockQuantity")
@@ -385,12 +404,20 @@ namespace backend.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("products");
+                    b.HasIndex("CategoryId1");
+
+                    b.HasIndex("Sku")
+                        .IsUnique();
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("products", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.ProductImage", b =>
                 {
-                    b.Property<Guid>("ProductImageId")
+                    b.Property<Guid>("ImageId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("image_id");
@@ -416,11 +443,11 @@ namespace backend.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("sort_order");
 
-                    b.HasKey("ProductImageId");
+                    b.HasKey("ImageId");
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("product_images");
+                    b.ToTable("product_images", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.ProductSpec", b =>
@@ -452,7 +479,7 @@ namespace backend.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("product_specs");
+                    b.ToTable("product_specs", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -494,7 +521,9 @@ namespace backend.Migrations
                         .HasColumnName("phone");
 
                     b.Property<int>("Role")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
+                        .HasDefaultValue(3)
                         .HasColumnName("role");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -528,10 +557,14 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.HasOne("backend.Models.NewsCategory", "Category")
-                        .WithMany("News")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("backend.Models.NewsCategory", null)
+                        .WithMany("News")
+                        .HasForeignKey("NewsCategoryCategoryId");
 
                     b.Navigation("Author");
 
@@ -556,10 +589,14 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.HasOne("backend.Models.Category", "Category")
-                        .WithMany("Products")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("backend.Models.Category", null)
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId1");
 
                     b.Navigation("Brand");
 

@@ -40,6 +40,14 @@ export const routes: Routes = [
         loadChildren: () => import('./features/product/product.routes').then(m => m.PRODUCT_ROUTES)
       },
       {
+        path: 'build-pc',
+        loadComponent: () => import('./features/build-pc/build-pc').then(m => m.BuildPc)
+      },
+      {
+        path: 'comparison',
+        loadComponent: () => import('./features/comparison/comparison').then(m => m.Comparison)
+      },
+      {
         path: 'cart',
         loadChildren: () => import('./features/cart/cart.routes').then(m => m.CART_ROUTES)
       }

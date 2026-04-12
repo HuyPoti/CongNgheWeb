@@ -11,7 +11,7 @@ public class ProductImage
 {
     [Key]
     [Column("image_id")]
-    public Guid ProductImageId { get; set; }
+    public Guid ImageId { get; set; }
 
     [Column("product_id")]
     public Guid ProductId { get; set; }

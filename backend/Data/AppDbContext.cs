@@ -9,89 +9,119 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Category> Categories { get; set; }
-
-    // Them dbset products, product_images, product_spec
     public DbSet<Product> Products { get; set; }
-
     public DbSet<ProductImage> ProductImages { get; set; }
-
-    public DbSet<ProductSpec> Specs { get; set; }
-
+    public DbSet<ProductSpec> ProductSpecs { get; set; }
     public DbSet<Banner> Banners { get; set; }
-
     public DbSet<Brand> Brands { get; set; }
-
     public DbSet<News> News { get; set; }
-
     public DbSet<NewsCategory> NewsCategories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        //--------------------------------------------------------------
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.ToTable("users");
-            entity.HasIndex(e => e.Email).IsUnique();
 
-            // Ánh xạ cột role tới INT trong database (1: admin, 2: staff, 3: customer)
-            // EF Core mặc định mapping enum C# sang int (integer)
-            entity.Property(e => e.Role)
-                .HasColumnName("role")
-                .IsRequired();
-        });
-        modelBuilder.Entity<Category>(entity =>
-        {
-            entity.ToTable("categories");
-            entity.HasIndex(e => e.Slug).IsUnique();
-            entity.HasOne(e => e.Parent).WithMany(e => e.Children).HasForeignKey(e => e.ParentId).OnDelete(DeleteBehavior.SetNull);
-        });
+        // Banners
         modelBuilder.Entity<Banner>(entity =>
         {
             entity.ToTable("banners");
-            entity.Property(e => e.ImageUrl).HasColumnType("text");
-            entity.Property(e => e.LinkUrl).HasColumnType("text");
-            entity.Property(e => e.StartDate).HasColumnType("date");
-            entity.Property(e => e.EndDate).HasColumnType("date");
-            entity.Property(e => e.CreatedAt).HasColumnType("timestamp with time zone");
-            entity.Property(e => e.UpdatedAt).HasColumnType("timestamp with time zone");
-        }); // Đóng đúng ngoặc cho Banner
+            entity.HasKey(e => e.BannerId);
+            entity.Property(e => e.Position).HasDefaultValue(BannerPosition.homepage_mid);
+            entity.Property(e => e.SortOrder).HasDefaultValue(0);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+        });
+
+        // Brands
         modelBuilder.Entity<Brand>(entity =>
         {
             entity.ToTable("brands");
             entity.HasKey(e => e.BrandId);
-            entity.Property(e => e.BrandId).HasColumnName("brand_id");
-            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Slug).HasColumnName("slug").HasMaxLength(100).IsRequired();
-            entity.Property(e => e.LogoUrl).HasColumnName("logo_url");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.HasIndex(e => e.Slug).IsUnique();
         });
+
+        // Categories
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.ToTable("categories");
+            entity.HasKey(e => e.CategoryId);
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasOne(e => e.Parent)
+                .WithMany(e => e.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Products
         modelBuilder.Entity<Product>(entity =>
         {
             entity.ToTable("products");
+            entity.HasKey(e => e.ProductId);
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => e.Sku).IsUnique();
             
-            // Cấu hình tường minh cho cột jsonb
-            entity.Property(e => e.Specifications)
-                .HasColumnName("specifications")
-                .HasColumnType("jsonb");
+            entity.Property(e => e.Specifications).HasColumnType("jsonb");
+            entity.Property(e => e.Status).HasDefaultValue(1);
 
-            entity.HasMany(p => p.Images)
-                .WithOne(pi => pi.Product)
-                .HasForeignKey(pi => pi.ProductId);
+            entity.HasOne(p => p.Category)
+                .WithMany()
+                .HasForeignKey(p => p.CategoryId);
+
+            entity.HasOne(p => p.Brand)
+                .WithMany()
+                .HasForeignKey(p => p.BrandId);
         });
-        // PRODUCT IMAGES
-        modelBuilder.Entity<ProductImage>()
-        .HasOne(pi => pi.Product)
-        .WithMany(p => p.Images)
-        .HasForeignKey(pi => pi.ProductId);
-        // Relation SPEC
-        modelBuilder.Entity<ProductSpec>()
-        .HasOne(ps => ps.Product)
-        .WithMany(p => p.Specs)
-        .HasForeignKey(ps => ps.ProductId);
 
+        // Product Images
+        modelBuilder.Entity<ProductImage>(entity =>
+        {
+            entity.ToTable("product_images");
+            entity.HasKey(e => e.ImageId);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.Images)
+                .HasForeignKey(e => e.ProductId);
+        });
 
+        // Product Specs (Key-Value)
+        modelBuilder.Entity<ProductSpec>(entity =>
+        {
+            entity.ToTable("product_specs");
+            entity.HasKey(e => e.SpecId);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.Specs)
+                .HasForeignKey(e => e.ProductId);
+        });
+
+        // Users
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("users");
+            entity.HasKey(e => e.UserId);
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.Role).HasDefaultValue(UserRole.customer);
+        });
+
+        // News Categories
+        modelBuilder.Entity<NewsCategory>(entity =>
+        {
+            entity.ToTable("news_categories");
+            entity.HasKey(e => e.CategoryId);
+            entity.HasIndex(e => e.Slug).IsUnique();
+        });
+
+        // News
+        modelBuilder.Entity<News>(entity =>
+        {
+            entity.ToTable("news");
+            entity.HasKey(e => e.NewsId);
+            entity.HasIndex(n => n.Slug).IsUnique();
+            
+            entity.HasOne(n => n.Category)
+                .WithMany()
+                .HasForeignKey(n => n.CategoryId);
+
+            entity.HasOne(n => n.Author)
+                .WithMany()
+                .HasForeignKey(n => n.AuthorId);
+        });
     }
-
 }

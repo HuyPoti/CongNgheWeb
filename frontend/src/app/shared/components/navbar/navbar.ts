@@ -12,7 +12,7 @@ import { CartService } from '../../../core/services/cart.service';
   standalone: true,
   imports: [RouterLink, CommonModule, SearchOverlay, TranslatePipe],
   templateUrl: './navbar.html',
-  styleUrl: './navbar.css',
+  styles: ``,
 })
 export class Navbar {
   themeService = inject(ThemeService);

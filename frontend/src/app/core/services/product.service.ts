@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   ProductListResponse,
@@ -20,12 +21,25 @@ export class ProductService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/product`;
   private productsUrl = `${environment.apiUrl}/products`;
+  private clientProductsCache = new Map<string, ProductListResponse>();
+
+  clearCache(): void {
+    this.clientProductsCache.clear();
+  }
 
   // ── Client-facing ──────────────────────────────────────────────
 
   fetchClientProducts(page = 1, pageSize = 12): Observable<ProductListResponse> {
+    const cacheKey = `${page}-${pageSize}`;
+    if (this.clientProductsCache.has(cacheKey)) {
+      return of(this.clientProductsCache.get(cacheKey)!);
+    }
     return this.http.get<ProductListResponse>(
       `${this.baseUrl}/client?page=${page}&pageSize=${pageSize}`,
+    ).pipe(
+      tap((res) => {
+        this.clientProductsCache.set(cacheKey, res);
+      })
     );
   }
 
@@ -62,15 +76,21 @@ export class ProductService {
   }
 
   create(dto: CreateProductDto): Observable<ProductDto> {
-    return this.http.post<ProductDto>(this.baseUrl, dto);
+    return this.http.post<ProductDto>(this.baseUrl, dto).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   update(id: string, dto: UpdateProductDto): Observable<ProductDto> {
-    return this.http.put<ProductDto>(`${this.baseUrl}/${id}`, dto);
+    return this.http.put<ProductDto>(`${this.baseUrl}/${id}`, dto).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   // ── Product Images ─────────────────────────────────────────────

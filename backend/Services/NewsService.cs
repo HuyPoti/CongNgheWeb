@@ -21,7 +21,7 @@ public class NewsService(IUnitOfWork uow, IMapper mapper) : INewsService
 
     public async Task<NewsDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var item = await uow.News.Query().Include(n => n.Category).Include(n => n.Author).FirstOrDefaultAsync(n => n.NewId == id, cancellationToken);
+        var item = await uow.News.Query().Include(n => n.Category).Include(n => n.Author).FirstOrDefaultAsync(n => n.NewsId == id, cancellationToken);
         return mapper.Map<NewsDto>(item);
     }
 
@@ -35,7 +35,7 @@ public class NewsService(IUnitOfWork uow, IMapper mapper) : INewsService
 
     public async Task<NewsDto?> UpdateAsync(Guid id, UpdateNewsDto dto, CancellationToken cancellationToken)
     {
-        var entity = await uow.News.Query().FirstOrDefaultAsync(n => n.NewId == id, cancellationToken);
+        var entity = await uow.News.Query().FirstOrDefaultAsync(n => n.NewsId == id, cancellationToken);
         if (entity == null) return null;
         mapper.Map(dto, entity);
         entity.UpdatedAt = DateTime.UtcNow;
@@ -46,7 +46,7 @@ public class NewsService(IUnitOfWork uow, IMapper mapper) : INewsService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var entity = await uow.News.Query().FirstOrDefaultAsync(n => n.NewId == id, cancellationToken);
+        var entity = await uow.News.Query().FirstOrDefaultAsync(n => n.NewsId == id, cancellationToken);
         if (entity == null) return false;
 
         entity.IsActive = false;

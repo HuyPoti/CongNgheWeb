@@ -23,7 +23,7 @@ public class NewsController(INewsService service) : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         var created = await service.CreateAsync(dto, ct);
-        return CreatedAtAction(nameof(GetById), new { id = created.NewId }, created);
+        return CreatedAtAction(nameof(GetById), new { id = created.NewsId }, created);
     }
 
     [HttpPut("{id}")]

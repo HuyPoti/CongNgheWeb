@@ -7,11 +7,15 @@ import { ProductService } from '../../core/services/product.service';
 import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
 import { ComparisonService, CompareProduct } from '../../core/services/comparison';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
+import { CategoryService } from '../../core/services/category.service';
+import { Category } from '../../core/models/category.model';
 
 export interface ClientBanner {
   id: string;
   title: string;
+  subtitle?: string;
   imageUrl: string;
+  linkUrl?: string;
   targetAlt: string;
   status: 'Live' | 'Draft';
   position: string;
@@ -30,6 +34,7 @@ export class HomeComponent implements OnInit {
   private bannerService = inject(BannerService);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private categoryService = inject(CategoryService);
   comparisonService = inject(ComparisonService);
 
   mainCategories = [
@@ -45,28 +50,47 @@ export class HomeComponent implements OnInit {
 
   banners: ClientBanner[] = [];
   featuredProducts: ProductCard[] = [];
+  laptopGaming: ProductCard[] = [];
+  pcGaming: ProductCard[] = [];
+  monitors: ProductCard[] = [];
+  accessories: ProductCard[] = [];
   isLoading = true;
+  dbCategories: Category[] = [];
+  isBannersLoading = true;
 
   ngOnInit(): void {
     this.loadBanners();
     this.loadFeaturedProducts();
+    this.loadCategories();
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getAll().subscribe({
+      next: (data) => {
+        this.dbCategories = data.filter(c => c.isActive);
+      },
+      error: (err) => console.error('Lỗi khi fetch categories', err)
+    })
   }
 
   private loadBanners(): void {
+    this.isBannersLoading = true;
     this.bannerService.getPublic().subscribe({
       next: (banners: Banner[]) => {
         this.banners = banners
           .map((banner: Banner) => this.toClientBanner(banner))
           .sort((a: ClientBanner, b: ClientBanner) => a.position.localeCompare(b.position));
+        this.isBannersLoading = false;
       },
       error: () => {
         this.banners = [];
+        this.isBannersLoading = false;
       },
     });
   }
 
   private loadFeaturedProducts(): void {
-    this.productService.fetchClientProducts(1, 8).subscribe({
+    this.productService.fetchClientProducts(1, 20).subscribe({
       next: (res) => {
         this.featuredProducts = res.items.map((p: ProductListItemDto) => ({
           id: p.id,
@@ -76,6 +100,14 @@ export class HomeComponent implements OnInit {
           category: p.categoryName,
           specs: {},
         }));
+        
+        // Populate specific category arrays for the UI (using sliced copies of the fetched products)
+        // In a real scenario, this would be fetched from specific category endpoints
+        this.laptopGaming = this.featuredProducts.slice(0, 5);
+        this.pcGaming = this.featuredProducts.slice(5, 10).length > 0 ? this.featuredProducts.slice(5, 10) : [...this.featuredProducts].reverse().slice(0, 5);
+        this.monitors = this.featuredProducts.slice(10, 15).length > 0 ? this.featuredProducts.slice(10, 15) : this.featuredProducts.slice(0, 5);
+        this.accessories = this.featuredProducts.slice(15, 20).length > 0 ? this.featuredProducts.slice(15, 20) : [...this.featuredProducts].reverse().slice(0, 5);
+        
         this.isLoading = false;
       },
       error: (err) => {
@@ -85,18 +117,24 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  get heroBanner(): ClientBanner | undefined {
-    return this.banners.find((b) => b.position === 'HOME PAGE HERO' && b.status === 'Live');
+  get heroBanners(): ClientBanner[] {
+    return this.banners.filter((b) => b.position === 'HOME PAGE HERO' && b.status === 'Live');
   }
 
-  get promoBanner(): ClientBanner | undefined {
-    return this.banners.find((b) => b.position === 'SIDEBAR PROMO' && b.status === 'Live');
+  get heroBanner(): ClientBanner | undefined {
+    return this.heroBanners[0];
+  }
+
+  get midBanners(): ClientBanner[] {
+    return this.banners.filter((b) => b.position === 'SIDEBAR PROMO' && b.status === 'Live');
   }
 
   private toClientBanner(banner: Banner): ClientBanner {
     return {
       id: banner.bannerId,
       title: banner.title || 'Banner',
+      subtitle: banner.subtitle || '',
+      linkUrl: banner.linkUrl || '',
       imageUrl: banner.imageUrl,
       targetAlt: banner.subtitle || banner.title || 'Banner image',
       status: banner.isActive ? 'Live' : 'Draft',

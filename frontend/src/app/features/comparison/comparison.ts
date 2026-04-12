@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { ComparisonService } from '../../../core/services/comparison';
+import { TranslatePipe } from '../../core/pipes/translate.pipe';
+import { ComparisonService } from '../../core/services/comparison';
 
 @Component({
   selector: 'app-comparison',

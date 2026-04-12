@@ -8,7 +8,7 @@ public class News
 {
     [Key]
     [Column("news_id")]
-    public Guid NewId { get; set; } = Guid.NewGuid();
+    public Guid NewsId { get; set; } = Guid.NewGuid();
 
     [Required]
     [Column("category_id")]

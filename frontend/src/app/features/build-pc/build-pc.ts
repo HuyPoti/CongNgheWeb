@@ -1,8 +1,8 @@
 import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslatePipe } from '../../../core/pipes/translate.pipe';
-import { MOCK_PRODUCTS } from '../../../core/mocks/product.mock';
-import { ProductCard } from '../../../core/models/product.model';
+import { TranslatePipe } from '../../core/pipes/translate.pipe';
+import { MOCK_PRODUCTS } from '../../core/mocks/product.mock';
+import { ProductCard } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-build-pc',

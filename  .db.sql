@@ -1,3 +1,7 @@
+-- ===========================================
+-- DATABASE SCHEMA
+-- ===========================================
+
 -- 1. Bảng users
 -- role: 1=admin, 2=staff, 3=customer
 CREATE TABLE users (
@@ -12,6 +16,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 2. Bảng categories
 CREATE TABLE categories (
     category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
@@ -24,6 +29,7 @@ CREATE TABLE categories (
     FOREIGN KEY (parent_id) REFERENCES categories(category_id) ON DELETE SET NULL
 );
 
+-- 3. Bảng brands
 CREATE TABLE brands (
     brand_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
@@ -35,7 +41,7 @@ CREATE TABLE brands (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Bảng products
+-- 4. Bảng products
 -- status: 1=draft, 2=published
 CREATE TABLE products (
     product_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,6 +63,7 @@ CREATE TABLE products (
     FOREIGN KEY (brand_id) REFERENCES brands(brand_id)
 );
 
+-- 5. Bảng product_images
 CREATE TABLE product_images (
     image_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL,
@@ -67,6 +74,7 @@ CREATE TABLE product_images (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
+-- 6. Bảng product_specs
 CREATE TABLE product_specs (
     spec_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL,
@@ -76,6 +84,7 @@ CREATE TABLE product_specs (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
+-- 7. Bảng cart_items
 CREATE TABLE cart_items (
     cart_item_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -86,6 +95,7 @@ CREATE TABLE cart_items (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
+-- 8. Bảng addresses
 CREATE TABLE addresses (
     address_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -100,9 +110,7 @@ CREATE TABLE addresses (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- Bảng orders
--- status: 1=pending, 2=confirmed, 3=processing, 4=shipping, 5=delivered, 6=cancelled
--- payment_status: 1=unpaid, 2=paid, 3=refunded
+-- 9. Bảng orders
 CREATE TABLE orders (
     order_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -119,6 +127,7 @@ CREATE TABLE orders (
     FOREIGN KEY (shipping_address_id) REFERENCES addresses(address_id)
 );
 
+-- 10. Bảng order_items
 CREATE TABLE order_items (
     order_item_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL,
@@ -129,8 +138,7 @@ CREATE TABLE order_items (
     FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
--- Bảng payments
--- status: 1=pending, 2=success, 3=failed
+-- 11. Bảng payments
 CREATE TABLE payments (
     payment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL,
@@ -142,6 +150,7 @@ CREATE TABLE payments (
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
+-- 12. Bảng news_categories
 CREATE TABLE news_categories (
     category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
@@ -153,6 +162,7 @@ CREATE TABLE news_categories (
     FOREIGN KEY (parent_id) REFERENCES news_categories(category_id) ON DELETE SET NULL
 );
 
+-- 13. Bảng news
 CREATE TABLE news (
     news_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
@@ -173,8 +183,7 @@ CREATE TABLE news (
     FOREIGN KEY (author_id) REFERENCES users(user_id)
 );
 
--- Bảng banners
--- position: 1=homepage_slider, 2=homepage_mid, 3=category_top, 4=news_top
+-- 14. Bảng banners
 CREATE TABLE banners (
     banner_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255),
@@ -190,70 +199,82 @@ CREATE TABLE banners (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 15. Bảng reviews
+CREATE TABLE reviews (
+    review_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    status INT DEFAULT 2,
+    is_verified_purchase BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 16. Bảng review_images
+CREATE TABLE review_images (
+    image_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    review_id UUID NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE
+);
+
+-- 17. Bảng review_helpful_votes
+CREATE TABLE review_helpful_votes (
+    vote_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    review_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(review_id, user_id),
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
 
 -- ===========================================
--- DỮ LIỆU MẪU (SEED DATA)
+-- SEED DATA (Dựa trên CreateDtos)
 -- ===========================================
 
--- 1. users
-INSERT INTO users (user_id, email, password_hash, full_name, role) VALUES 
-('11111111-1111-1111-1111-111111111111', 'admin@example.com', 'hashed_pw_1', 'Quản trị viên', 1),
-('22222222-2222-2222-2222-222222222222', 'staff@example.com', 'hashed_pw_2', 'Nhân viên A', 2),
-('33333333-3333-3333-3333-333333333333', 'customer@example.com', 'hashed_pw_3', 'Khách hàng B', 3);
+-- 1. Users (Email, PasswordHash, FullName, Phone, Role)
+INSERT INTO users (user_id, email, password_hash, full_name, phone, role, is_active, created_at, updated_at) VALUES 
+('11111111-1111-1111-1111-111111111111', 'admin@gearvn.id.vn', '$2a$11$qRbnM8T8UqjK9qgQcE7Ue.N4FfM3oX5tO1J/j.CgE7n8m7uK/uD8m', 'Huy Poti Admin', '0123456789', 1, TRUE, NOW(), NOW()),
+('22222222-2222-2222-2222-222222222222', 'customer@example.com', '$2a$11$qRbnM8T8UqjK9qgQcE7Ue.N4FfM3oX5tO1J/j.CgE7n8m7uK/uD8m', 'Khách hàng Demo', '0987654321', 3, TRUE, NOW(), NOW());
 
--- 2. categories
-INSERT INTO categories (category_id, name, slug) VALUES 
-('c0000000-0000-0000-0000-000000000001', 'Điện thoại', 'dien-thoai'),
-('c0000000-0000-0000-0000-000000000002', 'Laptop', 'laptop');
+-- 2. Categories (Name, Slug, Description, ParentId, ImageUrl, IsActive)
+INSERT INTO categories (category_id, name, slug, description, is_active, created_at, updated_at) VALUES 
+('c0000000-0000-0000-0000-000000000001', 'Linh kiện PC', 'linh-kien-pc', 'CPU, RAM, VGA, Mainboard...', TRUE, NOW(), NOW()),
+('c0000000-0000-0000-0000-000000000002', 'Laptop Gaming', 'laptop-gaming', 'Laptop cấu hình cao chơi game', TRUE, NOW(), NOW());
 
--- 3. brands
-INSERT INTO brands (brand_id, name, slug) VALUES 
-('b0000000-0000-0000-0000-000000000001', 'Apple', 'apple'),
-('b0000000-0000-0000-0000-000000000002', 'Samsung', 'samsung');
+-- 3. Brands (Name, Slug, LogoUrl, Description, IsActive)
+INSERT INTO brands (brand_id, name, slug, is_active, created_at, updated_at) VALUES 
+('b0000000-0000-0000-0000-000000000001', 'ASUS', 'asus', TRUE, NOW(), NOW()),
+('b0000000-0000-0000-0000-000000000002', 'MSI', 'msi', TRUE, NOW(), NOW());
 
--- 4. products
-INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, status) VALUES 
-('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'iPhone 15 Pro Max', 'iphone-15-pro-max', 'IP15PM', 29900000, 2),
-('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'MacBook Pro M2', 'macbook-pro-m2', 'MBPM2', 35000000, 2);
+-- 4. Products (CategoryId, BrandId, Name, Slug, Sku, RegularPrice, SalePrice, StockQuantity, WarrantyMonths, Description, Specifications, Status)
+INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, status, created_at, updated_at) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'VGA ASUS ROG Strix RTX 4090', 'vga-asus-rog-strix-rtx-4090', 'RTX4090-ROG', 55000000, 52900000, 10, 36, 2, NOW(), NOW()),
+('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'Laptop MSI Katana 15', 'laptop-msi-katana-15', 'MSI-K15', 25000000, 23500000, 5, 24, 2, NOW(), NOW());
 
--- 5. product_images
-INSERT INTO product_images (product_id, image_url, is_primary) VALUES 
-('d0000000-0000-0000-0000-000000000001', 'https://example.com/ip15pm.jpg', TRUE),
-('d0000000-0000-0000-0000-000000000002', 'https://example.com/mbpm2.jpg', TRUE);
+-- 5. Product Images (ImageId, ProductId, ImageUrl, IsPrimary, SortOrder, CreatedAt)
+INSERT INTO product_images (image_id, product_id, image_url, is_primary, sort_order, created_at) VALUES 
+('f0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'https://ttgshop.vn/media/product/250_1072100124_dsc09857_copy.jpg', TRUE, 0, NOW()),
+('f0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 'https://ttgshop.vn/media/product/250_11116.jpg', TRUE, 0, NOW());
 
--- 6. product_specs
-INSERT INTO product_specs (product_id, spec_key, spec_value) VALUES 
-('d0000000-0000-0000-0000-000000000001', 'RAM', '8GB'),
-('d0000000-0000-0000-0000-000000000002', 'RAM', '16GB');
+-- 6. Product Specs (SpecId, ProductId, SpecKey, SpecValue, CreatedAt)
+INSERT INTO product_specs (spec_id, product_id, spec_key, spec_value, created_at) VALUES 
+('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Dung lượng VRAM', '24GB GDDR6X', NOW()),
+('a0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 'CPU', 'Intel Core i7-13620H', NOW());
 
--- 7. cart_items
-INSERT INTO cart_items (user_id, product_id, quantity) VALUES 
-('33333333-3333-3333-3333-333333333333', 'd0000000-0000-0000-0000-000000000001', 1);
+-- 7. Banners (BannerId, Title, Subtitle, ImageUrl, LinkUrl, Position, SortOrder, IsActive)
+INSERT INTO banners (banner_id, title, subtitle, image_url, link_url, position, sort_order, is_active) VALUES 
+('e0000000-0000-0000-0000-000000000001', 'Siêu Phẩm RTX 40 Series', 'Sức mạnh đồ họa đỉnh cao', 'https://gearvn.com/cdn/shop/files/pc_gaming_slider_600x480.jpg', '/product/list', 1, 0, TRUE),
+('e0000000-0000-0000-0000-000000000002', 'Laptop Gaming Giá Rẻ', 'Ưu đãi cực khủng mùa tựu trường', 'https://phongvu.vn/media/banner/06_Jun607548773950fb28fc586ecc495f5ac2.png', '/product/list', 2, 0, TRUE),
+('e0000000-0000-0000-0000-000000000003', 'Màn Hình Đồ Họa', 'Độ chuẩn màu 100% sRGB', 'https://phongvu.vn/media/banner/06_Jun73248386e8ca779430c77431e7f09805.png', '/product/list', 2, 1, TRUE),
+('e0000000-0000-0000-0000-000000000004', 'Promo Đặc Biệt', 'Dành riêng cho game thủ', 'https://gearvn.com/cdn/shop/files/Bannaer_Mid_Dashboard.jpg', '/product/list', 2, 2, TRUE);
 
--- 8. addresses
-INSERT INTO addresses (address_id, user_id, recipient_name, phone, address_line, province, district, ward) VALUES 
-('a0000000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'Khách hàng B', '0123456789', '123 Đường X', 'TP Hồ Chí Minh', 'Quận 1', 'Phường Bến Nghé');
-
--- 9. orders
-INSERT INTO orders (order_id, user_id, order_code, total_amount, status, payment_method, shipping_address_id) VALUES 
-('e0000000-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'ORD001', 29900000, 1, 'COD', 'a0000000-0000-0000-0000-000000000001');
-
--- 10. order_items
-INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES 
-('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 1, 29900000);
-
--- 11. payments
-INSERT INTO payments (order_id, amount, payment_method, status) VALUES 
-('e0000000-0000-0000-0000-000000000001', 29900000, 'COD', 1);
-
--- 12. news_categories
-INSERT INTO news_categories (category_id, name, slug) VALUES 
-('f0000000-0000-0000-0000-000000000001', 'Công nghệ', 'cong-nghe');
-
--- 13. news
-INSERT INTO news (title, slug, category_id, content, author_id) VALUES 
-('Apple ra mắt iPhone mới', 'apple-ra-mat-iphone-moi', 'f0000000-0000-0000-0000-000000000001', 'Nội dung bài viết...', '11111111-1111-1111-1111-111111111111');
-
--- 14. banners
-INSERT INTO banners (image_url, position) VALUES 
-('https://example.com/banner1.jpg', 1);
+-- 8. Reviews (ReviewId, ProductId, UserId, Rating, Comment, Status, IsVerifiedPurchase)
+INSERT INTO reviews (review_id, product_id, user_id, rating, comment, status, is_verified_purchase) VALUES 
+('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 2, TRUE);

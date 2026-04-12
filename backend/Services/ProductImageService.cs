@@ -44,9 +44,9 @@ public class ProductImageService(IUnitOfWork uow, IMapper mapper) : IProductImag
         return mapper.Map<ProductImageDto>(image);
     }
 
-    public async Task DeleteAsync(Guid ProductImageId, CancellationToken ct)
+    public async Task DeleteAsync(Guid ImageId, CancellationToken ct)
     {
-        var deleted = await uow.ProductImages.DeleteAsync(ProductImageId, ct);
+        var deleted = await uow.ProductImages.DeleteAsync(ImageId, ct);
         if (deleted == null) throw new NotFoundException("Image not found");
         await uow.SaveAsync(ct);
     }
