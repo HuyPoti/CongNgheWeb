@@ -51,7 +51,7 @@
             <a
               [routerLink]="['/product/list']"
               [queryParams]="{ category: cat.slug }"
-              class="flex items-center justify-between px-6 py-4 hover:bg-slate-900 fark:hover:bg-white/5 transition-colors group cursor-pointer"
+              class="flex items-center justify-between px-6 py-4 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group cursor-pointer"
             >
               <div class="flex items-center gap-4">
                 <span
@@ -214,17 +214,50 @@
             class="flex flex-col gap-6 p-6 rounded-[2.5rem] bg-slate-50 dark:bg-white/5 border border-transparent hover:border-red-500/20 transition-all cursor-pointer group"
           >
             <div
-              class="aspect-square rounded-3xl bg-white dark:bg-slate-800 p-8 relative overflow-hidden"
+              class="aspect-square rounded-3xl bg-white dark:bg-slate-800 relative overflow-hidden"
             >
-              <img
-                [src]="item.image"
-                class="w-full h-full object-contain transition-transform group-hover:scale-110"
-                alt="Flash Sale Item"
-              />
+              @if (isLoading) {
+                <div
+                  class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-lg animate-pulse z-20"
+                ></div>
+              } @else {
+                <img
+                  [src]="item.image"
+                  class="w-full h-full object-contain p-4 transition-transform group-hover:scale-110"
+                  alt="{{ item.name }}"
+                  #fsImg
+                  (error)="fsImg.style.display = 'none'; fsFallback.classList.remove('hidden')"
+                />
+                <!-- Fallback if specific image fails -->
+                <div
+                  #fsFallback
+                  class="absolute inset-0 flex items-center justify-center hidden bg-slate-200 dark:bg-slate-800 z-10"
+                >
+                  <span class="material-symbols-outlined text-slate-400 text-3xl"
+                    >image_not_supported</span
+                  >
+                </div>
+              }
+
               <div
-                class="absolute top-4 left-4 size-12 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-lg animate-pulse"
+                class="absolute top-4 left-4 size-12 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-lg animate-pulse z-20"
               >
                 -30%
+              </div>
+              <!-- Add Compare button for Flash Sale -->
+              <div
+                class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                [class.!opacity-100]="isProductSelected(item.id)"
+              >
+                <button
+                  class="size-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-xl shadow-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                  [class.!text-red-500]="isProductSelected(item.id)"
+                  (click)="toggleCompare($event, item)"
+                >
+                  <span class="material-symbols-outlined text-lg">{{
+                    isProductSelected(item.id) ? 'check_circle' : 'compare_arrows'
+                  }}</span>
+                </button>
               </div>
             </div>
             <div>
@@ -233,20 +266,20 @@
               >
                 {{ item.name }}
               </h3>
-              <div class="flex items-baseline gap-3 mb-6">
-                <span class="text-2xl font-display font-bold text-red-500"
+              <div class="flex flex-wrap items-baseline gap-2 mb-6">
+                <span class="text-xl font-display font-bold text-red-500"
                   >{{ item.price | number: '1.0-0' }}đ</span
                 >
-                <span class="text-xs text-slate-400 line-through"
+                <span class="text-[10px] text-slate-400 line-through"
                   >{{ item.price * 1.3 | number: '1.0-0' }}đ</span
                 >
               </div>
               <div class="flex flex-col gap-2">
                 <div
-                  class="flex justify-between text-[8px] font-black text-slate-400 uppercase tracking-widest"
+                  class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tight"
                 >
-                  <span>{{ 'home.sold_count' | translate }}</span>
-                  <span>Hot</span>
+                  <span class="truncate pr-2">{{ 'home.sold_count' | translate }}</span>
+                  <span class="text-red-500 font-black">HOT</span>
                 </div>
                 <div class="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                   <div
@@ -296,21 +329,40 @@
               [routerLink]="['/product', prod.id]"
             >
               <div
-                class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl p-6 mb-6 overflow-hidden relative"
+                class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl mb-6 overflow-hidden relative"
               >
-                <img
-                  [src]="prod.image"
-                  class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                  [alt]="prod.name"
-                />
+                @if (isLoading) {
+                  <div
+                    class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-lg animate-pulse z-20"
+                  ></div>
+                } @else {
+                  <img
+                    [src]="prod.image"
+                    class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                    [alt]="prod.name"
+                    #pImg
+                    (error)="pImg.style.display = 'none'; pFallback.classList.remove('hidden')"
+                  />
+                  <!-- Fallback if specific image fails -->
+                  <div
+                    #pFallback
+                    class="absolute inset-0 flex items-center justify-center hidden bg-slate-200 dark:bg-slate-800 z-10"
+                  >
+                    <span class="material-symbols-outlined text-slate-400"
+                      >image_not_supported</span
+                    >
+                  </div>
+                }
                 <div
                   class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                  [class.!opacity-100]="isProductSelected(prod.id)"
                 >
                   <button
-                    class="size-8 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+                    class="size-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-lg shadow-lg flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+                    [class.!text-primary]="isProductSelected(prod.id)"
                     (click)="toggleCompare($event, prod)"
                   >
-                    <span class="material-symbols-outlined text-sm">{{
+                    <span class="material-symbols-outlined text-sm font-bold">{{
                       isProductSelected(prod.id) ? 'check' : 'compare_arrows'
                     }}</span>
                   </button>
@@ -342,50 +394,50 @@
       </div>
     </ng-template>
 
-    <!-- Block 1: LAPTOP GAMING -->
+    <!-- Block 1: CPU -->
     <ng-container
       *ngTemplateOutlet="
         productGrid;
         context: {
-          title: ('home.featured_laptops' | translate),
-          products: laptopGaming,
-          tags: ['ROG Series', 'Predator', 'Alienware'],
+          title: 'BỘ VI XỬ LÝ (CPU)',
+          products: productSections.cpu,
+          tags: ['Intel Core', 'AMD Ryzen'],
         }
       "
     ></ng-container>
 
-    <!-- Block 2: PC BÁN CHẠY -->
+    <!-- Block 2: GPU -->
     <ng-container
       *ngTemplateOutlet="
         productGrid;
         context: {
-          title: 'PC BÁN CHẠY',
-          products: pcGaming,
-          tags: ['Intel Core i5', 'Ryzen 5', 'PC Làm Việc'],
+          title: 'CARD ĐỒ HỌA (GPU)',
+          products: productSections.gpu,
+          tags: ['RTX 40 Series', 'RX 7000 Series'],
         }
       "
     ></ng-container>
 
-    <!-- Block 3: MÀN HÌNH -->
+    <!-- Block 3: RAM -->
     <ng-container
       *ngTemplateOutlet="
         productGrid;
         context: {
-          title: 'MÀN HÌNH MÁY TÍNH',
-          products: monitors,
-          tags: ['144Hz+', '4K UHD', 'Ultrawide'],
+          title: 'BỘ NHỚ (RAM)',
+          products: productSections.ram,
+          tags: ['DDR4', 'DDR5', 'RGB Sync'],
         }
       "
     ></ng-container>
 
-    <!-- Block 4: PHỤ KIỆN -->
+    <!-- Block 4: MAINBOARD -->
     <ng-container
       *ngTemplateOutlet="
         productGrid;
         context: {
-          title: 'PHỤ KIỆN GAMING GEAR',
-          products: accessories,
-          tags: ['Bàn phím cơ', 'Chuột Không Dây', 'Tai Nghe'],
+          title: 'BO MẠCH CHỦ',
+          products: productSections.mainboard,
+          tags: ['Z790', 'B760', 'X670'],
         }
       "
     ></ng-container>
@@ -393,11 +445,11 @@
     <!-- Large Promo Banner -->
     @if (isBannersLoading) {
       <div
-        class="relative w-full h-[350px] rounded-[3.5rem] overflow-hidden mt-12 bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5 shadow-sm"
+        class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden mt-12 bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5 shadow-sm"
       ></div>
     } @else if (midBanners[2]) {
       <div
-        class="relative w-full h-[350px] rounded-[3.5rem] overflow-hidden group cursor-pointer border border-primary/10 shadow-2xl mt-12"
+        class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden group cursor-pointer border border-primary/10 shadow-2xl mt-12"
       >
         <!-- Ảnh Banner rõ nét -->
         <img
@@ -438,8 +490,54 @@
     }
   </section>
 
-  <!-- Comparison Sticky Bar -->
+  <!-- Improved Comparison Sticky Bar -->
   @if (comparisonService.selectedCount() > 0) {
-    <!-- ... same as before ... -->
+    <div
+      class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-10 duration-500"
+    >
+      <div
+        class="bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-[2rem] px-8 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-8"
+      >
+        <div class="flex items-center gap-4 border-r border-white/10 pr-8">
+          <div class="flex -space-x-3">
+            @for (prod of comparisonService.selectedProducts(); track prod.id) {
+              <div class="size-12 rounded-full border-2 border-slate-900 overflow-hidden bg-white">
+                <img
+                  [src]="prod.image"
+                  class="w-full h-full object-contain p-1"
+                  [alt]="prod.name"
+                />
+              </div>
+            }
+          </div>
+          <div class="flex flex-col">
+            <span class="text-white font-bold text-sm"
+              >{{ comparisonService.selectedCount() }} sản phẩm</span
+            >
+            <span class="text-slate-400 text-[10px] uppercase font-black tracking-widest"
+              >Đã chọn so sánh</span
+            >
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <button
+            (click)="goToCompare()"
+            class="px-8 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+          >
+            So sánh ngay
+          </button>
+          <button
+            (click)="comparisonService.clearAll()"
+            class="size-10 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors flex items-center justify-center group"
+            title="Xóa tất cả"
+          >
+            <span class="material-symbols-outlined group-hover:rotate-90 transition-transform"
+              >close</span
+            >
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </div>

@@ -99,6 +99,7 @@ public class ProductController : ControllerBase
     // GET: api/product/client
     [HttpGet("client")]
     public async Task<IActionResult> GetClientProducts(
+        [FromQuery] string? categorySlug,
         CancellationToken cancellationToken,
         int page = 1,
         int pageSize = 12)
@@ -106,7 +107,8 @@ public class ProductController : ControllerBase
         var result = await _service.GetProductListAsync(
             cancellationToken,
             page,
-            pageSize
+            pageSize,
+            categorySlug
         );
 
         return Ok(result);

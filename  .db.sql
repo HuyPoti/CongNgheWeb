@@ -207,7 +207,7 @@ CREATE TABLE reviews (
     user_id UUID NOT NULL,
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
-    status INT DEFAULT 2,
+    is_active INT DEFAULT 1,
     is_verified_purchase BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -234,6 +234,20 @@ CREATE TABLE review_helpful_votes (
     FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+-- 18. Bảng review_replies
+CREATE TABLE review_replies (
+    reply_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    review_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    is_active INT DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 
 -- ===========================================
 -- SEED DATA (Dựa trên CreateDtos)
@@ -295,3 +309,78 @@ INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_pri
 VALUES 
 ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 1, 52900000),
 ('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 1, 23500000);
+INSERT INTO categories (category_id, name, slug, description, parent_id, is_active) VALUES 
+('c0000001-1111-1111-1111-000000000001', 'CPU (Bộ vi xử lý)', 'cpu-bo-vi-xu-ly', 'Chip xử lý trung tâm', 'c0000000-0000-0000-0000-000000000001', TRUE),
+('c0000001-1111-1111-1111-000000000002', 'Mainboard (Bo mạch chủ)', 'mainboard-bo-mach-chu', 'Bo mạch chủ máy tính', 'c0000000-0000-0000-0000-000000000001', TRUE),
+('c0000001-1111-1111-1111-000000000003', 'RAM', 'ram-bo-nho-trong', 'Bộ nhớ RAM', 'c0000000-0000-0000-0000-000000000001', TRUE),
+('c0000001-1111-1111-1111-000000000004', 'GPU (Card đồ họa)', 'gpu-card-do-hoa', 'Card xử lý đồ họa', 'c0000000-0000-0000-0000-000000000001', TRUE),
+('c0000001-1111-1111-1111-000000000005', 'SSD', 'ssd-o-cung-the-ran', 'Ổ cứng SSD tốc độ cao', 'c0000000-0000-0000-0000-000000000001', TRUE),
+('c0000001-1111-1111-1111-000000000006', 'HDD', 'hdd-o-cung-co', 'Ổ lưu trữ dung lượng lớn', 'c0000000-0000-0000-0000-000000000001', TRUE),
+('c0000001-1111-1111-1111-000000000007', 'PSU (Nguồn máy tính)', 'psu-nguon-may-tinh', 'Bộ nguồn máy tính', 'c0000000-0000-0000-0000-000000000001', TRUE);
+-- ==========================================================
+-- 2. CHÈN DANH MỤC CON (SUB-CATEGORIES)
+-- ==========================================================
+-- Nhóm CPU
+-- ==========================================================
+-- ==========================================================
+-- 1. CHÈN DANH MỤC CẤP CAO NHẤT (PARENTS)
+-- ==========================================================
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000001-0000-0000-0000-000000000001', 'CPU', 'cpu', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000002', 'Mainboard', 'mainboard', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000003', 'RAM', 'ram', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000004', 'GPU (Card đồ họa)', 'gpu', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000005', 'SSD', 'ssd', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000006', 'HDD', 'hdd', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000007', 'PSU (Nguồn)', 'psu', NULL, TRUE, NOW());
+
+-- ==========================================================
+-- 2. CHÈN DANH MỤC CẤP CON (CHILDREN)
+-- ==========================================================
+
+-- Nhóm CPU
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000001', 'Intel', 'cpu-intel', 'c0000001-0000-0000-0000-000000000001', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000002', 'AMD', 'cpu-amd', 'c0000001-0000-0000-0000-000000000001', TRUE, NOW());
+
+-- Nhóm Mainboard
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000003', 'Intel', 'mainboard-intel', 'c0000001-0000-0000-0000-000000000002', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000004', 'AMD', 'mainboard-amd', 'c0000001-0000-0000-0000-000000000002', TRUE, NOW());
+
+-- Nhóm RAM
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000005', 'DDR4', 'ram-ddr4', 'c0000001-0000-0000-0000-000000000003', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000006', 'DDR5', 'ram-ddr5', 'c0000001-0000-0000-0000-000000000003', TRUE, NOW());
+
+-- Nhóm GPU
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000007', 'NVIDIA', 'gpu-nvidia', 'c0000001-0000-0000-0000-000000000004', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000008', 'AMD', 'gpu-amd', 'c0000001-0000-0000-0000-000000000004', TRUE, NOW());
+
+-- Nhóm SSD
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000009', 'SSD SATA', 'ssd-sata', 'c0000001-0000-0000-0000-000000000005', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000010', 'SSD NVMe', 'ssd-nvme', 'c0000001-0000-0000-0000-000000000005', TRUE, NOW());
+
+-- Nhóm HDD
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000011', 'HDD 2.5 inch', 'hdd-2-5-inch', 'c0000001-0000-0000-0000-000000000006', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000012', 'HDD 3.5 inch', 'hdd-3-5-inch', 'c0000001-0000-0000-0000-000000000006', TRUE, NOW());
+
+-- Nhóm PSU
+INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000013', '500W–650W', 'psu-500w-650w', 'c0000001-0000-0000-0000-000000000007', TRUE, NOW()),
+('c0000002-0000-0000-0000-000000000014', '650W–850W', 'psu-650w-850w', 'c0000001-0000-0000-0000-000000000007', TRUE, NOW());
+
+INSERT INTO review_replies (reply_id, review_id, user_id, content, is_active) VALUES
+('bb000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Cảm ơn bạn đã đánh giá! Rất vui vì bạn hài lòng với sản phẩm.', 1);
+
+-- Seed data cho review_images
+INSERT INTO review_images (image_id, review_id, image_url) VALUES
+('cc000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review1/400/300'),
+('cc000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review2/400/300');
+
+-- Seed data cho review_helpful_votes
+INSERT INTO review_helpful_votes (vote_id, review_id, user_id) VALUES
+('dd000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111');

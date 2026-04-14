@@ -17,6 +17,10 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
     public IRepository<News> News { get; } = new Repository<News>(dbContext, mapper);
     public IRepository<NewsCategory> NewsCategories { get; } = new Repository<NewsCategory>(dbContext, mapper);
     public IRepository<Order> Orders { get; } = new Repository<Order>(dbContext, mapper);
+    public IRepository<Review> Reviews { get; } = new Repository<Review>(dbContext, mapper);
+    public IRepository<ReviewImage> ReviewImages { get; } = new Repository<ReviewImage>(dbContext, mapper);
+    public IRepository<ReviewReply> ReviewReplies { get; } = new Repository<ReviewReply>(dbContext, mapper);
+    public IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; } = new Repository<ReviewHelpfulVote>(dbContext, mapper);
 
     public async Task<int> SaveAsync(CancellationToken cancellationToken)
     {

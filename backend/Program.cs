@@ -28,6 +28,7 @@ builder.Services.AddScoped<INewsCategoryService, NewsCategoryService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();

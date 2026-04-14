@@ -389,7 +389,7 @@ export const TRANSLATIONS = {
     'home.hotline': 'Support: 1900 1234',
     'home.sold_count': 'Sold [[count]]/[[total]]',
     'home.status_stock': 'In Stock',
-    'home.featured_laptops': 'FEATURED LAPTOPS',
+    'home.featured_cpu': 'FEATURED CPU',
     'home.promo_tag': 'MAY SUPER PROMO',
     'home.promo_title': 'UPGRADE GRAPHICS',
     'home.promo_subtitle': 'SUPREME GAMING',

@@ -187,7 +187,9 @@ public class ProductService(
     public async Task<PagedResult<ProductListItemDto>> GetProductListAsync(
         CancellationToken cancellationToken,
         int page,
-        int pageSize)
+        int pageSize,
+        string? categorySlug = null
+    )
     {
         page = page <= 0 ? 1 : page;
         pageSize = pageSize <= 0 ? 12 : pageSize;
@@ -197,6 +199,11 @@ public class ProductService(
             .Where(p => p.Status == 2) // Chỉ khách hàng mới thấy sản phẩm Hoạt động
             .Include(p => p.Category)
             .AsQueryable();
+
+        if (!string.IsNullOrEmpty(categorySlug))
+        {
+            query = query.Where(p => p.Category.Slug == categorySlug);
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 
