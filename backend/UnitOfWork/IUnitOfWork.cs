@@ -13,5 +13,6 @@ public interface IUnitOfWork
     IRepository<ProductSpec> ProductSpecs { get; }
     IRepository<News> News { get; }
     IRepository<NewsCategory> NewsCategories { get; }
+    IRepository<Order> Orders { get; }
     Task<int> SaveAsync(CancellationToken cancellationToken);
 }

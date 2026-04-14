@@ -16,9 +16,10 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
     public IRepository<ProductSpec> ProductSpecs { get; } = new Repository<ProductSpec>(dbContext, mapper);
     public IRepository<News> News { get; } = new Repository<News>(dbContext, mapper);
     public IRepository<NewsCategory> NewsCategories { get; } = new Repository<NewsCategory>(dbContext, mapper);
+    public IRepository<Order> Orders { get; } = new Repository<Order>(dbContext, mapper);
 
     public async Task<int> SaveAsync(CancellationToken cancellationToken)
     {
-       return await dbContext.SaveChangesAsync(cancellationToken);
+        return await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
