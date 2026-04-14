@@ -40,27 +40,32 @@
         </tr>
       </thead>
       <tbody>
-        @for (order of orders(); track order.order_id) {
+        @for (order of orders(); track order.orderId) {
           <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
-            <td class="px-5 py-4 text-primary font-mono font-bold text-xs">{{ order.order_code }}</td>
-            <td class="px-5 py-4 text-slate-200">{{ order.customer_name }}</td>
-            <td class="px-5 py-4 text-slate-100 font-bold">${{ order.total_amount | number:'1.2-2' }}</td>
-            <td class="px-5 py-4 text-slate-400 text-xs">{{ order.payment_method }}</td>
+            <td class="px-5 py-4 text-primary font-mono font-bold text-xs">{{ order.orderCode }}</td>
+            <td class="px-5 py-4 text-slate-200">{{ order.customerName }}</td>
+            <td class="px-5 py-4 text-slate-100 font-bold">${{ order.totalAmount | number:'1.2-2' }}</td>
+            <td class="px-5 py-4 text-slate-400 text-xs">{{ order.paymentMethod }}</td>
             <td class="px-5 py-4">
-              <span class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase" [ngClass]="paymentColors[order.payment_status]">
-                {{ order.payment_status }}
-              </span>
+              <select [ngModel]="order.paymentStatus"
+                (ngModelChange)="updatePaymentStatus(order, $event)"
+                class="bg-transparent text-[10px] font-bold px-2 py-1 rounded-full border cursor-pointer focus:outline-none uppercase"
+                [ngClass]="paymentColors[order.paymentStatus]">
+                @for (ps of paymentStatusOptions; track ps) {
+                  <option [value]="ps" class="bg-slate-800 text-slate-100">{{ ps }}</option>
+                }
+              </select>
             </td>
             <td class="px-5 py-4">
               <select [ngModel]="order.status" (ngModelChange)="updateOrderStatus(order, $event)"
-                class="bg-transparent text-[10px] font-bold px-2 py-1 rounded-full border cursor-pointer focus:outline-none"
+                class="bg-transparent text-[10px] font-bold px-2 py-1 rounded-full border cursor-pointer focus:outline-none uppercase"
                 [ngClass]="statusColors[order.status]">
                 @for (s of statusOptions; track s) {
                   <option [value]="s" class="bg-slate-800 text-slate-100">{{ statusLabels[s] }}</option>
                 }
               </select>
             </td>
-            <td class="px-5 py-4 text-xs text-slate-500">{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="px-5 py-4 text-xs text-slate-500">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             <td class="px-5 py-4">
               <button (click)="openDetail(order)" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary">
                 <span class="material-symbols-outlined text-sm">visibility</span>
@@ -78,15 +83,15 @@
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="closeDetail()">
     <div class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
       <div class="p-6 border-b border-primary/10 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-slate-100">Chi tiết đơn {{ showDetail()!.order_code }}</h3>
+        <h3 class="text-lg font-bold text-slate-100">Chi tiết đơn {{ showDetail()!.orderCode }}</h3>
         <button (click)="closeDetail()" class="text-slate-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
       </div>
       <div class="p-6 space-y-6">
         <!-- Order Info -->
         <div class="grid grid-cols-2 gap-4 text-sm">
-          <div><span class="text-slate-500">Khách hàng:</span> <span class="text-slate-100 ml-2 font-semibold">{{ showDetail()!.customer_name }}</span></div>
-          <div><span class="text-slate-500">Thanh toán:</span> <span class="text-slate-100 ml-2">{{ showDetail()!.payment_method }}</span></div>
-          <div class="col-span-2"><span class="text-slate-500">Địa chỉ:</span> <span class="text-slate-100 ml-2">{{ showDetail()!.shipping_address }}</span></div>
+          <div><span class="text-slate-500">Khách hàng:</span> <span class="text-slate-100 ml-2 font-semibold">{{ showDetail()!.customerName }}</span></div>
+          <div><span class="text-slate-500">Thanh toán:</span> <span class="text-slate-100 ml-2">{{ showDetail()!.paymentMethod }}</span></div>
+          <div class="col-span-2"><span class="text-slate-500">Địa chỉ:</span> <span class="text-slate-100 ml-2">{{ showDetail()!.shippingAddress.addressLine }}, {{ showDetail()!.shippingAddress.ward }}, {{ showDetail()!.shippingAddress.district }}, {{ showDetail()!.shippingAddress.province }}</span></div>
           @if (showDetail()!.notes) {
             <div class="col-span-2"><span class="text-slate-500">Ghi chú:</span> <span class="text-yellow-400 ml-2">{{ showDetail()!.notes }}</span></div>
           }
@@ -95,33 +100,29 @@
         <div>
           <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Sản phẩm trong đơn</h4>
           <div class="space-y-2">
-            @for (item of showDetail()!.items; track item.order_item_id) {
+            @for (item of showDetail()!.items; track item.orderItemId) {
               <div class="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-3">
-                <span class="text-sm text-slate-200">{{ item.product_name }}</span>
+                <span class="text-sm text-slate-200">{{ item.productName }}</span>
                 <div class="text-right">
                   <span class="text-sm text-slate-300">x{{ item.quantity }}</span>
-                  <span class="text-sm text-primary font-bold ml-4">${{ item.unit_price | number:'1.2-2' }}</span>
+                  <span class="text-sm text-primary font-bold ml-4">${{ item.unitPrice | number:'1.2-2' }}</span>
                 </div>
               </div>
             }
           </div>
         </div>
         <!-- Payment Info -->
-        @if (showDetail()!.payment) {
-          <div>
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Thông tin thanh toán</h4>
-            <div class="bg-slate-800/50 rounded-lg p-4 text-sm space-y-2">
-              <div><span class="text-slate-500">Số tiền:</span> <span class="text-green-400 font-bold ml-2">${{ showDetail()!.payment!.amount | number:'1.2-2' }}</span></div>
-              <div><span class="text-slate-500">Mã giao dịch:</span> <span class="text-slate-200 font-mono ml-2">{{ showDetail()!.payment!.transaction_id }}</span></div>
-              <div><span class="text-slate-500">Trạng thái:</span> <span class="text-green-400 ml-2 uppercase font-bold text-xs">{{ showDetail()!.payment!.status }}</span></div>
-              <div><span class="text-slate-500">Thời gian:</span> <span class="text-slate-200 ml-2">{{ showDetail()!.payment!.paid_at | date:'dd/MM/yyyy HH:mm' }}</span></div>
-            </div>
-          </div>
-        }
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Trạng thái thanh toán</h4>
+          <span class="text-sm font-bold px-3 py-1 rounded-full border"
+                [ngClass]="paymentColors[showDetail()!.paymentStatus]">
+            {{ showDetail()!.paymentStatus }}
+          </span>
+        </div>
         <!-- Total -->
         <div class="flex items-center justify-between pt-4 border-t border-primary/10">
           <span class="text-slate-400 font-bold uppercase text-xs tracking-widest">Tổng cộng</span>
-          <span class="text-2xl font-bold text-primary">${{ showDetail()!.total_amount | number:'1.2-2' }}</span>
+          <span class="text-2xl font-bold text-primary">${{ showDetail()!.totalAmount | number:'1.2-2' }}</span>
         </div>
       </div>
     </div>

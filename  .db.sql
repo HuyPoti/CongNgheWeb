@@ -26,6 +26,7 @@ CREATE TABLE categories (
     image_url VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (parent_id) REFERENCES categories(category_id) ON DELETE SET NULL
 );
 
@@ -289,10 +290,25 @@ INSERT INTO banners (banner_id, title, subtitle, image_url, link_url, position, 
 ('e0000000-0000-0000-0000-000000000003', 'Màn Hình Đồ Họa', 'Độ chuẩn màu 100% sRGB', 'https://phongvu.vn/media/banner/06_Jun73248386e8ca779430c77431e7f09805.png', '/product/list', 2, 1, TRUE),
 ('e0000000-0000-0000-0000-000000000004', 'Promo Đặc Biệt', 'Dành riêng cho game thủ', 'https://gearvn.com/cdn/shop/files/Bannaer_Mid_Dashboard.jpg', '/product/list', 2, 2, TRUE);
 
--- 8. Reviews (ReviewId, ProductId, UserId, Rating, Comment, IsActive, IsVerifiedPurchase)
-INSERT INTO reviews (review_id, product_id, user_id, rating, comment, is_active, is_verified_purchase) VALUES 
-('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 1, TRUE);
+-- 8. Reviews (ReviewId, ProductId, UserId, Rating, Comment, Status, IsVerifiedPurchase)
+INSERT INTO reviews (review_id, product_id, user_id, rating, comment, status, is_verified_purchase) VALUES 
+('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 2, TRUE);
 
+-- 9. Address
+INSERT INTO addresses (address_id, user_id, recipient_name, phone, address_line, province, district, ward, is_default, created_at)
+VALUES 
+('00000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'Nguyễn Văn A', '0912345678', '123 Nguyễn Huệ', 'TP.HCM', 'Quận 1', 'Phường Bến Nghé', TRUE, NOW());
+
+-- 10. Order
+INSERT INTO orders (order_id, user_id, order_code, total_amount, status, payment_method, payment_status, shipping_address_id, notes, created_at, updated_at)
+VALUES 
+('00000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'ORD-20260414-001', 52900000, 1, 'COD', 1, '00000000-0000-0000-0000-000000000001', 'Giao buổi sáng', NOW(), NOW());
+
+-- 11. Order Items
+INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_price)
+VALUES 
+('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 1, 52900000),
+('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 1, 23500000);
 INSERT INTO categories (category_id, name, slug, description, parent_id, is_active) VALUES 
 ('c0000001-1111-1111-1111-000000000001', 'CPU (Bộ vi xử lý)', 'cpu-bo-vi-xu-ly', 'Chip xử lý trung tâm', 'c0000000-0000-0000-0000-000000000001', TRUE),
 ('c0000001-1111-1111-1111-000000000002', 'Mainboard (Bo mạch chủ)', 'mainboard-bo-mach-chu', 'Bo mạch chủ máy tính', 'c0000000-0000-0000-0000-000000000001', TRUE),

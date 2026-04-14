@@ -34,6 +34,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IProductSpecService, ProductSpecService>();
 
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 // Them Automapper
 builder.Services.AddAutoMapper(cfg => { }, Assembly.GetExecutingAssembly());

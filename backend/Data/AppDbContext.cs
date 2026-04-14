@@ -16,6 +16,9 @@ public class AppDbContext : DbContext
     public DbSet<Brand> Brands { get; set; }
     public DbSet<News> News { get; set; }
     public DbSet<NewsCategory> NewsCategories { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Address> Addresses { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<ReviewImage> ReviewImages { get; set; }
     public DbSet<ReviewReply> ReviewReplies { get; set; }
@@ -76,7 +79,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.ProductId);
             entity.HasIndex(e => e.Slug).IsUnique();
             entity.HasIndex(e => e.Sku).IsUnique();
-            
+
             entity.Property(e => e.Specifications).HasColumnType("jsonb");
             entity.Property(e => e.Status).HasDefaultValue(1);
 
@@ -132,7 +135,7 @@ public class AppDbContext : DbContext
             entity.ToTable("news");
             entity.HasKey(e => e.NewsId);
             entity.HasIndex(n => n.Slug).IsUnique();
-            
+
             entity.HasOne(n => n.Category)
                 .WithMany()
                 .HasForeignKey(n => n.CategoryId);
