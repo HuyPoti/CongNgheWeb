@@ -1,10 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { forkJoin, Observable } from 'rxjs';
 import { BannerService } from '../../core/services/banner.service';
 import { Banner } from '../../core/models/banner.model';
 import { ProductService } from '../../core/services/product.service';
-import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
+import { ProductCard, ProductListItemDto, ProductListResponse } from '../../core/models/product.model';
 import { ComparisonService, CompareProduct } from '../../core/services/comparison';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { CategoryService } from '../../core/services/category.service';
@@ -53,12 +54,8 @@ export class HomeComponent implements OnInit {
     ram: [],
     mainboard: []
   };
-  private loadSection(catSlug: string, target: keyof typeof this.productSections) {
-    this.productService.fetchClientProducts(1, 5, catSlug).subscribe({
-      next: (res) => {
-        this.productSections[target] = res.items.map(p => this.mapToCard(p));
-      }
-    });
+  private loadSection(catSlug: string): Observable<ProductListResponse> {
+    return this.productService.fetchClientProducts(1, 5, catSlug);
   }
   comparisonService = inject(ComparisonService);
 
@@ -84,15 +81,42 @@ export class HomeComponent implements OnInit {
   isBannersLoading = true;
 
   ngOnInit(): void {
+    this.isLoading = true;
     this.loadBanners();
-    this.loadFeaturedProducts();
     this.loadCategories();
 
-    // Tải sản phẩm theo từng danh mục cụ thể
-    this.loadSection('cpu', 'cpu');
-    this.loadSection('gpu', 'gpu');
-    this.loadSection('ram', 'ram');
-    this.loadSection('mainboard', 'mainboard');
+    // Tải đồng thời tất cả các mục sản phẩm để skeleton biến mất cùng lúc
+    forkJoin({
+      featured: this.productService.fetchClientProducts(1, 20),
+      cpu: this.loadSection('cpu'),
+      gpu: this.loadSection('gpu'),
+      ram: this.loadSection('ram'),
+      mainboard: this.loadSection('mainboard')
+    }).subscribe({
+      next: (results: { 
+        featured: ProductListResponse, 
+        cpu: ProductListResponse, 
+        gpu: ProductListResponse, 
+        ram: ProductListResponse, 
+        mainboard: ProductListResponse 
+      }) => {
+        // Map data cho sản phẩm nổi bật
+        this.featuredProducts = results.featured.items.map((p: ProductListItemDto) => this.mapToCard(p));
+        this.laptopGaming = this.featuredProducts.slice(0, 5);
+        this.pcGaming = this.featuredProducts.slice(5, 10).length > 0 ? this.featuredProducts.slice(5, 10) : [...this.featuredProducts].reverse().slice(0, 5);
+
+        // Map data cho các danh mục
+        this.productSections.cpu = results.cpu.items.map((p: ProductListItemDto) => this.mapToCard(p));
+        this.productSections.gpu = results.gpu.items.map((p: ProductListItemDto) => this.mapToCard(p));
+        this.productSections.ram = results.ram.items.map((p: ProductListItemDto) => this.mapToCard(p));
+        this.productSections.mainboard = results.mainboard.items.map((p: ProductListItemDto) => this.mapToCard(p));
+
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      }
+    });
   }
 
   private loadCategories(): void {

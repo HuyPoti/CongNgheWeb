@@ -127,10 +127,6 @@ export class CmsBanner implements OnInit {
     });
   }
 
-  deleteBanner(banner: Banner) {
-    // Feature removed as requested. We keep the method empty if needed for other parts, or just remove it.
-    // Since there are no references left in HTML, we can safely remove it.
-  }
 
   private buildPayload(): CreateBanner {
     return {
@@ -138,7 +134,7 @@ export class CmsBanner implements OnInit {
       subtitle: this.form.subtitle?.trim() || null,
       imageUrl: this.form.imageUrl?.trim() || '',
       linkUrl: this.form.linkUrl?.trim() || null,
-      position: this.form.position as any || 'homepage_slider',
+      position: this.form.position || 'homepage_slider',
       sortOrder: Number(this.form.sortOrder ?? 0),
       isActive: this.form.isActive ?? true,
       startDate: this.form.startDate || null,

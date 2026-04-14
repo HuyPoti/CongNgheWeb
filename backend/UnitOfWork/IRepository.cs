@@ -10,6 +10,7 @@ public interface IRepository<T> where T : class
 
     T Insert(T entity);
     T Update(T entity);
+    void Delete(T entity);
     Task<T?> DeleteAsync(Guid id, CancellationToken cancellationToken);
     IQueryable<T> Query();
 }

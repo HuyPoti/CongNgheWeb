@@ -216,18 +216,39 @@
             <div
               class="aspect-square rounded-3xl bg-white dark:bg-slate-800 relative overflow-hidden"
             >
-              <img
-                [src]="item.image"
-                class="w-full h-full transition-transform group-hover:scale-110"
-                alt="Flash Sale Item"
-              />
+              @if (isLoading) {
+                <div
+                  class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-lg animate-pulse z-20"
+                ></div>
+              } @else {
+                <img
+                  [src]="item.image"
+                  class="w-full h-full object-contain p-4 transition-transform group-hover:scale-110"
+                  alt="{{ item.name }}"
+                  #fsImg
+                  (error)="fsImg.style.display = 'none'; fsFallback.classList.remove('hidden')"
+                />
+                <!-- Fallback if specific image fails -->
+                <div
+                  #fsFallback
+                  class="absolute inset-0 flex items-center justify-center hidden bg-slate-200 dark:bg-slate-800 z-10"
+                >
+                  <span class="material-symbols-outlined text-slate-400 text-3xl"
+                    >image_not_supported</span
+                  >
+                </div>
+              }
+
               <div
-                class="absolute top-4 left-4 size-12 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-lg animate-pulse"
+                class="absolute top-4 left-4 size-12 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-lg animate-pulse z-20"
               >
                 -30%
               </div>
               <!-- Add Compare button for Flash Sale -->
-              <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity" [class.!opacity-100]="isProductSelected(item.id)">
+              <div
+                class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                [class.!opacity-100]="isProductSelected(item.id)"
+              >
                 <button
                   class="size-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur rounded-xl shadow-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
                   [class.!text-red-500]="isProductSelected(item.id)"
@@ -310,11 +331,28 @@
               <div
                 class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl mb-6 overflow-hidden relative"
               >
-                <img
-                  [src]="prod.image"
-                  class="w-full h-full group-hover:scale-110 transition-transform duration-500"
-                  [alt]="prod.name"
-                />
+                @if (isLoading) {
+                  <div
+                    class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 border border-slate-100 dark:border-white/5 shadow-lg animate-pulse z-20"
+                  ></div>
+                } @else {
+                  <img
+                    [src]="prod.image"
+                    class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                    [alt]="prod.name"
+                    #pImg
+                    (error)="pImg.style.display = 'none'; pFallback.classList.remove('hidden')"
+                  />
+                  <!-- Fallback if specific image fails -->
+                  <div
+                    #pFallback
+                    class="absolute inset-0 flex items-center justify-center hidden bg-slate-200 dark:bg-slate-800 z-10"
+                  >
+                    <span class="material-symbols-outlined text-slate-400"
+                      >image_not_supported</span
+                    >
+                  </div>
+                }
                 <div
                   class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
                   [class.!opacity-100]="isProductSelected(prod.id)"
@@ -454,35 +492,49 @@
 
   <!-- Improved Comparison Sticky Bar -->
   @if (comparisonService.selectedCount() > 0) {
-    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-10 duration-500">
-      <div class="bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-[2rem] px-8 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-8">
+    <div
+      class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-10 duration-500"
+    >
+      <div
+        class="bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-[2rem] px-8 py-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-8"
+      >
         <div class="flex items-center gap-4 border-r border-white/10 pr-8">
           <div class="flex -space-x-3">
             @for (prod of comparisonService.selectedProducts(); track prod.id) {
               <div class="size-12 rounded-full border-2 border-slate-900 overflow-hidden bg-white">
-                <img [src]="prod.image" class="w-full h-full object-contain p-1" [alt]="prod.name">
+                <img
+                  [src]="prod.image"
+                  class="w-full h-full object-contain p-1"
+                  [alt]="prod.name"
+                />
               </div>
             }
           </div>
           <div class="flex flex-col">
-            <span class="text-white font-bold text-sm">{{ comparisonService.selectedCount() }} sản phẩm</span>
-            <span class="text-slate-400 text-[10px] uppercase font-black tracking-widest">Đã chọn so sánh</span>
+            <span class="text-white font-bold text-sm"
+              >{{ comparisonService.selectedCount() }} sản phẩm</span
+            >
+            <span class="text-slate-400 text-[10px] uppercase font-black tracking-widest"
+              >Đã chọn so sánh</span
+            >
           </div>
         </div>
 
         <div class="flex items-center gap-4">
-          <button 
+          <button
             (click)="goToCompare()"
             class="px-8 py-3 bg-primary text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-primary/20"
           >
             So sánh ngay
           </button>
-          <button 
+          <button
             (click)="comparisonService.clearAll()"
             class="size-10 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors flex items-center justify-center group"
             title="Xóa tất cả"
           >
-            <span class="material-symbols-outlined group-hover:rotate-90 transition-transform">close</span>
+            <span class="material-symbols-outlined group-hover:rotate-90 transition-transform"
+              >close</span
+            >
           </button>
         </div>
       </div>
