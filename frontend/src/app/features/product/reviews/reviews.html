@@ -13,7 +13,7 @@
             <p class="text-slate-500 dark:text-slate-400 text-lg">Real experiences from our community of builders and gamers.</p>
         </div>
         <button 
-            class="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all neon-glow flex items-center gap-2 shrink-0"
+            class="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all neon-glow flex items-center gap-2 shrink-0 shadow-lg shadow-primary/20"
             (click)="toggleWriteReview()"
         >
             <span class="material-symbols-outlined">edit</span>
@@ -24,112 +24,181 @@
     <!-- Rating Overview -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
         <!-- Left: Summary -->
-        <div class="lg:col-span-4 bg-slate-100 dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark p-8 flex flex-col items-center justify-center text-center">
-            <div class="text-6xl font-bold text-slate-900 dark:text-white mb-2">{{ averageRating }}</div>
-            <div class="flex items-center gap-1 mb-3">
-                @for (star of getStarArray(5); track $index) {
-                    <span class="material-symbols-outlined text-2xl" [class]="$index < 4 ? 'text-amber-400 fill-1' : ($index === 4 ? 'text-amber-400/50 fill-1' : 'text-slate-600')">star</span>
+        <div class="lg:col-span-4 bg-slate-100 dark:bg-surface-dark rounded-3xl border border-slate-200 dark:border-border-dark p-8 flex flex-col items-center justify-center text-center shadow-xl shadow-black/5">
+            <div class="text-7xl font-black text-slate-900 dark:text-white mb-2">{{ averageRating() }}</div>
+            <div class="flex items-center gap-1.5 mb-4">
+                @for (star of [1,2,3,4,5]; track star) {
+                    <span class="material-symbols-outlined text-3xl" 
+                          [class]="star <= averageRating() ? 'text-amber-400 fill-1' : 'text-slate-300 dark:text-slate-700'">
+                        star
+                    </span>
                 }
             </div>
-            <p class="text-slate-500 dark:text-slate-400 text-sm">Based on <span class="font-bold text-slate-900 dark:text-white">{{ totalReviews }}</span> reviews</p>
+            <p class="text-slate-500 dark:text-slate-400 font-medium">Based on <span class="font-bold text-slate-900 dark:text-white">{{ totalReviews() }}</span> reviews</p>
         </div>
 
         <!-- Right: Distribution -->
-        <div class="lg:col-span-8 bg-slate-100 dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark p-8">
-            <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-6">Rating Distribution</h3>
-            <div class="space-y-3">
-                @for (item of ratingDistribution; track item.stars) {
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-1 w-20 shrink-0">
-                            <span class="text-sm font-bold text-slate-900 dark:text-white">{{ item.stars }}</span>
-                            <span class="material-symbols-outlined text-amber-400 text-sm fill-1">star</span>
+        <div class="lg:col-span-8 bg-slate-100 dark:bg-surface-dark rounded-3xl border border-slate-200 dark:border-border-dark p-8 shadow-xl shadow-black/5">
+            <h3 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-8">Rating Distribution</h3>
+            <div class="space-y-4">
+                @for (item of ratingDistribution(); track item.stars) {
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-1 w-16 shrink-0">
+                            <span class="text-sm font-black text-slate-700 dark:text-slate-300">{{ item.stars }}</span>
+                            <span class="material-symbols-outlined text-amber-400 text-base fill-1">star</span>
                         </div>
-                        <div class="flex-1 h-3 bg-slate-300 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div class="flex-1 h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                             <div 
-                                class="h-full bg-gradient-to-r from-primary to-accent-cyan rounded-full transition-all duration-500"
+                                class="h-full bg-gradient-to-r from-primary to-accent-cyan rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,102,255,0.3)]"
                                 [style.width.%]="item.percentage"
                             ></div>
                         </div>
-                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400 w-16 text-right">{{ item.count }} ({{ item.percentage }}%)</span>
+                        <span class="text-sm font-bold text-slate-400 dark:text-slate-500 w-20 text-right">{{ item.count }} ({{ item.percentage }}%)</span>
                     </div>
                 }
             </div>
         </div>
     </div>
 
-    <!-- Sort Bar -->
+    <!-- Sort Bar & Loading -->
     <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-200 dark:border-border-dark">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ totalReviews }} Reviews</h2>
-        <div class="flex items-center gap-2">
-            <span class="text-sm text-slate-500 dark:text-slate-400">Sort by:</span>
-            <select class="bg-white dark:bg-surface-dark border border-slate-300 dark:border-border-dark rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer">
-                <option>Newest First</option>
-                <option>Highest Rated</option>
-                <option>Lowest Rated</option>
-                <option>Most Helpful</option>
-            </select>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ totalReviews() }} Reviews</h2>
+        <div class="flex items-center gap-4">
+            @if (isLoading()) {
+                <div class="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            }
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-slate-500 dark:text-slate-400">Sort:</span>
+                <select class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl px-4 py-2 text-sm font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-primary/20 cursor-pointer transition-all">
+                    <option>Newest First</option>
+                    <option>Highest Rated</option>
+                    <option>Most Helpful</option>
+                </select>
+            </div>
         </div>
     </div>
 
+    <!-- Empty State -->
+    @if (!isLoading() && reviews().length === 0) {
+        <div class="py-20 text-center">
+            <div class="size-24 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-4xl text-slate-400">rate_review</span>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">No reviews yet</h3>
+            <p class="text-slate-400">Be the first to share your experience with this product!</p>
+        </div>
+    }
+
     <!-- Review Cards -->
-    <div class="space-y-8">
-        @for (review of reviews(); track review.id) {
-            <div class="bg-white dark:bg-surface-dark border border-slate-50 dark:border-white/5 rounded-[3rem] p-8 md:p-12 hover:border-primary/30 transition-all duration-500 group animate-in fade-in slide-in-from-bottom-8">
-                <div class="flex flex-col md:flex-row gap-10">
+    <div class="space-y-10">
+        @for (review of reviews(); track review.reviewId) {
+            <div class="bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 rounded-[3.5rem] p-8 md:p-12 hover:border-primary/40 transition-all duration-700 group relative overflow-hidden animate-in fade-in slide-in-from-bottom-12">
+                <!-- Background Glow -->
+                <div class="absolute -top-24 -right-24 size-64 bg-primary/5 blur-[100px] rounded-full group-hover:bg-primary/10 transition-colors"></div>
+                
+                <div class="flex flex-col md:flex-row gap-12 relative z-10">
                     <!-- User Side -->
-                    <div class="md:w-1/4 flex flex-col items-center md:items-start text-center md:text-left border-b md:border-b-0 md:border-r border-slate-50 dark:border-white/5 pb-8 md:pb-0 md:pr-10">
-                        <div class="size-20 rounded-3xl bg-gradient-to-br from-primary to-accent-cyan flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform mb-6">
-                            {{ review.userInitial }}
+                    <div class="md:w-1/4 flex flex-col items-center md:items-start text-center md:text-left border-b md:border-b-0 md:border-r border-slate-100 dark:border-white/5 pb-10 md:pb-0 md:pr-12">
+                        <div class="size-24 rounded-[2rem] bg-gradient-to-br from-primary to-accent-cyan p-[2px] shadow-2xl shadow-primary/20 rotate-3 group-hover:rotate-0 transition-all duration-500 mb-8">
+                            <div class="w-full h-full bg-slate-900 rounded-[calc(2rem-2px)] flex items-center justify-center text-white text-4xl font-black">
+                                {{ getUserInitial(review.userName) }}
+                            </div>
                         </div>
-                        <h4 class="font-bold text-xl text-slate-900 dark:text-white mb-2">{{ review.userName }}</h4>
-                        <div class="flex items-center gap-2 mb-6">
-                            @if (review.verified) {
-                                <span class="material-symbols-outlined text-emerald-500 text-sm">verified</span>
-                                <span class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Verified Log</span>
+                        <h4 class="font-black text-2xl text-slate-900 dark:text-white mb-3">{{ review.userName }}</h4>
+                        <div class="flex items-center gap-2 mb-8">
+                            @if (review.isVerifiedPurchase) {
+                                <div class="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                                    <span class="material-symbols-outlined text-emerald-500 text-xs">verified</span>
+                                    <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Verified</span>
+                                </div>
                             } @else {
-                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Public Review</span>
+                                <span class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full">Community</span>
                             }
                         </div>
-                        <div class="mt-auto space-y-3 w-full">
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Unit Identified:</p>
-                            <div class="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                                <p class="text-[10px] font-bold text-slate-900 dark:text-white line-clamp-1 uppercase tracking-tight">{{ review.product }}</p>
+                        
+                        <div class="mt-auto w-full">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Unit Identification:</p>
+                            <div class="p-4 bg-slate-50 dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/5 group-hover:bg-primary/5 transition-colors">
+                                <p class="text-xs font-black text-slate-900 dark:text-white line-clamp-2 uppercase tracking-tight leading-relaxed">
+                                    {{ review.productName }}
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Content Side -->
-                    <div class="md:w-3/4 flex flex-col justify-between pt-4 md:pt-0">
-                        <div>
-                            <div class="flex flex-wrap items-center justify-between gap-6 mb-8">
-                                <div class="flex gap-1.5">
-                                    @for (star of getStarArray(5); track $index) {
-                                        <span class="material-symbols-outlined text-xl" 
-                                              [class]="$index < review.rating ? 'text-amber-400 fill-1' : 'text-slate-200 dark:text-white/10'">
-                                            star
-                                        </span>
-                                    }
-                                </div>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ review.date }}</span>
+                    <div class="md:w-3/4 flex flex-col pt-4 md:pt-0">
+                        <div class="flex flex-wrap items-center justify-between gap-6 mb-10">
+                            <div class="flex gap-2">
+                                @for (star of [1,2,3,4,5]; track star) {
+                                    <span class="material-symbols-outlined text-2xl" 
+                                          [class]="star <= review.rating ? 'text-amber-400 fill-1' : 'text-slate-200 dark:text-white/10'">
+                                        star
+                                    </span>
+                                }
                             </div>
-                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 leading-tight group-hover:text-primary transition-colors italic">"{{ review.title }}"</h3>
-                            <p class="text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                {{ review.body }}
+                            <span class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{{ formatDate(review.createdAt) }}</span>
+                        </div>
+
+                        <div class="prose prose-invert max-w-none">
+                            <p class="text-lg md:text-xl text-slate-600 dark:text-slate-300 leading-relaxed font-medium mb-8">
+                                {{ review.comment }}
                             </p>
                         </div>
 
-                        <div class="flex items-center justify-between mt-12 pt-8 border-t border-slate-50 dark:border-white/5">
+                        <!-- Review Images -->
+                        @if (review.images && review.images.length > 0) {
+                            <div class="flex flex-wrap gap-4 mb-10">
+                                @for (img of review.images; track img.imageId) {
+                                    <div class="group/img relative size-24 md:size-32 rounded-3xl overflow-hidden cursor-zoom-in border-4 border-white dark:border-slate-800 shadow-xl transition-all hover:scale-105 active:scale-95">
+                                        <img [src]="img.imageUrl" class="w-full h-full object-cover" [alt]="'Review Image ' + $index">
+                                        <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover/img:opacity-100 transition-opacity"></div>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <!-- Admin Replies -->
+                        @if (review.replies && review.replies.length > 0) {
+                            <div class="space-y-4 mb-10">
+                                @for (reply of review.replies; track reply.replyId) {
+                                    <div class="p-8 bg-slate-50 dark:bg-primary/5 rounded-[2.5rem] border border-primary/10 relative">
+                                        <div class="absolute top-0 right-12 -translate-y-1/2 px-4 py-1.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-primary/20">
+                                            Official Response
+                                        </div>
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <div class="size-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                                                ZX
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-black text-slate-900 dark:text-white uppercase">{{ reply.fullName }}</p>
+                                                <p class="text-[9px] font-bold text-primary tracking-widest">{{ formatDate(reply.createdAt) }}</p>
+                                            </div>
+                                        </div>
+                                        <p class="text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic">
+                                            {{ reply.content }}
+                                        </p>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="flex items-center justify-between mt-auto pt-10 border-t border-slate-100 dark:border-white/5">
                             <div class="flex items-center gap-4">
-                                <button class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:border-primary transition-all">
-                                    <span class="material-symbols-outlined text-sm">thumb_up</span>
-                                    Protocol Helpful ({{ review.helpful }})
+                                <button 
+                                    (click)="toggleHelpful(review)"
+                                    class="flex items-center gap-3 px-8 py-3 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-lg shadow-black/5"
+                                >
+                                    <span class="material-symbols-outlined text-lg">thumb_up</span>
+                                    {{ review.helpfulVoteCount > 0 ? 'Helpful (' + review.helpfulVoteCount + ')' : 'Mark as Helpful' }}
                                 </button>
-                                <button class="flex items-center justify-center size-10 rounded-full border border-slate-100 dark:border-white/5 text-slate-400 hover:text-red-500 transition-all">
-                                    <span class="material-symbols-outlined text-sm">flag</span>
+                                <button class="flex items-center justify-center size-12 rounded-full border border-slate-200 dark:border-white/10 text-slate-400 hover:text-red-500 hover:bg-red-500/5 transition-all shadow-lg shadow-black/5">
+                                    <span class="material-symbols-outlined">flag</span>
                                 </button>
                             </div>
-                            <div class="flex items-center gap-2 text-[10px] font-black text-slate-300 dark:text-white/20 uppercase tracking-[0.2em]">
-                                Ref: ZX-LOG-{{ review.id }}
+                            <div class="hidden sm:flex items-center gap-3 text-[10px] font-black text-slate-300 dark:text-white/10 uppercase tracking-[0.3em]">
+                                <span class="size-1.5 rounded-full bg-primary/30"></span>
+                                LOG: {{ review.reviewId.split('-')[0] }}
                             </div>
                         </div>
                     </div>
@@ -139,13 +208,14 @@
     </div>
 
     <!-- Load More -->
-    <div class="flex justify-center mt-10">
-        <button class="px-8 py-3 border border-slate-300 dark:border-border-dark text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary font-bold rounded-xl transition-all flex items-center gap-2">
-            Load More Reviews
+    <div class="flex justify-center mt-16">
+        <button class="px-12 py-4 border-2 border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary font-black uppercase tracking-widest rounded-[2rem] transition-all hover:shadow-2xl hover:shadow-primary/20 flex items-center gap-3 active:scale-95">
+            Access More Data
             <span class="material-symbols-outlined">expand_more</span>
         </button>
     </div>
 </div>
+
 
 <!-- Write Review Modal -->
 @if (isWriteReviewOpen()) {

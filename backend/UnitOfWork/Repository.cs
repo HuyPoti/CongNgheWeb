@@ -40,6 +40,11 @@ public class Repository<T>(DbContext dbContext, IMapper mapper) : IRepository<T>
         return entity;
     }
 
+    public void Delete(T entity)
+    {
+        dbContext.Set<T>().Remove(entity);
+    }
+
     public async Task<T?> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var entity = await dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);

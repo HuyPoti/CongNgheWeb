@@ -24,6 +24,14 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `MapperProfiles/`: Cấu hình **AutoMapper** để chuyển đổi giữa Models và DTOs.
 - `Middleware/`: Chứa `ExceptionMiddleware` xử lý lỗi tập trung toàn hệ thống.
 
+#### 🛠️ Service Details (Review)
+- `ReviewService`: Triển khai interface `IReviewService` xử lý nghiệp vụ đánh giá.
+  - **Reviews**: `GetAllAsync`, `GetByIdAsync`, `UpdateActiveAsync`, `DeleteAsync`.
+  - **Replies**: `CreateReplyAsync`, `UpdateReplyAsync`, `DeleteReplyAsync`.
+  - **Images**: `AddImageAsync`, `DeleteImageAsync`, `GetImagesByReviewIdAsync`.
+  - **Votes**: `ToggleVoteAsync`, `GetVoteCountAsync`, `HasUserVotedAsync`.
+
+
 ### ⚙️ Quy trình xử lý (Data Flow)
 `Request` -> `Controller` -> `Service` -> `UnitOfWork` -> `Repository` -> `Database`
 
@@ -44,6 +52,14 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - **Tailwind CSS 4**: Sử dụng engine mới nhất của Tailwind để tối ưu tốc độ và kích thước CSS.
 - **Responsive Design**: Hỗ trợ đầy đủ Mobile, Tablet và Desktop.
 
+#### 🛠️ Service Details (Review)
+- `ReviewService`: Chứa logic xử lý đánh giá sản phẩm.
+  - **Reviews**: `getAll`, `getById`, `updateActive`, `delete`.
+  - **Replies**: `createReply`, `updateReply`, `deleteReply`.
+  - **Images**: `addImage`, `deleteImage`, `getImages`.
+  - **Votes**: `toggleVote`, `getVoteCount`, `checkUserVoted`.
+
+
 ---
 
 ## 4. Cơ sở dữ liệu (Database)
@@ -55,6 +71,9 @@ Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 - `Brands`: Thương hiệu sản phẩm.
 - `News` & `NewsCategories`: Quản lý tin tức.
 - `Banners`: Hình ảnh quảng cáo.
+- `Reviews`: Đánh giá và bình luận sản phẩm.
+- `ReviewImages`: Hình ảnh đính kèm trong đánh giá.
+- `ReviewReplies`: Phản hồi từ quản trị viên đối với đánh giá.
 
 ---
 

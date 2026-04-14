@@ -206,7 +206,7 @@ CREATE TABLE reviews (
     user_id UUID NOT NULL,
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
-    status INT DEFAULT 2,
+    is_active INT DEFAULT 1,
     is_verified_purchase BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -233,6 +233,20 @@ CREATE TABLE review_helpful_votes (
     FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+-- 18. Bảng review_replies
+CREATE TABLE review_replies (
+    reply_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    review_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    is_active INT DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 
 -- ===========================================
 -- SEED DATA (Dựa trên CreateDtos)
@@ -275,9 +289,9 @@ INSERT INTO banners (banner_id, title, subtitle, image_url, link_url, position, 
 ('e0000000-0000-0000-0000-000000000003', 'Màn Hình Đồ Họa', 'Độ chuẩn màu 100% sRGB', 'https://phongvu.vn/media/banner/06_Jun73248386e8ca779430c77431e7f09805.png', '/product/list', 2, 1, TRUE),
 ('e0000000-0000-0000-0000-000000000004', 'Promo Đặc Biệt', 'Dành riêng cho game thủ', 'https://gearvn.com/cdn/shop/files/Bannaer_Mid_Dashboard.jpg', '/product/list', 2, 2, TRUE);
 
--- 8. Reviews (ReviewId, ProductId, UserId, Rating, Comment, Status, IsVerifiedPurchase)
-INSERT INTO reviews (review_id, product_id, user_id, rating, comment, status, is_verified_purchase) VALUES 
-('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 2, TRUE);
+-- 8. Reviews (ReviewId, ProductId, UserId, Rating, Comment, IsActive, IsVerifiedPurchase)
+INSERT INTO reviews (review_id, product_id, user_id, rating, comment, is_active, is_verified_purchase) VALUES 
+('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 1, TRUE);
 
 INSERT INTO categories (category_id, name, slug, description, parent_id, is_active) VALUES 
 ('c0000001-1111-1111-1111-000000000001', 'CPU (Bộ vi xử lý)', 'cpu-bo-vi-xu-ly', 'Chip xử lý trung tâm', 'c0000000-0000-0000-0000-000000000001', TRUE),
@@ -342,3 +356,15 @@ INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_a
 INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
 ('c0000002-0000-0000-0000-000000000013', '500W–650W', 'psu-500w-650w', 'c0000001-0000-0000-0000-000000000007', TRUE, NOW()),
 ('c0000002-0000-0000-0000-000000000014', '650W–850W', 'psu-650w-850w', 'c0000001-0000-0000-0000-000000000007', TRUE, NOW());
+
+INSERT INTO review_replies (reply_id, review_id, user_id, content, is_active) VALUES
+('bb000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Cảm ơn bạn đã đánh giá! Rất vui vì bạn hài lòng với sản phẩm.', 1);
+
+-- Seed data cho review_images
+INSERT INTO review_images (image_id, review_id, image_url) VALUES
+('cc000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review1/400/300'),
+('cc000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review2/400/300');
+
+-- Seed data cho review_helpful_votes
+INSERT INTO review_helpful_votes (vote_id, review_id, user_id) VALUES
+('dd000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111');

@@ -16,11 +16,29 @@ public class AppDbContext : DbContext
     public DbSet<Brand> Brands { get; set; }
     public DbSet<News> News { get; set; }
     public DbSet<NewsCategory> NewsCategories { get; set; }
+    public DbSet<Review> Reviews { get; set; }
+    public DbSet<ReviewImage> ReviewImages { get; set; }
+    public DbSet<ReviewReply> ReviewReplies { get; set; }
+    public DbSet<ReviewHelpfulVote> ReviewHelpfulVotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<ReviewHelpfulVote>(entity =>
+        {
+            entity.ToTable("review_helpful_votes");
+            entity.HasKey(e => e.VoteId);
+            entity.HasIndex(e => new { e.ReviewId, e.UserId }).IsUnique();
+            entity.HasOne(e => e.Review)
+                .WithMany(r => r.HelpfulVotes)
+                .HasForeignKey(e => e.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
         // Banners
         modelBuilder.Entity<Banner>(entity =>
         {
@@ -122,6 +140,46 @@ public class AppDbContext : DbContext
             entity.HasOne(n => n.Author)
                 .WithMany()
                 .HasForeignKey(n => n.AuthorId);
+        });
+
+        // Reviews
+        modelBuilder.Entity<Review>(entity =>
+        {
+            entity.ToTable("reviews");
+            entity.HasKey(e => e.ReviewId);
+            
+            entity.HasOne(r => r.Product)
+                .WithMany()
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Review Images
+        modelBuilder.Entity<ReviewImage>(entity =>
+        {
+            entity.ToTable("review_images");
+            entity.HasKey(e => e.ImageId);
+            entity.HasOne(e => e.Review)
+                .WithMany(r => r.Images)
+                .HasForeignKey(e => e.ReviewId);
+        });
+
+        // Review Replies
+        modelBuilder.Entity<ReviewReply>(entity =>
+        {
+            entity.ToTable("review_replies");
+            entity.HasKey(e => e.ReplyId);
+            entity.HasOne(e => e.Review)
+                .WithMany(r => r.Replies)
+                .HasForeignKey(e => e.ReviewId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId);
         });
     }
 }

@@ -13,5 +13,12 @@ public interface IUnitOfWork
     IRepository<ProductSpec> ProductSpecs { get; }
     IRepository<News> News { get; }
     IRepository<NewsCategory> NewsCategories { get; }
+
+    IRepository<Review> Reviews { get; }
+    IRepository<ReviewImage> ReviewImages { get; }
+    IRepository<ReviewReply> ReviewReplies { get; }
+    IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; }
+
+    
     Task<int> SaveAsync(CancellationToken cancellationToken);
 }
