@@ -1,0 +1,121 @@
+<div class="p-8">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-slate-100 mb-2">Quản lý Nhân viên</h2>
+      <p class="text-slate-500">
+        {{ getEmployeeCount() }} nhân viên đang phục vụ hệ thống
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-sm">search</span>
+        <input [(ngModel)]="searchQuery"
+          class="bg-slate-800 border border-primary/10 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary w-64"
+          placeholder="Tìm tên, email..." aria-label="Tìm kiếm nhân viên" />
+      </div>
+      <button (click)="openCreate()"
+        class="px-6 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-semibold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">badge</span>
+        Thêm nhân viên
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-primary/10 text-left">
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Họ tên</th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vai trò</th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ngày gia nhập</th>
+          <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of filteredUsers; track user.userId) {
+          <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                  {{ user.fullName.charAt(0) }}
+                </div>
+                <span class="text-slate-100 font-semibold">{{ user.fullName }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-slate-400">{{ user.email }}</td>
+            <td class="px-6 py-4">
+              <span class="text-[10px] font-bold px-3 py-1 rounded-full border uppercase"
+                [ngClass]="{
+                  'bg-red-500/20 text-red-400 border-red-500/30': user.role === 'admin',
+                  'bg-blue-500/20 text-blue-400 border-blue-500/30': user.role === 'staff'
+                }">
+                {{ roleLabels[user.role] }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-xs text-slate-500">
+              {{ user.createdAt | date: 'dd/MM/yyyy' }}
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <button (click)="openEdit(user)" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary">
+                  <span class="material-symbols-outlined text-sm">edit</span>
+                </button>
+                <button (click)="deleteUser(user)" class="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-400">
+                  <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Create/Edit Employee -->
+@if (showModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="closeModal()">
+    <div class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-lg" (click)="$event.stopPropagation()">
+      <div class="p-6 border-b border-primary/10 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-100">{{ isCreating() ? 'Thêm nhân viên mới' : 'Cập nhật nhân viên' }}</h3>
+        <button (click)="closeModal()" class="text-slate-400 hover:text-white">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Họ tên</label>
+          <input [(ngModel)]="form.fullName" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Email công việc</label>
+          <input [(ngModel)]="form.email" type="email" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Phân quyền nhân sự</label>
+          <select [(ngModel)]="form.role" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary">
+            <option value="staff">Nhân viên (Staff)</option>
+            <option value="admin">Quản trị viên (Admin)</option>
+          </select>
+        </div>
+        @if (isCreating()) {
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Mật khẩu khởi tạo</label>
+            <input [(ngModel)]="form.password" type="password" class="w-full bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-primary" />
+          </div>
+        }
+      </div>
+      <div class="p-6 border-t border-primary/10 flex justify-end gap-3">
+        <button (click)="closeModal()" class="px-6 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white">Hủy</button>
+        <button (click)="save()" class="px-6 py-3 bg-primary hover:bg-primary/80 rounded-xl text-sm font-semibold text-white">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (isLoading()) {
+  <div class="flex items-center justify-center p-20">
+    <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
+  </div>
+}

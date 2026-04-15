@@ -1,6 +1,3 @@
-// Component quản lý người dùng - ĐÃ KẾT NỐI API THẬT
-// Thay thế data mock bằng gọi API từ UserService
-
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,46 +6,46 @@ import { ToastService } from '../../../core/services/toast.service';
 import { User, CreateUser, UpdateUser } from '../../../core/models/user.model';
 
 @Component({
-  selector: 'app-customer-crm',
+  selector: 'app-employee-management',
+  standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './customer-crm.html',
+  templateUrl: './employee-management.html',
   styles: ``,
 })
-export class CustomerCrm implements OnInit {
+export class EmployeeManagement implements OnInit {
   private userService = inject(UserService);
   private toastService = inject(ToastService);
 
-  users = signal<User[]>([]);        // ← Khởi tạo rỗng, sẽ load từ API
-  isLoading = signal(true);          // ← Trạng thái loading
-  errorMessage = signal('');         // ← Thông báo lỗi
+  users = signal<User[]>([]);        
+  isLoading = signal(true);          
+  errorMessage = signal('');         
 
   showModal = signal(false);
-  isCreating = signal(false);        // ← Phân biệt modal tạo mới / sửa
+  isCreating = signal(false);        
   editingUser = signal<User | null>(null);
   form: Partial<User & { password?: string }> = {};
   searchQuery = '';
 
   roleLabels: Record<string, string> = {
     customer: 'Khách hàng',
-    admin: 'Quản trị',
+    admin: 'Quản trị viên',
     staff: 'Nhân viên',
   };
 
-  // OnInit = lifecycle hook, chạy sau khi component được tạo
   ngOnInit() {
-    this.loadUsers();  // ← Gọi API lấy danh sách users khi component load
+    this.loadUsers();  
   }
 
   loadUsers() {
     this.isLoading.set(true);
     this.userService.getAll().subscribe({
-      next: (data) => {                     // ← Thành công
+      next: (data) => {                     
         this.users.set(data);
         this.isLoading.set(false);
       },
-      error: (err) => {                     // ← Thất bại
-        console.error('Lỗi tải users:', err);
-        this.errorMessage.set('Không thể tải danh sách người dùng');
+      error: (err) => {                     
+        console.error('Lỗi tải nhân viên:', err);
+        this.errorMessage.set('Không thể tải danh sách nhân viên');
         this.isLoading.set(false);
       },
     });
@@ -56,10 +53,10 @@ export class CustomerCrm implements OnInit {
 
   get filteredUsers() {
     const q = this.searchQuery.toLowerCase();
-    const customers = this.users().filter(u => u.role === 'customer');
+    const employees = this.users().filter(u => u.role === 'admin' || u.role === 'staff');
     
-    if (!q) return customers;
-    return customers.filter(
+    if (!q) return employees;
+    return employees.filter(
       (u) =>
         u.fullName.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
@@ -67,15 +64,13 @@ export class CustomerCrm implements OnInit {
     );
   }
 
-  // Mở modal TẠO MỚI
   openCreate() {
     this.isCreating.set(true);
     this.editingUser.set(null);
-    this.form = { role: 'customer' };
+    this.form = { role: 'staff' };
     this.showModal.set(true);
   }
 
-  // Mở modal SỬA
   openEdit(user: User) {
     this.isCreating.set(false);
     this.editingUser.set(user);
@@ -88,10 +83,9 @@ export class CustomerCrm implements OnInit {
   }
 
   save() {
-    // === VALIDATION TRƯỚC KHI GỬI ===
     if (!this.form.fullName?.trim() || !this.form.email?.trim()) {
       this.toastService.warning('Vui lòng điền đầy đủ Họ tên và Email');
-      return; // Dừng lại, không gọi API
+      return;
     }
 
     if (this.isCreating() && !this.form.password?.trim()) {
@@ -100,40 +94,30 @@ export class CustomerCrm implements OnInit {
     }
 
     if (this.isCreating()) {
-      // TẠO MỚI → POST /api/users
       const createData: CreateUser = {
         email: this.form.email || '',
         password: this.form.password || '',
         fullName: this.form.fullName || '',
         phone: this.form.phone || '', 
-        role: this.form.role || 'customer',
+        role: this.form.role || 'staff',
       };
       this.userService.create(createData).subscribe({
         next: () => {
-          this.toastService.success('Thêm người dùng thành công');
+          this.toastService.success('Thêm nhân viên thành công');
           this.loadUsers();
           this.closeModal();
           this.errorMessage.set('');
         },
         error: (err) => {
-          // Xử lý thông minh cho các loại lỗi 400 (Validation) từ Backend
-          let msg = 'Lỗi tạo người dùng';
+          let msg = 'Lỗi tạo nhân viên';
           if (err.error?.message) {
             msg = err.error.message;
-          } else if (err.error?.errors) {
-            // Lấy lỗi đầu tiên trong mảng lỗi chi tiết
-            const keys = Object.keys(err.error.errors);
-            if (keys.length > 0) msg = err.error.errors[keys[0]][0];
-          } else if (err.error?.title) {
-            msg = err.error.title;
           }
-          
           this.errorMessage.set(msg);
           this.toastService.error(msg);
         },
       });
     } else {
-      // CẬP NHẬT → PUT /api/users/:id
       const userId = this.editingUser()?.userId;
       if (!userId) return;
       const updateData: UpdateUser = {
@@ -151,13 +135,7 @@ export class CustomerCrm implements OnInit {
         },
         error: (err) => {
           let msg = 'Lỗi cập nhật';
-          if (err.error?.message) {
-            msg = err.error.message;
-          } else if (err.error?.errors) {
-            const keys = Object.keys(err.error.errors);
-            if (keys.length > 0) msg = err.error.errors[keys[0]][0];
-          }
-
+          if (err.error?.message) msg = err.error.message;
           this.errorMessage.set(msg);
           this.toastService.error(msg);
         },
@@ -166,19 +144,18 @@ export class CustomerCrm implements OnInit {
   }
 
   deleteUser(user: User) {
-    if (confirm(`Xóa người dùng "${user.fullName}"?`)) {
-      // DELETE /api/users/:id
+    if (confirm(`Xóa nhân viên "${user.fullName}"?`)) {
       this.userService.delete(user.userId).subscribe({
         next: () => {
-          this.toastService.success('Đã xóa người dùng');
+          this.toastService.success('Đã xóa nhân viên');
           this.loadUsers();
         },
-        error: () => this.toastService.error('Lỗi xóa người dùng'),
+        error: () => this.toastService.error('Lỗi xóa nhân viên'),
       });
     }
   }
 
-  getUserCountByRole(role: string) {
-    return this.users().filter((u) => u.role === role).length;
+  getEmployeeCount() {
+    return this.users().filter((u) => u.role === 'admin' || u.role === 'staff').length;
   }
 }

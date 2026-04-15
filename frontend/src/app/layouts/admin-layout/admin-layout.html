@@ -1,63 +1,117 @@
 <div class="flex flex-col h-screen overflow-hidden">
-    <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar -->
-        <aside class="w-64 border-r border-primary/10 bg-background-dark flex flex-col">
-            <div class="p-6 flex items-center gap-3 border-b border-primary/5">
-                <div class="size-10 bg-primary flex items-center justify-center rounded-lg shadow-[0_0_15px_rgba(0,229,255,0.4)]">
-                    <span class="material-symbols-outlined text-background-dark font-bold">bolt</span>
-                </div>
-                <div>
-                    <h1 class="font-neon text-xl font-bold tracking-wider text-primary">ZX ADMIN</h1>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-tighter font-bold">Panel Control</p>
-                </div>
-            </div>
-            <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
-                <a routerLink="/admin/dashboard" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span class="text-sm font-medium">Dashboard</span>
-                </a>
-                <a routerLink="/admin/inventory" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">inventory_2</span>
-                    <span class="text-sm font-medium">Inventory</span>
-                </a>
-                <a routerLink="/admin/manage-product" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">shopping_bag</span>
-                    <span class="text-sm font-medium">Products</span>
-                </a>
-                <a routerLink="/admin/manage-order" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">orders</span>
-                    <span class="text-sm font-medium">Orders</span>
-                </a>
-                <a routerLink="/admin/customer-crm" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">group</span>
-                    <span class="text-sm font-medium">Customers</span>
-                </a>
-                <a routerLink="/admin/category-hierarchy" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">account_tree</span>
-                    <span class="text-sm font-medium">Categories</span>
-                </a>
-                <a routerLink="/admin/cms-banner" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">image</span>
-                    <span class="text-sm font-medium">Banners</span>
-                </a>
-                <a routerLink="/admin/brand-management" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">branding_watermark</span>
-                    <span class="text-sm font-medium">Brands</span>
-                </a>
-                <a routerLink="/admin/cms-news" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">newspaper</span>
-                    <span class="text-sm font-medium">News</span>
-                </a>
-                <a routerLink="/admin/reviews" routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer">
-                    <span class="material-symbols-outlined">reviews</span>
-                    <span class="text-sm font-medium">Reviews</span>
-                </a>
-            </nav>
-        </aside>
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 border-r border-primary/10 bg-background-dark flex flex-col">
+      <div class="p-6 flex items-center gap-3 border-b border-primary/5">
+        <div
+          class="size-10 bg-primary flex items-center justify-center rounded-lg shadow-[0_0_15px_rgba(0,229,255,0.4)]"
+        >
+          <span class="material-symbols-outlined text-background-dark font-bold">bolt</span>
+        </div>
+        <div>
+          <h1 class="font-neon text-xl font-bold tracking-wider text-primary">ZX ADMIN</h1>
+          <p class="text-[10px] text-slate-400 uppercase tracking-tighter font-bold">
+            Panel Control
+          </p>
+        </div>
+      </div>
+      <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
+        <a
+          routerLink="/admin/dashboard"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="text-sm font-medium">Dashboard</span>
+        </a>
+        <a
+          routerLink="/admin/inventory"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">inventory_2</span>
+          <span class="text-sm font-medium">Inventory</span>
+        </a>
+        <a
+          routerLink="/admin/manage-product"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">shopping_bag</span>
+          <span class="text-sm font-medium">Products</span>
+        </a>
+        <a
+          routerLink="/admin/manage-order"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">orders</span>
+          <span class="text-sm font-medium">Orders</span>
+        </a>
+        <a
+          routerLink="/admin/customer-crm"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">group</span>
+          <span class="text-sm font-medium">Customers</span>
+        </a>
+        <a
+          routerLink="/admin/employee-management"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">badge</span>
+          <span class="text-sm font-medium">Employees</span>
+        </a>
+        <a
+          routerLink="/admin/category-hierarchy"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">account_tree</span>
+          <span class="text-sm font-medium">Categories</span>
+        </a>
+        <a
+          routerLink="/admin/cms-banner"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">image</span>
+          <span class="text-sm font-medium">Banners</span>
+        </a>
+        <a
+          routerLink="/admin/brand-management"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">branding_watermark</span>
+          <span class="text-sm font-medium">Brands</span>
+        </a>
+        <a
+          routerLink="/admin/cms-news"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">newspaper</span>
+          <span class="text-sm font-medium">News</span>
+        </a>
+        <a
+          routerLink="/admin/reviews"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">reviews</span>
+          <span class="text-sm font-medium">Reviews</span>
+        </a>
+      </nav>
+    </aside>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto bg-background-dark font-display text-slate-100 selection:bg-primary/30">
-            <router-outlet></router-outlet>
-        </main>
-    </div>
+    <!-- Main Content Area -->
+    <main
+      class="flex-1 overflow-y-auto bg-background-dark font-display text-slate-100 selection:bg-primary/30"
+    >
+      <router-outlet></router-outlet>
+    </main>
+  </div>
 </div>

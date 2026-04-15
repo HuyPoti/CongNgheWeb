@@ -48,6 +48,7 @@ public class CategoryService(IUnitOfWork uow, IMapper mapper) : ICategoryService
         }
 
         mapper.Map(dto, entity);
+        entity.UpdatedAt = DateTime.UtcNow;
         uow.Categories.Update(entity);
         await uow.SaveAsync(cancellationToken);
         return mapper.Map<CategoryDto>(entity);

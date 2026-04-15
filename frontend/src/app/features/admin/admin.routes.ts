@@ -8,6 +8,7 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'inventory', loadComponent: () => import('./inventory/inventory').then(m => m.Inventory) },
   { path: 'category-hierarchy', loadComponent: () => import('./category-hierarchy/category-hierarchy').then(m => m.CategoryHierarchy) },
   { path: 'customer-crm', loadComponent: () => import('./customer-crm/customer-crm').then(m => m.CustomerCrm) },
+  { path: 'employee-management', loadComponent: () => import('./employee-management/employee-management').then(m => m.EmployeeManagement) },
   { path: 'cms-banner', loadComponent: () => import('./cms-banner/cms-banner').then(m => m.CmsBanner) },
   { path: 'brand-management', loadComponent: () => import('./brand-management/brand-management').then(m => m.BrandManagement) },
   { path: 'cms-news', loadComponent: () => import('./cms-news/cms-news').then(m => m.CmsNews) },
