@@ -24,7 +24,15 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tech-news/tech-news').then(m => m.TechNews)
       },
       {
+        path: 'news',
+        loadComponent: () => import('./features/tech-news/tech-news').then(m => m.TechNews)
+      },
+      {
         path: 'tech-news/:id',
+        loadComponent: () => import('./features/tech-news/news-detail/news-detail').then(m => m.NewsDetail)
+      },
+      {
+        path: 'news/:id',
         loadComponent: () => import('./features/tech-news/news-detail/news-detail').then(m => m.NewsDetail)
       },
       {

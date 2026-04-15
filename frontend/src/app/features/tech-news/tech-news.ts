@@ -1,53 +1,123 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
+import { News, NewsCategory } from '../../core/models/news.model';
+import { NewsService } from '../../core/services/news.service';
 
 @Component({
   selector: 'app-tech-news',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './tech-news.html',
   styleUrl: './tech-news.css',
 })
-export class TechNews {
-  featuredNews = {
-    id: 1,
-    title: 'The Future of Neural Rendering: RTX 50 Series Leaks',
-    excerpt: 'Deep dive into next-gen Blackwell architecture and what it means for path-traced gaming.',
-    category: 'Hardware',
-    date: 'March 20, 2026',
-    author: 'Admin Alpha',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBPzThu9uEonp_i40D5SA5pcegCRyyySSmkTkcYjnhnbx-xSuglve6bU6zFH_opPtpzzBmLxJ6vhfnDXpA21sw3Cse0f3p-KyxTH66Y3xKZd2O_vaiN35OjISTDOgcop-okiQIAT8-wfI_0OmBYx2ZOGFBtHb0WZzjGxhf0kN-_NmZ5d2c5-AZ9uREbBwy5a5GiTcHT_0-cZuIhuW_rAOGxWGjeBIE5ayveBnscDdeXORGf0cZbJOYySRkfe10rONj0RpiP9b0q365d',
-    tag: 'Trending'
-  };
+export class TechNews implements OnInit {
+  private newsService = inject(NewsService);
 
-  newsList = [
-    {
-      id: 2,
-      title: 'DDR6 Memory Standards Finalized',
-      excerpt: 'JEDEC releases specifications for next-generation system memory with speeds up to 12800 MT/s.',
-      category: 'Memory',
-      date: 'March 18, 2026',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBp-tO3xWBeb3zfbzG_DfHvADBqcwjQ2o-OFfFfnJ-ssgsrqN2uHExcRLoFQ-JTGJw6xSERTF7WGTcMIcYs71CXF3tbfgBrXkCs3WaZQc5EnNmmUPXFBU4_PG1jTqPN1f6Dbqze3BAR6gaynB7Iotj5SmDLcpJc5IVHHafqgVio5l4JtI89IMBI9o4RBh9ojmPhZTM2bD6KPsUrdkQ8kY3Z1IsoZbaKJrW1262HRoxLYGfRQ5Q0799Gg3SFy54cVZm-p1N-NwKxX1FI'
-    },
-    {
-      id: 3,
-      title: 'Linux Gaming Market Share Hits 5%',
-      excerpt: 'Proton and Steam Deck continue to push alternative operating systems into the mainstream gaming space.',
-      category: 'Software',
-      date: 'March 15, 2026',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCCn4gtyeJ2CaW7u2H189BkhzWyKr1mEWWeZrhgk-HzJFGA5bQugLrIlObsC-tcIfiF10HYYP4tsMhFZkPPCJoQmJhj0KS-a9b59ElgLyEuv7FtTwmnrIDvvWO6kmxbBv9qAqZve82LbSCSAicD9EQ6ND0w5mD-rrBWTAd-xywajRgVv3_GtYhrow0dDLfm8gy2uO13_1nKn-T5-tWf7HjRQqW4N3spxbK9Bns9ByXcyKgop0Z9VYxpLikYQJ0jfWEZwfkwp6yp8jZ2'
-    },
-    {
-        id: 4,
-        title: 'PCIe 7.0 Deployment in Data Centers',
-        excerpt: 'Enterprise storage solutions begin adopting the ultra-bandwidth interface for next-gen AI training.',
-        category: 'Interface',
-        date: 'March 12, 2026',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAgWijPBQPecdF0fcD6xuyJulf79DsZ4Rhx0zl_3gAeOwJW4zg3ePmaQ7__BaG7oEr6pkVQ9IvfMPs7QJtf3S0CLRWiqlzH-5ds8T7tiVE5NmUMee-vk4imksDZop3g6A07Q0fDjP8e6S_DUQr7DKZT3t0KQfSfweZguk5dcejfe7VbfC6_G3c6dI4a_PsesVw0HmEuTWtAaQvZEW9oygXJzdIZBgJClqP1zXUvcLXb35I8ZjFsVGvjN5rO9Sn_yVYlQBe2CA_JDkXQ'
+  protected readonly fallbackImage = 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80';
+  protected loading = signal(true);
+  protected error = signal('');
+  protected activeCategory = signal('All');
+  protected searchKeyword = signal('');
+
+  private allNews = signal<News[]>([]);
+  private categoriesData = signal<NewsCategory[]>([]);
+
+  protected categories = computed(() => [
+    'All',
+    ...this.categoriesData()
+      .filter((cat) => cat.isActive)
+      .map((cat) => cat.name),
+  ]);
+
+  protected filteredNews = computed(() => {
+    const selectedCategory = this.activeCategory();
+    const keyword = this.searchKeyword().trim().toLowerCase();
+
+    return this.allNews().filter((news) => {
+      const isPublished = news.isPublished;
+      const isActive = news.isActive ?? true;
+      const categoryName = this.getCategoryName(news).toLowerCase();
+      const matchCategory = selectedCategory === 'All' || categoryName === selectedCategory.toLowerCase();
+      const matchKeyword =
+        keyword.length === 0 ||
+        news.title.toLowerCase().includes(keyword) ||
+        (news.excerpt ?? '').toLowerCase().includes(keyword);
+
+      return isPublished && isActive && matchCategory && matchKeyword;
+    });
+  });
+
+  protected featuredNews = computed(() => this.filteredNews()[0] ?? null);
+  protected newsList = computed(() => this.filteredNews().slice(1));
+
+  ngOnInit(): void {
+    this.loadCategories();
+    this.loadNews();
+  }
+
+  protected selectCategory(category: string): void {
+    this.activeCategory.set(category);
+  }
+
+  protected updateSearch(value: string): void {
+    this.searchKeyword.set(value);
+  }
+
+  protected getCategoryName(news: News): string {
+    if (news.categoryName) {
+      return news.categoryName;
     }
-  ];
 
-  categories = ['All', 'Hardware', 'Software', 'Gaming', 'AI', 'Deals'];
+    const matched = this.categoriesData().find(
+      (cat) => cat.categoryId.toLowerCase() === news.categoryId.toLowerCase(),
+    );
+
+    return matched?.name ?? 'General';
+  }
+
+  protected getDisplayDate(news: News): string {
+    const sourceDate = news.publishedAt ?? news.createdAt;
+    if (!sourceDate) {
+      return '';
+    }
+
+    return new Date(sourceDate).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  private loadNews(): void {
+    this.loading.set(true);
+    this.error.set('');
+
+    this.newsService.getNews().subscribe({
+      next: (news) => {
+        const sortedNews = [...news].sort(
+          (left, right) =>
+            new Date(right.publishedAt ?? right.createdAt).getTime() -
+            new Date(left.publishedAt ?? left.createdAt).getTime(),
+        );
+        this.allNews.set(sortedNews);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Không thể tải dữ liệu tin tức. Vui lòng thử lại.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private loadCategories(): void {
+    this.newsService.getCategories().subscribe({
+      next: (categories) => this.categoriesData.set(categories),
+      error: () => {
+        this.categoriesData.set([]);
+      },
+    });
+  }
 }

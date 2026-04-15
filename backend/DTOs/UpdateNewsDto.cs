@@ -8,5 +8,6 @@ public class UpdateNewsDto
     public Guid? CategoryId { get; set; }
     public string? ImageUrl { get; set; }
     public string? Excerpt { get; set; }
+    public bool? IsActive { get; set; }
     public bool? IsPublished { get; set; }
 }

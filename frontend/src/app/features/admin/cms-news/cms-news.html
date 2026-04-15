@@ -36,7 +36,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (news of newsList(); track news.newId) {
+          @for (news of newsList(); track news.newsId) {
             <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
               <td class="px-5 py-3">
                 @if (news.imageUrl) {

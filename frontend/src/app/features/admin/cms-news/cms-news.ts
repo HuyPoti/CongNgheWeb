@@ -49,7 +49,14 @@ export class CmsNews implements OnInit {
     });
 
     this.newsService.getNews().subscribe({
-      next: (data) => this.newsList.set(data),
+      next: (data) => {
+        const normalized = data.map((item) => ({
+          ...item,
+          categoryId: item.categoryId?.toLowerCase() ?? '',
+          isActive: item.isActive ?? true,
+        }));
+        this.newsList.set(normalized);
+      },
       error: () => this.toast.error('Lỗi tải danh sách bài viết')
     });
   }
@@ -166,7 +173,7 @@ export class CmsNews implements OnInit {
     }
 
     if (this.editingNews()) {
-      const id = this.editingNews()!.newId;
+      const id = this.editingNews()!.newsId;
       const updateData: UpdateNews = {
         title: this.form.title,
         slug: this.form.slug,
@@ -174,6 +181,7 @@ export class CmsNews implements OnInit {
         content: this.form.content ?? '',
         excerpt: this.form.excerpt,
         imageUrl: this.form.imageUrl,
+        isActive: this.form.isActive,
         isPublished: this.form.isPublished,
         metaTitle: this.form.metaTitle,
         metaDescription: this.form.metaDescription
@@ -214,7 +222,7 @@ export class CmsNews implements OnInit {
 
   deleteArticle(news: News) {
     if (confirm(`Xóa bài viết "${news.title}"?`)) {
-      this.newsService.deleteNews(news.newId).subscribe({
+      this.newsService.deleteNews(news.newsId).subscribe({
         next: () => {
           this.toast.success('Đã xóa bài viết');
           this.loadData();
@@ -227,7 +235,7 @@ export class CmsNews implements OnInit {
   togglePublish(news: News) {
     const updateData: UpdateNews = { isPublished: !news.isPublished };
     
-    this.newsService.updateNews(news.newId, updateData).subscribe({
+    this.newsService.updateNews(news.newsId, updateData).subscribe({
       next: () => {
         this.toast.info(updateData.isPublished ? 'Đã xuất bản bài viết' : 'Đã gỡ bài viết');
         this.loadData();
