@@ -9,5 +9,6 @@ public class CreateNewsDto
     public Guid AuthorId { get; set; }
     public string? ImageUrl { get; set; }
     public string? Excerpt { get; set; }
+    public bool IsActive { get; set; } = true;
     public bool IsPublished { get; set; }
 }

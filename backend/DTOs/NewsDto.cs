@@ -11,7 +11,11 @@ public class NewsDto
     public Guid CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public string? AuthorName { get; set; }
+    public bool IsActive { get; set; }
     public bool IsPublished { get; set; }
+    public DateTime? PublishedAt { get; set; }
     public int Views { get; set; }
+    public string? MetaTitle { get; set; }
+    public string? MetaDescription { get; set; }
     public DateTime CreatedAt { get; set; }
 }

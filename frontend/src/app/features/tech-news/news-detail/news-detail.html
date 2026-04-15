@@ -1,83 +1,76 @@
 <main class="min-h-screen relative bg-background-light dark:bg-background-dark transition-colors duration-500 pb-20 overflow-x-hidden">
-    <!-- Hero Image Section (Cinematic) -->
-    <div class="relative h-[65vh] w-full overflow-hidden">
-        <div class="absolute inset-0 z-10 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/40 dark:from-background-dark/40 to-transparent"></div>
-        <div class="absolute inset-0 z-10 bg-gradient-to-r from-background-light dark:from-background-dark/80 via-transparent to-transparent"></div>
-        <img [src]="article().image" class="w-full h-full object-cover animate-pulse-slow scale-110 group-hover:scale-100 transition-transform duration-10000" [alt]="article().title"/>
-        
-        <!-- Hero Content Overlay -->
-        <div class="absolute bottom-0 left-0 w-full z-20 p-6 md:p-20 max-w-7xl mx-auto">
-            <div class="animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                <div class="flex items-center gap-4 mb-8">
-                    <span class="px-6 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl shadow-primary/40">{{ article().category }}</span>
-                    <div class="h-px w-20 bg-primary/30"></div>
-                    <span class="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">{{ article().date }}</span>
-                </div>
-                <h1 class="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-8 tracking-tighter leading-[1.05] uppercase max-w-4xl">{{ article().title }}</h1>
-                <div class="flex items-center gap-6">
-                    <div class="flex items-center gap-3">
-                        <div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 flex items-center justify-center font-black text-xs">OV</div>
-                        <span class="text-sm font-bold text-slate-800 dark:text-slate-200">Written by {{ article().author }}</span>
+    @if (loading()) {
+        <div class="max-w-4xl mx-auto px-6 py-32">
+            <div class="h-72 rounded-[2rem] bg-slate-200/70 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-10 mt-10 rounded-xl bg-slate-200/70 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-6 mt-6 rounded-xl bg-slate-200/70 dark:bg-white/10 animate-pulse"></div>
+        </div>
+    } @else if (error()) {
+        <div class="max-w-4xl mx-auto px-6 py-32">
+            <div class="rounded-3xl border border-red-300/40 bg-red-500/10 px-8 py-10 text-center text-red-200">
+                {{ error() }}
+            </div>
+            <div class="mt-10 flex justify-center">
+                <a routerLink="/tech-news" class="text-primary text-sm font-bold uppercase tracking-[0.15em]">Quay lại danh sách tin</a>
+            </div>
+        </div>
+    } @else if (article(); as article) {
+        <!-- Hero Image Section (Cinematic) -->
+        <div class="relative h-[65vh] w-full overflow-hidden">
+            <div class="absolute inset-0 z-10 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/40 dark:from-background-dark/40 to-transparent"></div>
+            <div class="absolute inset-0 z-10 bg-gradient-to-r from-background-light dark:from-background-dark/80 via-transparent to-transparent"></div>
+            <img [src]="article.imageUrl || fallbackImage" class="w-full h-full object-cover animate-pulse-slow scale-110 group-hover:scale-100 transition-transform duration-10000" [alt]="article.title"/>
+
+            <!-- Hero Content Overlay -->
+            <div class="absolute bottom-0 left-0 w-full z-20 p-6 md:p-20 max-w-7xl mx-auto">
+                <div class="animate-in fade-in slide-in-from-bottom-12 duration-1000">
+                    <div class="flex items-center gap-4 mb-8 flex-wrap">
+                        <span class="px-6 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-full shadow-2xl shadow-primary/40">{{ article.categoryName || 'Tin công nghệ' }}</span>
+                        <div class="h-px w-20 bg-primary/30"></div>
+                        <span class="text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">{{ getDisplayDate(article) }}</span>
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-8 tracking-tighter leading-[1.05] uppercase max-w-4xl">{{ article.title }}</h1>
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 flex items-center justify-center font-black text-xs">NW</div>
+                            <span class="text-sm font-bold text-slate-800 dark:text-slate-200">Written by {{ article.authorName || 'Admin' }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Article Content -->
-    <article class="max-w-4xl mx-auto px-6 mt-20 relative z-30">
-        <div class="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-            @for (block of article().content; track $index) {
-                @if (block.type === 'p') {
-                    <p class="text-xl md:text-2xl text-slate-600 dark:text-slate-300 font-medium leading-relaxed first-letter:text-6xl first-letter:font-black first-letter:text-primary first-letter:mr-3 first-letter:float-left first-letter:leading-[0.8]">
-                        {{ block.text }}
+        <!-- Article Content -->
+        <article class="max-w-4xl mx-auto px-6 mt-20 relative z-30">
+            @if (article.excerpt) {
+                <p class="text-lg md:text-xl text-slate-500 dark:text-slate-300 mb-12 border-l-4 border-primary pl-6 italic">
+                    {{ article.excerpt }}
+                </p>
+            }
+
+            <div class="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                @for (paragraph of getArticleParagraphs(article.content); track $index) {
+                    <p class="text-lg md:text-xl text-slate-600 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-line">
+                        {{ paragraph }}
                     </p>
                 }
-                @if (block.type === 'h2') {
-                    <h2 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white pt-10 pb-4 border-l-8 border-primary pl-8 uppercase tracking-tight">
-                        {{ block.text }}
-                    </h2>
-                }
-                @if (block.type === 'image') {
-                    <div class="group my-16 space-y-4">
-                        <div class="aspect-video rounded-[3rem] overflow-hidden border border-slate-100 dark:border-white/5 shadow-2xl relative">
-                             <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" [alt]="block.caption" [src]="block.url"/>
-                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-center italic">{{ block.caption }}</p>
+            </div>
+
+            <div class="mt-24 pt-12 border-t border-slate-100 dark:border-white/5 animate-in fade-in duration-1000 delay-500">
+                <div class="bg-white dark:bg-surface-dark rounded-[3rem] p-12 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none flex flex-col md:flex-row items-center justify-between gap-10">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Tổng quan bài viết</h3>
+                        <p class="text-slate-500 dark:text-slate-400 font-medium">Lượt xem: {{ article.views | number }} | Trạng thái: {{ article.isPublished ? 'Published' : 'Draft' }}</p>
                     </div>
-                }
-            }
-        </div>
-
-        <!-- Footer / Tags -->
-        <div class="mt-24 pt-12 border-t border-slate-100 dark:border-white/5 animate-in fade-in duration-1000 delay-500">
-            <div class="flex flex-wrap items-center gap-4 mb-16">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Digital Tags:</span>
-                @for (tag of article().tags; track tag) {
-                    <span class="px-5 py-2 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-full text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-primary hover:border-primary transition-all cursor-pointer">
-                        #{{ tag }}
-                    </span>
-                }
-            </div>
-
-            <div class="bg-white dark:bg-surface-dark rounded-[3rem] p-12 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none flex flex-col md:flex-row items-center justify-between gap-10">
-                <div class="flex-1">
-                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Newsletter Staging</h3>
-                    <p class="text-slate-500 dark:text-slate-400 font-medium">Join 20k+ operators getting the latest hardware intel weekly.</p>
-                </div>
-                <div class="relative w-full md:w-96">
-                    <input type="email" placeholder="operativ@example.com" class="w-full h-16 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-6 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"/>
-                    <button class="absolute right-2 top-2 h-12 px-6 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all">Subscribe</button>
                 </div>
             </div>
-        </div>
-        
-        <div class="mt-20 flex justify-center">
-            <a routerLink="/tech-news" class="group flex items-center gap-4 text-[11px] font-black text-primary uppercase tracking-[0.4em] hover:translate-x-[-10px] transition-transform">
-                <span class="material-symbols-outlined text-xl group-hover:animate-vibrate font-bold">arrow_back</span>
-                Return to Intelligence Hub
-            </a>
-        </div>
-    </article>
+
+            <div class="mt-20 flex justify-center">
+                <a routerLink="/tech-news" class="group flex items-center gap-4 text-[11px] font-black text-primary uppercase tracking-[0.4em] hover:translate-x-[-10px] transition-transform">
+                    <span class="material-symbols-outlined text-xl group-hover:animate-vibrate font-bold">arrow_back</span>
+                    Return to Intelligence Hub
+                </a>
+            </div>
+        </article>
+    }
 </main>

@@ -19,21 +19,32 @@ export interface CreateNewsCategory {
 export type UpdateNewsCategory = Partial<CreateNewsCategory>;
 
 export interface News {
-  newId: string; // Tên ID khớp DB (Guid)
+  newsId: string;
   title: string;
   slug: string;
   categoryId: string;
   categoryName?: string;
   content: string;
   excerpt?: string;
-  authorId: string;
+  authorName?: string;
+  authorId?: string;
   imageUrl?: string;
-  isActive: boolean;
+  isActive?: boolean;
   isPublished: boolean;
   publishedAt?: string | null;
   views: number;
+  createdAt: string;
   metaTitle?: string;
   metaDescription?: string;
+}
+
+export interface NewsQueryParams {
+  isPublished?: boolean;
+  isActive?: boolean;
+  categoryId?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface CreateNews {
