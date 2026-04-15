@@ -7,7 +7,7 @@ export const TRANSLATIONS = {
     'nav.news': 'Tin tức',
     'nav.reviews': 'Đánh giá',
     'nav.login': 'Đăng nhập',
-    
+
     'home.hero_title': 'SIÊU ƯU ĐÃI THÁNG 5',
     'home.hero_subtitle': 'SẢN PHẨM CÔNG NGHỆ CHÍNH HÃNG - GIÁ TỐT NHẤT',
     'home.flash_sale': 'GIỜ VÀNG GIÁ SỐC',
@@ -17,7 +17,7 @@ export const TRANSLATIONS = {
     'home.shipping': 'Giao hàng toàn quốc',
     'home.support': 'Hỗ trợ 24/7',
     'home.hotline': 'Hotline: 1900 1234',
-    'home.sold_count': 'Đã bán [[count]]/[[total]]',
+    'home.sold_count': 'Đã bán',
     'home.status_stock': 'Còn hàng',
     'home.featured_laptops': 'LAPTOP GAMING NỔI BẬT',
     'home.promo_tag': 'SIÊU ƯU ĐÃI THÁNG 5',
@@ -33,7 +33,7 @@ export const TRANSLATIONS = {
     'home.cat_mice': 'Chuột & Lót chuột',
     'home.cat_audio': 'Tai nghe & Loa',
     'home.cat_furniture': 'Bàn ghế Gaming',
-    
+
     // Product List
     'product.list_title': 'Danh sách sản phẩm',
     'product.filter_price': 'Khoảng giá',
@@ -69,7 +69,7 @@ export const TRANSLATIONS = {
     'product.submit_review': 'Gửi đánh giá',
     'product.cancel': 'Huỷ',
     'product.nationwide_delivery': 'Giao hàng toàn quốc',
-    
+
     // Product Detail
     'product.loading': 'Đang tải sản phẩm...',
     'product.home_link': 'Về trang chủ',
@@ -95,7 +95,7 @@ export const TRANSLATIONS = {
     'product.compare_status': 'So sánh cấu trúc',
     'product.new': 'Mới',
     'product.filter_category': 'Danh mục',
-    
+
     // Cart & Checkout
     'cart.title': 'Giỏ hàng',
     'cart.subtitle': 'Danh sách sản phẩm chờ thanh toán',
@@ -130,7 +130,7 @@ export const TRANSLATIONS = {
     'cart.final_clearance': 'Xác nhận cuối cùng',
     'cart.auth_node': 'Nút xác thực',
     'cart.complete_steps': 'Hoàn thành các bước để triển khai',
-    
+
     // News
     'news.title': 'Tin công nghệ',
     'news.read_more': 'Đọc tiếp',
@@ -156,7 +156,7 @@ export const TRANSLATIONS = {
     'compare.select_another': 'Chọn thêm sản phẩm',
     'compare.another_desc': 'Chọn thêm sản phẩm thứ hai để bắt đầu so sánh.',
     'compare.view_details': 'Xem chi tiết',
-    
+
     // User Settings
     'settings.title': 'Cài đặt hệ thống',
     'settings.subtitle': 'Quản lý tài khoản, bảo mật và tùy chỉnh giao diện',
@@ -218,14 +218,14 @@ export const TRANSLATIONS = {
     'user.profile_confirm_pwd': 'Xác nhận mật khẩu mới',
     'user.profile_update_pwd': 'Cập nhật mật khẩu',
     'settings.all': 'Tất cả',
-    
+
     // User Sidebar
     'user.sidebar_overview': 'Tổng quan',
     'user.sidebar_orders': 'Đơn hàng',
     'user.sidebar_tracking': 'Theo dõi đơn hàng',
     'user.sidebar_settings': 'Cài đặt',
     'user.sidebar_logout': 'Đăng xuất',
-    
+
     // Orders
     'orders.title': 'Lịch sử đơn hàng',
     'orders.subtitle': 'Lịch sử triển khai và tình trạng vận chuyển',
@@ -245,7 +245,7 @@ export const TRANSLATIONS = {
     'orders.status_deployed': 'Triển khai thành công',
     'orders.closed_at': 'Hoàn thành lúc:',
     'orders.view_receipt': 'Xem biên lai',
-    
+
     // Tracking
     'tracking.title': 'Theo dõi nhịp đơn hàng',
     'tracking.order_id': 'Mã đơn hàng:',
@@ -268,7 +268,7 @@ export const TRANSLATIONS = {
     'tracking.log_arrived': 'Đã đến kho phân loại',
     'tracking.log_picked': 'Đã lấy hàng',
     'tracking.log_received': 'Đã nhận thông tin',
-    
+
     // Build PC
     'build.pc_title': 'Xây dựng cấu hình PC',
     'build.pc_subtitle': 'Tùy chỉnh hệ thống tối cao của riêng bạn',
@@ -296,7 +296,7 @@ export const TRANSLATIONS = {
     'build.status_pending': 'Chưa thực hiện',
     'build.already_selected': 'Đã chọn',
     'build.select_component': 'Chọn linh kiện',
-    
+
     // Admin Dashboard
     'admin.dashboard_title': 'Bảng điều khiển',
     'admin.total_sales': 'Tổng số lượng bán',
@@ -321,7 +321,7 @@ export const TRANSLATIONS = {
     'admin.cat_fashion': 'Thời trang',
     'admin.cat_home': 'Đồ gia dụng',
     'admin.cat_others': 'Khác',
-    
+
     // Manage Product
     'admin.manage.prod_title': 'Quản lý Sản phẩm',
     'admin.manage.add_prod': 'Thêm sản phẩm',
@@ -358,7 +358,7 @@ export const TRANSLATIONS = {
     'admin.manage.placeholder_spec_key': 'Key (VD: RAM)',
     'admin.manage.placeholder_spec_val': 'Value (VD: 32GB DDR5)',
     'admin.manage.add': 'Thêm',
-    
+
     // Days
     'days.mon': 'Thứ 2',
     'days.tue': 'Thứ 3',
@@ -376,7 +376,7 @@ export const TRANSLATIONS = {
     'nav.news': 'News',
     'nav.reviews': 'Reviews',
     'nav.login': 'Login',
-    
+
     // Home
     'home.hero_title': 'MAY SUPER DEALS',
     'home.hero_subtitle': 'GENUINE TECH PRODUCTS - BEST PRICES',
@@ -403,7 +403,7 @@ export const TRANSLATIONS = {
     'home.cat_mice': 'Mice & Pads',
     'home.cat_audio': 'Audio & Speakers',
     'home.cat_furniture': 'Gaming Furniture',
-    
+
     // Product List
     'product.list_title': 'Product Catalog',
     'product.filter_price': 'Price Range',
@@ -439,7 +439,7 @@ export const TRANSLATIONS = {
     'product.submit_review': 'Submit Review',
     'product.cancel': 'Cancel',
     'product.nationwide_delivery': 'Nationwide Delivery',
-    
+
     // Cart & Checkout
     'cart.title': 'Cart Array',
     'cart.subtitle': 'Inventory awaiting deployment',
@@ -474,7 +474,7 @@ export const TRANSLATIONS = {
     'cart.final_clearance': 'Final Clearance',
     'cart.auth_node': 'Authenticated Node',
     'cart.complete_steps': 'Complete Steps for Deployment',
-    
+
     // Product Detail
     'product.loading': 'Loading product...',
     'product.home_link': 'Back to home',
@@ -500,7 +500,7 @@ export const TRANSLATIONS = {
     'product.compare_status': 'Compare Matrix',
     'product.new': 'New',
     'product.filter_category': 'Category',
-    
+
     // News
     'news.title': 'Tech Intelligence',
     'news.read_more': 'Continue Decryption',
@@ -521,12 +521,13 @@ export const TRANSLATIONS = {
     'compare.title': 'Product Comparison',
     'compare.subtitle': 'Side-by-side comparison of your selected products.',
     'compare.no_products': 'No Products Selected',
-    'compare.no_products_desc': 'Go to the product listing and click the compare button on 2 products to start.',
+    'compare.no_products_desc':
+      'Go to the product listing and click the compare button on 2 products to start.',
     'compare.browse_products': 'Browse Products',
     'compare.select_another': 'Select Another Product',
     'compare.another_desc': 'Choose a second product to compare.',
     'compare.view_details': 'View Details',
-    
+
     // User Settings
     'settings.title': 'System Settings',
     'settings.subtitle': 'Manage account, security, and interface preferences',
@@ -588,14 +589,14 @@ export const TRANSLATIONS = {
     'user.profile_confirm_pwd': 'Confirm New Password',
     'user.profile_update_pwd': 'Update Password',
     'settings.all': 'All',
-    
+
     // User Sidebar
     'user.sidebar_overview': 'Overview',
     'user.sidebar_orders': 'My Orders',
     'user.sidebar_tracking': 'Track Order',
     'user.sidebar_settings': 'Settings',
     'user.sidebar_logout': 'Logout',
-    
+
     // Orders
     'orders.title': 'Order Archives',
     'orders.subtitle': 'Deployment history and dispatch status',
@@ -615,7 +616,7 @@ export const TRANSLATIONS = {
     'orders.status_deployed': 'Successfully Deployed',
     'orders.closed_at': 'Closed at:',
     'orders.view_receipt': 'View Receipt',
-    
+
     // Tracking
     'tracking.title': 'Track Your Pulse',
     'tracking.order_id': 'Order ID:',
@@ -638,7 +639,7 @@ export const TRANSLATIONS = {
     'tracking.log_arrived': 'Arrived at Sorting Facility',
     'tracking.log_picked': 'Package Picked Up',
     'tracking.log_received': 'Information Received',
-    
+
     // Build PC
     'build.pc_title': 'Forge Your PC Array',
     'build.pc_subtitle': 'CUSTOMIZE YOUR SUPREME SYSTEM ARCHITECTURE',
@@ -666,7 +667,7 @@ export const TRANSLATIONS = {
     'build.status_pending': 'Pending',
     'build.already_selected': 'Selected',
     'build.select_component': 'Select Component',
-    
+
     // Admin Dashboard
     'admin.dashboard_title': 'Command Center',
     'admin.total_sales': 'Total Sales',
@@ -691,7 +692,7 @@ export const TRANSLATIONS = {
     'admin.cat_fashion': 'Fashion',
     'admin.cat_home': 'Home',
     'admin.cat_others': 'Others',
-    
+
     // Manage Product
     'admin.manage.prod_title': 'Product Management',
     'admin.manage.add_prod': 'Add Product',
@@ -728,7 +729,7 @@ export const TRANSLATIONS = {
     'admin.manage.placeholder_spec_key': 'Key (Ex: RAM)',
     'admin.manage.placeholder_spec_val': 'Value (Ex: 32GB DDR5)',
     'admin.manage.add': 'Add',
-    
+
     // Days
     'days.mon': 'Mon',
     'days.tue': 'Tue',
@@ -737,5 +738,5 @@ export const TRANSLATIONS = {
     'days.fri': 'Fri',
     'days.sat': 'Sat',
     'days.sun': 'Sun',
-  }
+  },
 };

@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
+  ClientProductsQuery,
   ProductListResponse,
   ProductDto,
   ProductFullDto,
@@ -21,23 +21,20 @@ export class ProductService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/product`;
   private productsUrl = `${environment.apiUrl}/products`;
-  private clientProductsCache = new Map<string, ProductListResponse>();
 
-  clearCache(): void {
-    this.clientProductsCache.clear();
-  }
+  fetchClientProducts(query: ClientProductsQuery = {}): Observable<ProductListResponse> {
+    let params = new HttpParams()
+      .set('page', String(query.page ?? 1))
+      .set('pageSize', String(query.pageSize ?? 12));
 
-  // ── Client-facing ──────────────────────────────────────────────
+    if (query.categorySlug) params = params.set('categorySlug', query.categorySlug);
+    if (query.keyword?.trim()) params = params.set('keyword', query.keyword.trim());
+    if (query.brandId) params = params.set('brandId', query.brandId);
+    if (query.minPrice != null) params = params.set('minPrice', String(query.minPrice));
+    if (query.maxPrice != null) params = params.set('maxPrice', String(query.maxPrice));
+    if (query.sortBy) params = params.set('sortBy', query.sortBy);
 
-  fetchClientProducts(page = 1, pageSize = 12, categorySlug?: string): Observable<ProductListResponse> {
-    const cacheKey = `${page}-${pageSize}-${categorySlug || 'all'}`;
-    let url = `${this.baseUrl}/client?page=${page}&pageSize=${pageSize}`;
-    if (categorySlug) {
-      url += `&categorySlug=${categorySlug}`;
-    }
-    return this.http.get<ProductListResponse>(url).pipe(
-      tap((res) => this.clientProductsCache.set(cacheKey, res))
-    );
+    return this.http.get<ProductListResponse>(`${this.baseUrl}/client`, { params });
   }
 
   // ── Admin CRUD ─────────────────────────────────────────────────
@@ -53,10 +50,12 @@ export class ProductService {
     let params = new HttpParams()
       .set('page', String(opts?.page ?? 1))
       .set('pageSize', String(opts?.pageSize ?? 20));
+
     if (opts?.keyword) params = params.set('keyword', opts.keyword);
     if (opts?.categoryId) params = params.set('categoryId', opts.categoryId);
     if (opts?.minPrice != null) params = params.set('minPrice', String(opts.minPrice));
     if (opts?.maxPrice != null) params = params.set('maxPrice', String(opts.maxPrice));
+
     return this.http.get<PagedProductResponse>(this.baseUrl, { params });
   }
 
@@ -73,21 +72,15 @@ export class ProductService {
   }
 
   create(dto: CreateProductDto): Observable<ProductDto> {
-    return this.http.post<ProductDto>(this.baseUrl, dto).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.http.post<ProductDto>(this.baseUrl, dto);
   }
 
   update(id: string, dto: UpdateProductDto): Observable<ProductDto> {
-    return this.http.put<ProductDto>(`${this.baseUrl}/${id}`, dto).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.http.put<ProductDto>(`${this.baseUrl}/${id}`, dto);
   }
 
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   // ── Product Images ─────────────────────────────────────────────

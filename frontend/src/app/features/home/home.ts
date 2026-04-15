@@ -1,11 +1,12 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, of } from 'rxjs'; // Thêm 'of'
+import { catchError, finalize } from 'rxjs/operators'; // Thêm catchError và finalize
 import { BannerService } from '../../core/services/banner.service';
 import { Banner } from '../../core/models/banner.model';
 import { ProductService } from '../../core/services/product.service';
-import { ProductCard, ProductListItemDto, ProductListResponse } from '../../core/models/product.model';
+import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
 import { ComparisonService, CompareProduct } from '../../core/services/comparison';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { CategoryService } from '../../core/services/category.service';
@@ -14,14 +15,12 @@ import { Category } from '../../core/models/category.model';
 export interface ClientBanner {
   id: string;
   title: string;
-  subtitle?: string;
+  subtitle: string;
   imageUrl: string;
-  linkUrl?: string;
+  linkUrl: string;
   targetAlt: string;
   status: 'Live' | 'Draft';
   position: string;
-  lastUpdated: string;
-  author: string;
 }
 
 @Component({
@@ -29,204 +28,210 @@ export interface ClientBanner {
   standalone: true,
   imports: [RouterLink, CommonModule, TranslatePipe],
   templateUrl: './home.html',
-  styles: ``,
 })
 export class HomeComponent implements OnInit {
-  private bannerService = inject(BannerService);
-  private productService = inject(ProductService);
-  private router = inject(Router);
-  private categoryService = inject(CategoryService);
-  private mapToCard(p: ProductListItemDto): ProductCard {
-    return {
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      image: p.thumbnailUrl || 'path_to_default_img',
-      category: p.categoryName,
-      specs: {}
-    };
-  }
-  // 2. Viết hàm tải sản phẩm theo Category
-  // 2. Sửa lại hàm loadSection
+  private readonly bannerService = inject(BannerService);
+  private readonly productService = inject(ProductService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+  readonly comparisonService = inject(ComparisonService);
+
+  // ── State ────────────────────────────────────────────────────────
+  banners: ClientBanner[] = [];
+  featuredProducts: ProductCard[] = [];
   productSections: Record<'cpu' | 'gpu' | 'ram' | 'mainboard', ProductCard[]> = {
     cpu: [],
     gpu: [],
     ram: [],
-    mainboard: []
+    mainboard: [],
   };
-  private loadSection(catSlug: string): Observable<ProductListResponse> {
-    return this.productService.fetchClientProducts(1, 5, catSlug);
-  }
-  comparisonService = inject(ComparisonService);
-
-  // mainCategories = [
-  //   { name: 'home.cat_laptop', icon: 'laptop_mac', slug: 'laptop' },
-  //   { name: 'home.cat_pc', icon: 'desktop_windows', slug: 'pc-gaming' },
-  //   { name: 'home.cat_components', icon: 'memory', slug: 'pc-components' },
-  //   { name: 'home.cat_monitors', icon: 'monitor', slug: 'monitors' },
-  //   { name: 'home.cat_keyboards', icon: 'keyboard', slug: 'keyboards' },
-  //   { name: 'home.cat_mice', icon: 'mouse', slug: 'mice' },
-  //   { name: 'home.cat_audio', icon: 'headset', slug: 'audio' },
-  //   { name: 'home.cat_furniture', icon: 'chair', slug: 'gaming-furniture' },
-  // ];
-
-  banners: ClientBanner[] = [];
-  featuredProducts: ProductCard[] = [];
-  laptopGaming: ProductCard[] = [];
-  pcGaming: ProductCard[] = [];
-  monitors: ProductCard[] = [];
-  accessories: ProductCard[] = [];
-  isLoading = true;
   dbCategories: Category[] = [];
+  isLoading = true;
   isBannersLoading = true;
 
+  // ── Lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
-    this.isLoading = true;
-    this.loadBanners();
-    this.loadCategories();
-
-    // Tải đồng thời tất cả các mục sản phẩm để skeleton biến mất cùng lúc
-    forkJoin({
-      featured: this.productService.fetchClientProducts(1, 20),
-      cpu: this.loadSection('cpu'),
-      gpu: this.loadSection('gpu'),
-      ram: this.loadSection('ram'),
-      mainboard: this.loadSection('mainboard')
-    }).subscribe({
-      next: (results: { 
-        featured: ProductListResponse, 
-        cpu: ProductListResponse, 
-        gpu: ProductListResponse, 
-        ram: ProductListResponse, 
-        mainboard: ProductListResponse 
-      }) => {
-        // Map data cho sản phẩm nổi bật
-        this.featuredProducts = results.featured.items.map((p: ProductListItemDto) => this.mapToCard(p));
-        this.laptopGaming = this.featuredProducts.slice(0, 5);
-        this.pcGaming = this.featuredProducts.slice(5, 10).length > 0 ? this.featuredProducts.slice(5, 10) : [...this.featuredProducts].reverse().slice(0, 5);
-
-        // Map data cho các danh mục
-        this.productSections.cpu = results.cpu.items.map((p: ProductListItemDto) => this.mapToCard(p));
-        this.productSections.gpu = results.gpu.items.map((p: ProductListItemDto) => this.mapToCard(p));
-        this.productSections.ram = results.ram.items.map((p: ProductListItemDto) => this.mapToCard(p));
-        this.productSections.mainboard = results.mainboard.items.map((p: ProductListItemDto) => this.mapToCard(p));
-
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
+    // FIX NG0100: Sử dụng setTimeout để đợi Angular hoàn tất chu kỳ render/hydration hiện tại
+    // rồi mới bắt đầu thay đổi các biến trạng thái (isLoading) và gọi API.
+    setTimeout(() => {
+      this.loadBanners();
+      this.loadCategories();
+      this.loadAllProducts();
+    }, 0);
   }
 
+  // ── Loaders ───────────────────────────────────────────────────────
   private loadCategories(): void {
-    this.categoryService.getAll().subscribe({
-      next: (data) => {
-        this.dbCategories = data.filter(c => c.isActive && !c.parentId);
-      },
-      error: (err) => console.error('Lỗi khi fetch categories', err)
-    })
+    this.categoryService
+      .getAll()
+      .pipe(
+        catchError(() => of([])), // Nếu lỗi, trả về mảng rỗng để không crash app
+      )
+      .subscribe({
+        next: (data) => {
+          this.dbCategories = data.filter((c) => c.isActive);
+          this.cdr.markForCheck(); // Báo cho Angular biết state đã đổi
+        },
+      });
   }
 
   private loadBanners(): void {
     this.isBannersLoading = true;
-    this.bannerService.getPublic().subscribe({
-      next: (banners: Banner[]) => {
-        this.banners = banners
-          .map((banner: Banner) => this.toClientBanner(banner))
-          .sort((a: ClientBanner, b: ClientBanner) => a.position.localeCompare(b.position));
-        this.isBannersLoading = false;
-      },
-      error: () => {
-        this.banners = [];
-        this.isBannersLoading = false;
-      },
-    });
+    this.cdr.markForCheck();
+
+    this.bannerService
+      .getPublic()
+      .pipe(
+        finalize(() => {
+          this.isBannersLoading = false;
+          this.cdr.detectChanges(); // Ép giao diện cập nhật ngay lập tức
+        }),
+      )
+      .subscribe({
+        next: (banners) => {
+          this.banners = banners.map((b) => this.toClientBanner(b));
+        },
+        error: () => {
+          this.banners = [];
+        },
+      });
   }
 
-  private loadFeaturedProducts(): void {
-    this.productService.fetchClientProducts(1, 20).subscribe({
-      next: (res) => {
-        this.featuredProducts = res.items.map((p: ProductListItemDto) => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          image: p.thumbnailUrl || 'https://ttgshop.vn/media/product/250_1072100124_dsc09857_copy.jpg',
-          category: p.categoryName,
-          specs: {},
-        }));
-        
-        // Populate specific category arrays for the UI (using sliced copies of the fetched products)
-        // In a real scenario, this would be fetched from specific category endpoints
-        this.laptopGaming = this.featuredProducts.slice(0, 5);
-        this.pcGaming = this.featuredProducts.slice(5, 10).length > 0 ? this.featuredProducts.slice(5, 10) : [...this.featuredProducts].reverse().slice(0, 5);
-        this.monitors = this.featuredProducts.slice(10, 15).length > 0 ? this.featuredProducts.slice(10, 15) : this.featuredProducts.slice(0, 5);
-        this.accessories = this.featuredProducts.slice(15, 20).length > 0 ? this.featuredProducts.slice(15, 20) : [...this.featuredProducts].reverse().slice(0, 5);
-        
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Lỗi tải sản phẩm nổi bật:', err);
-        this.isLoading = false;
-      }
-    });
+  private loadAllProducts(): void {
+    this.isLoading = true;
+    this.cdr.markForCheck();
+
+    // Chuẩn bị fallback data khi gọi API thất bại
+    const fallback = { items: [] };
+
+    forkJoin({
+      // FIX LỖI MẤT DỮ LIỆU: Thêm catchError cho từng request
+      featured: this.productService
+        .fetchClientProducts({ page: 1, pageSize: 20 })
+        .pipe(catchError(() => of(fallback))),
+      cpu: this.productService
+        .fetchClientProducts({ page: 1, pageSize: 5, categorySlug: 'cpu' })
+        .pipe(catchError(() => of(fallback))),
+      gpu: this.productService
+        .fetchClientProducts({ page: 1, pageSize: 5, categorySlug: 'gpu' })
+        .pipe(catchError(() => of(fallback))),
+      ram: this.productService
+        .fetchClientProducts({ page: 1, pageSize: 5, categorySlug: 'ram' })
+        .pipe(catchError(() => of(fallback))),
+      mainboard: this.productService
+        .fetchClientProducts({
+          page: 1,
+          pageSize: 5,
+          categorySlug: 'mainboard',
+        })
+        .pipe(catchError(() => of(fallback))),
+    })
+      .pipe(
+        finalize(() => {
+          // finalize luôn chạy cho dù API thành công hay thất bại
+          this.isLoading = false;
+          // FIX LỖI BACK TRANG: Ép Angular vẽ lại giao diện ngay khi có dữ liệu từ Cache hoặc API
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this.featuredProducts = res.featured.items.map((p: ProductListItemDto) => this.toCard(p));
+          this.productSections.cpu = res.cpu.items.map((p: ProductListItemDto) => this.toCard(p));
+          this.productSections.gpu = res.gpu.items.map((p: ProductListItemDto) => this.toCard(p));
+          this.productSections.ram = res.ram.items.map((p: ProductListItemDto) => this.toCard(p));
+          this.productSections.mainboard = res.mainboard.items.map((p: ProductListItemDto) =>
+            this.toCard(p),
+          );
+        },
+      });
   }
 
-  get heroBanners(): ClientBanner[] {
-    return this.banners.filter((b) => b.position === 'HOME PAGE HERO' && b.status === 'Live');
-  }
-
-  get heroBanner(): ClientBanner | undefined {
-    return this.heroBanners[0];
-  }
-
-  get midBanners(): ClientBanner[] {
-    return this.banners.filter((b) => b.position === 'SIDEBAR PROMO' && b.status === 'Live');
-  }
-
-  private toClientBanner(banner: Banner): ClientBanner {
+  private toCard(p: ProductListItemDto): ProductCard {
     return {
-      id: banner.bannerId,
-      title: banner.title || 'Banner',
-      subtitle: banner.subtitle || '',
-      linkUrl: banner.linkUrl || '',
-      imageUrl: banner.imageUrl,
-      targetAlt: banner.subtitle || banner.title || 'Banner image',
-      status: banner.isActive ? 'Live' : 'Draft',
-      position: this.mapPositionToClientLabel(banner.position),
-      lastUpdated: 'System',
-      author: 'System',
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      regularPrice: p.regularPrice,
+      salePrice: p.salePrice,
+      image: p.thumbnailUrl ?? '',
+      category: p.categoryName,
+      brand: p.brandName,
+      brandId: p.brandId,
+      stockQuantity: p.stockQuantity,
+      warrantyMonths: p.warrantyMonths,
+      specs: {},
     };
   }
 
-  private mapPositionToClientLabel(position: Banner['position']): string {
-    switch (position) {
-      case 'homepage_slider': return 'HOME PAGE HERO';
-      case 'homepage_mid': return 'SIDEBAR PROMO';
-      case 'category_top': return 'CATEGORY TOP';
-      case 'news_top': return 'NEWS TOP';
-      default: return position;
-    }
+  // ── Banner helpers ────────────────────────────────────────────────
+  get heroBanner(): ClientBanner | undefined {
+    return this.banners.find((b) => b.position === 'HOME_HERO' && b.status === 'Live');
   }
 
-  toggleCompare(event: Event, product: ProductCard): void {
+  get midBanners(): ClientBanner[] {
+    return this.banners.filter((b) => b.position === 'HOME_MID' && b.status === 'Live');
+  }
+
+  get rootCategories(): Category[] {
+    return this.dbCategories.filter((c) => !c.parentId);
+  }
+
+  private toClientBanner(b: Banner): ClientBanner {
+    return {
+      id: b.bannerId,
+      title: b.title ?? '',
+      subtitle: b.subtitle ?? '',
+      imageUrl: b.imageUrl,
+      linkUrl: b.linkUrl ?? '/product/list',
+      targetAlt: b.subtitle ?? b.title ?? 'Banner',
+      status: b.isActive ? 'Live' : 'Draft',
+      position: this.mapPosition(b.position),
+    };
+  }
+
+  private mapPosition(pos: Banner['position']): string {
+    const map: Record<string, string> = {
+      homepage_slider: 'HOME_HERO',
+      homepage_mid: 'HOME_MID',
+      category_top: 'CAT_TOP',
+      news_top: 'NEWS_TOP',
+    };
+    return map[pos] ?? pos;
+  }
+
+  // ── Comparison ────────────────────────────────────────────────────
+  toggleCompare(event: Event, p: ProductCard): void {
     event.stopPropagation();
     const cp: CompareProduct = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      category: product.category,
-      specs: product.specs,
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.image,
+      category: p.category,
+      specs: p.specs,
     };
     this.comparisonService.toggleProduct(cp);
   }
 
-  isProductSelected(productId: string): boolean {
-    return this.comparisonService.isSelected(productId);
+  isProductSelected(id: string): boolean {
+    return this.comparisonService.isSelected(id);
   }
 
   goToCompare(): void {
     this.router.navigate(['/comparison']);
+  }
+
+  getSubCategoriesBySlug(parentSlug: string): Category[] {
+    const parent = this.dbCategories.find((c) => c.slug === parentSlug);
+    if (!parent) return [];
+    return this.dbCategories.filter((c) => c.parentId === parent.categoryId);
+  }
+
+  goToCategory(slug: string) {
+    this.router.navigate(['/product/list'], {
+      queryParams: { category: slug },
+    });
   }
 }

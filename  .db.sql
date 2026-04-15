@@ -207,7 +207,7 @@ CREATE TABLE reviews (
     user_id UUID NOT NULL,
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
-    is_active INT DEFAULT 1,
+    status INT DEFAULT 1,
     is_verified_purchase BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

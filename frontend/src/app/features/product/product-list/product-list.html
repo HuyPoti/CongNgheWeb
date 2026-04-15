@@ -1,268 +1,519 @@
 <div class="w-full bg-[#f4f6f8] dark:bg-background-dark transition-colors duration-500 pt-10 pb-32">
   <div class="max-w-7xl mx-auto px-6">
-    <!-- Breadcrumbs -->
     <nav
       class="flex items-center gap-3 mb-10 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
     >
-      <a routerLink="/" class="hover:text-primary transition-colors">{{ 'common.home' | translate }}</a>
+      <a routerLink="/" class="hover:text-primary transition-colors">{{
+        'common.home' | translate
+      }}</a>
       <span class="material-symbols-outlined text-sm">chevron_right</span>
       <span class="text-slate-900 dark:text-white">{{ 'product.list_title' | translate }}</span>
+      @if (shopStateService.categorySlug()) {
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-primary capitalize">{{ shopStateService.categorySlug() }}</span>
+      }
     </nav>
 
-    <div class="grid grid-cols-12 gap-10 items-start">
-      <!-- Sidebar Filters: Gearvn Style -->
-      <aside class="col-span-12 lg:col-span-3 space-y-8 sticky top-32">
-        <!-- Search within results -->
+    <div class="grid grid-cols-12 gap-8 items-start">
+      <aside class="col-span-12 lg:col-span-3 space-y-5 sticky top-28">
         <div
-          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
+          class="bg-white dark:bg-surface-dark p-5 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
         >
           <h3
-            class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6 border-b border-slate-50 dark:border-white/5 pb-4"
+            class="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 pb-3 border-b border-slate-50 dark:border-white/5"
           >
             {{ 'product.filter_search' | translate }}
           </h3>
-          <div class="relative">
+          <div class="relative pb-1 border-b border-slate-100 dark:border-white/10">
             <input
               type="text"
               [placeholder]="'product.filter_search_placeholder' | translate"
-              class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
+              [value]="stateSearchKeyword()"
+              (input)="onSearchInput($any($event.target).value)"
+              class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-4 py-2.5 pr-9 text-sm focus:outline-none focus:border-primary transition-all dark:text-white"
             />
-            <span
-              class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-              >search</span
-            >
-          </div>
-        </div>
-
-        <!-- Price Range -->
-        <div
-          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
-        >
-          <h3
-            class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6 border-b border-slate-50 dark:border-white/5 pb-4"
-          >
-            {{ 'product.filter_price' | translate }}
-          </h3>
-          <div class="space-y-4">
-            @for (range of priceRanges; track range.key) {
-              <label class="flex items-center gap-4 group cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="size-5 rounded-lg border-2 border-slate-200 dark:border-slate-700 checked:bg-primary transition-all cursor-pointer"
-                />
-                <span
-                  class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors"
-                  >{{ range.key | translate }}</span
-                >
-              </label>
-            }
-          </div>
-        </div>
-
-        <!-- Brand Filter -->
-        <div
-          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
-        >
-          <h3
-            class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest mb-6 border-b border-slate-50 dark:border-white/5 pb-4"
-          >
-            {{ 'product.filter_brand' | translate }}
-          </h3>
-          <div class="grid grid-cols-2 gap-3">
-            @for (brand of ['ASUS', 'MSI', 'GIGABYTE', 'INTEL', 'AMD', 'NVIDIA']; track brand) {
+            @if (stateSearchKeyword()) {
               <button
-                class="px-3 py-3 rounded-xl border border-slate-100 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-primary hover:text-primary transition-all"
+                (click)="clearSearch()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
-                {{ brand }}
+                <span class="material-symbols-outlined text-base">close</span>
               </button>
+            } @else {
+              <span
+                class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none"
+                >search</span
+              >
             }
           </div>
         </div>
-      </aside>
-
-      <!-- Main Results -->
-      <main class="col-span-12 lg:col-span-9 space-y-8">
-        <!-- Sort & View Controls -->
         <div
-          class="bg-white dark:bg-surface-dark p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6"
+          class="bg-white dark:bg-surface-dark p-5 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
         >
-          <div class="flex items-center gap-8">
-            <span class="text-xs font-black text-slate-400 uppercase tracking-widest"
-              >{{ 'product.sort_by' | translate }}</span
-            >
-            <div class="flex items-center gap-4">
-              @for (sort of sortOptions; track sort.key) {
+          <h3
+            class="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 pb-3 border-b border-slate-50 dark:border-white/5"
+          >
+            {{ 'product.filter_category' | translate }}
+          </h3>
+
+          @if (categories().length === 0) {
+            <p class="text-xs text-slate-400 italic">{{ 'common.loading' | translate }}...</p>
+          } @else {
+            <div class="flex gap-3 min-h-60" (mouseleave)="onCategoryMenuLeave()">
+              <div class="w-64 shrink-0 space-y-1 max-h-72 overflow-y-auto custom-scrollbar pr-1">
                 <button
-                  class="px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                  type="button"
+                  (click)="selectCategory(null)"
+                  class="w-full px-3 py-2 rounded-xl text-left text-sm font-medium transition-colors"
                   [class]="
-                    sort.key === 'product.sort_newest'
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'text-slate-500 hover:text-primary'
+                    currentCategorySlug() === null
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary'
                   "
                 >
-                  {{ sort.key | translate }}
+                  {{ 'settings.all' | translate }}
                 </button>
-              }
-            </div>
-          </div>
-          <div class="flex items-center gap-4 text-slate-400">
-            <span class="text-xs font-bold">{{ filteredProducts.length }} {{ 'common.items' | translate }}</span>
-            <div class="h-6 w-px bg-slate-100 dark:bg-white/5 mx-2"></div>
-            <button class="material-symbols-outlined text-primary">grid_view</button>
-            <button class="material-symbols-outlined">view_list</button>
-          </div>
-        </div>
 
-        <!-- Product Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          @for (product of filteredProducts; track product.id) {
-            <div
-              class="bg-white dark:bg-surface-dark rounded-3xl p-6 border border-slate-100 dark:border-white/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 group flex flex-col h-full cursor-pointer"
-              [routerLink]="['/product', product.id]"
-            >
-              <div
-                class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl p-6 mb-6 overflow-hidden relative"
-              >
-                <img
-                  [src]="product.image"
-                  class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                  [alt]="product.name"
-                />
-
-                <div class="absolute top-3 left-3 flex flex-col gap-2">
-                  <span
-                    class="bg-primary text-white text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg"
-                    >{{ 'common.new' | translate }}</span
-                  >
-                </div>
-
-                <div
-                  class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
+                @for (parent of rootCategories(); track parent.categoryId) {
                   <button
-                    class="size-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-400 hover:text-primary transition-colors active:scale-90"
-                    (click)="toggleCompare($event, product)"
+                    type="button"
+                    (mouseenter)="onParentHover(parent)"
+                    (focus)="onParentHover(parent)"
+                    (click)="selectCategory(parent.slug)"
+                    class="w-full px-3 py-2 rounded-xl text-left text-sm font-bold transition-colors"
+                    [class]="
+                      activeCategory?.categoryId === parent.categoryId || isParentCategoryActive(parent)
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary'
+                    "
                   >
-                    <span class="material-symbols-outlined text-lg">{{
-                      isProductSelected(product.id) ? 'check' : 'compare_arrows'
-                    }}</span>
+                    {{ parent.name }}
                   </button>
-                </div>
+                }
               </div>
 
-              <div class="flex-1 flex flex-col px-2">
-                <span class="text-[9px] font-black text-primary uppercase tracking-[0.3em] mb-2">{{
-                  product.category
-                }}</span>
-                <h3
-                  class="text-slate-900 dark:text-white font-bold text-sm line-clamp-2 mb-6 group-hover:text-primary transition-colors leading-relaxed h-10"
+              @if (activeCategory; as hoveredParent) {
+                <div
+                  class="flex-1 min-w-0 rounded-2xl border border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-white/5 p-3"
                 >
-                  {{ product.name }}
-                </h3>
-
-                <div class="mt-auto">
-                  <div class="flex flex-col mb-6">
-                    <span class="text-primary font-display font-bold text-xl leading-none"
-                      >{{ product.price | number: '1.0-0' }}đ</span
-                    >
-                    <span class="text-[10px] text-slate-400 line-through mt-1"
-                      >{{ product.price * 1.15 | number: '1.0-0' }}đ</span
-                    >
-                  </div>
-
-                  <div class="flex items-center justify-between">
-                    <div
-                      class="flex items-center gap-2 text-[8px] font-black text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 uppercase tracking-widest"
-                    >
-                      <span class="material-symbols-outlined text-[10px]">check_circle</span>
-                      {{ 'product.status_stock' | translate }}
+                  @if (getChildren(hoveredParent.categoryId).length > 0) {
+                    <div class="grid grid-cols-2 gap-2">
+                      @for (child of getChildren(hoveredParent.categoryId); track child.categoryId) {
+                        <button
+                          type="button"
+                          (click)="selectCategory(child.slug)"
+                          class="w-full px-3 py-2 rounded-xl text-left text-sm transition-colors"
+                          [class]="
+                            isCategoryActive(child.slug)
+                              ? 'bg-primary/10 text-primary font-semibold'
+                              : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 hover:text-primary'
+                          "
+                        >
+                          {{ child.name }}
+                        </button>
+                      }
                     </div>
-                    <button
-                      class="size-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90"
-                      (click)="$event.stopPropagation()"
-                    >
-                      <span class="material-symbols-outlined">add_shopping_cart</span>
-                    </button>
-                  </div>
+                  }
                 </div>
-              </div>
+              }
             </div>
           }
         </div>
 
-        <!-- Pagination -->
-        <div class="flex justify-center pt-10">
-          <div
-            class="flex gap-4 p-2 bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/10 rounded-3xl shadow-sm"
+        <div
+          class="bg-white dark:bg-surface-dark p-5 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
+        >
+          <h3
+            class="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 pb-3 border-b border-slate-50 dark:border-white/5"
           >
-            <button
-              class="size-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
-            >
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            <div class="flex gap-2">
+            {{ 'product.filter_price' | translate }}
+          </h3>
+          <div class="space-y-2.5">
+            @for (range of priceRanges; track range.labelKey) {
               <button
-                class="size-12 rounded-2xl bg-primary text-white font-black text-sm shadow-lg shadow-primary/20"
+                type="button"
+                class="w-full flex items-center gap-3 text-left group"
+                (click)="togglePriceRange(range)"
               >
-                1
+                <div
+                  class="size-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all"
+                  [class]="
+                    isPriceRangeSelected(range)
+                      ? 'bg-primary border-primary'
+                      : 'border-slate-200 dark:border-slate-600'
+                  "
+                >
+                  @if (isPriceRangeSelected(range)) {
+                    <span class="material-symbols-outlined text-white text-[11px]">check</span>
+                  }
+                </div>
+                <span
+                  class="text-sm font-medium transition-colors"
+                  [class]="
+                    isPriceRangeSelected(range)
+                      ? 'text-primary font-bold'
+                      : 'text-slate-600 dark:text-slate-400 group-hover:text-primary'
+                  "
+                  >{{ range.labelKey | translate }}</span
+                >
               </button>
-              <button
-                class="size-12 rounded-2xl text-slate-500 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5"
-              >
-                2
-              </button>
-              <button
-                class="size-12 rounded-2xl text-slate-500 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5"
-              >
-                3
-              </button>
-            </div>
-            <button
-              class="size-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
-            >
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
+            }
           </div>
         </div>
+
+        <div
+          class="bg-white dark:bg-surface-dark p-5 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm"
+        >
+          <h3
+            class="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4 pb-3 border-b border-slate-50 dark:border-white/5"
+          >
+            {{ 'product.filter_brand' | translate }}
+          </h3>
+          @if (brands().length === 0) {
+            <p class="text-xs text-slate-400 italic">{{ 'common.loading' | translate }}...</p>
+          } @else {
+            <div class="space-y-2.5 max-h-52 overflow-y-auto custom-scrollbar pr-1">
+              @for (brand of brands(); track brand.brandId) {
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-3 text-left group"
+                  (click)="toggleBrand(brand.brandId)"
+                >
+                  <div
+                    class="size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
+                    [class]="
+                      isBrandSelected(brand.brandId)
+                        ? 'bg-primary border-primary'
+                        : 'border-slate-200 dark:border-slate-600'
+                    "
+                  >
+                    @if (isBrandSelected(brand.brandId)) {
+                      <div class="size-2.5 bg-white rounded-full"></div>
+                    }
+                  </div>
+                  <span
+                    class="text-sm font-medium transition-colors"
+                    [class]="
+                      isBrandSelected(brand.brandId)
+                        ? 'text-primary font-bold'
+                        : 'text-slate-600 dark:text-slate-400 group-hover:text-primary'
+                    "
+                    >{{ brand.name }}</span
+                  >
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (stateHasActiveFilters()) {
+          <button
+            type="button"
+            (click)="clearFilters()"
+            class="w-full py-3 rounded-2xl border-2 border-red-200 dark:border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:border-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+          >
+            <span class="material-symbols-outlined text-sm">filter_list_off</span>
+            {{ 'common.clear_all' | translate }}
+          </button>
+        }
+      </aside>
+
+      <main class="col-span-12 lg:col-span-9 space-y-6">
+        <div
+          class="bg-white dark:bg-surface-dark p-5 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4"
+        >
+          <div class="flex items-center gap-4 flex-wrap">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+              {{ 'product.sort_by' | translate }}
+            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              @for (opt of sortOptions; track opt.value) {
+                <button
+                  type="button"
+                  (click)="setSort(opt.value)"
+                  class="px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+                  [class]="
+                    stateSort() === opt.value
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-primary border border-transparent hover:border-primary/30'
+                  "
+                >
+                  {{ opt.labelKey | translate }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            @if (isLoading()) {
+              <div
+                class="size-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+              ></div>
+            }
+            <span class="text-xs font-bold text-slate-400">
+              {{ totalCount() }} {{ 'common.items' | translate }}
+            </span>
+          </div>
+        </div>
+
+        @if (hasError()) {
+          <div
+            class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-3xl p-10 text-center"
+          >
+            <span class="material-symbols-outlined text-red-400 text-4xl mb-3 block"
+              >error_outline</span
+            >
+            <p class="text-red-500 font-bold text-sm">{{ 'common.error' | translate }}</p>
+            <button
+              class="mt-4 px-6 py-2 bg-red-500 text-white rounded-xl font-bold text-xs hover:bg-red-600 transition-colors"
+            >
+              {{ 'common.retry' | translate }}
+            </button>
+          </div>
+        }
+
+        @if (isLoading() && !hasError()) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+              <div
+                class="bg-white dark:bg-surface-dark rounded-3xl p-5 border border-slate-100 dark:border-white/5 animate-pulse"
+              >
+                <div class="aspect-square bg-slate-100 dark:bg-white/5 rounded-2xl mb-4"></div>
+                <div class="h-3 bg-slate-100 dark:bg-white/5 rounded mb-2 w-4/5"></div>
+                <div class="h-3 bg-slate-100 dark:bg-white/5 rounded mb-4 w-3/5"></div>
+                <div class="h-5 bg-slate-100 dark:bg-white/5 rounded w-2/5"></div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (!isLoading() && !hasError() && products().length === 0) {
+          <div
+            class="bg-white dark:bg-surface-dark rounded-3xl p-16 border border-slate-100 dark:border-white/5 text-center"
+          >
+            <span
+              class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block"
+              >search_off</span
+            >
+            <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">
+              {{ 'product.empty_title' | translate }}
+            </h3>
+            <p class="text-sm text-slate-400 mb-6">
+              @if (stateHasActiveFilters()) {
+                {{ 'product.empty_filter_desc' | translate }}
+              } @else {
+                {{ 'product.empty_desc' | translate }}
+              }
+            </p>
+            @if (stateHasActiveFilters()) {
+              <button
+                type="button"
+                (click)="clearFilters()"
+                class="px-8 py-3 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform"
+              >
+                {{ 'common.clear_all' | translate }}
+              </button>
+            }
+          </div>
+        }
+
+        @if (!isLoading() && products().length > 0) {
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @for (p of products(); track p.id) {
+              <div
+                class="bg-white dark:bg-surface-dark rounded-3xl p-5 border border-slate-100 dark:border-white/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 group flex flex-col cursor-pointer"
+                [routerLink]="['/product', p.id]"
+              >
+                <div
+                  class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl mb-4 overflow-hidden relative"
+                >
+                  @if (p.image) {
+                    <img
+                      [src]="p.image"
+                      [alt]="p.name"
+                      class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                      #pImg
+                      (error)="pImg.style.display = 'none'; pFallback.style.display = 'flex'"
+                    />
+                    <div
+                      #pFallback
+                      style="display: none"
+                      class="absolute inset-0 items-center justify-center bg-slate-100 dark:bg-slate-800"
+                    >
+                      <span class="material-symbols-outlined text-slate-400 text-3xl"
+                        >image_not_supported</span
+                      >
+                    </div>
+                  } @else {
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-slate-400 text-3xl"
+                        >image_not_supported</span
+                      >
+                    </div>
+                  }
+
+                  @if (hasSalePrice(p)) {
+                    <div
+                      class="absolute top-3 left-3 bg-red-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg"
+                    >
+                      -{{ savingPercent(p) }}%
+                    </div>
+                  } @else {
+                    <div
+                      class="absolute top-3 left-3 bg-primary text-white text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest"
+                    >
+                      {{ 'common.new' | translate }}
+                    </div>
+                  }
+
+                  <div
+                    class="absolute top-3 right-3 transition-opacity"
+                    [class]="
+                      isProductSelected(p.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    "
+                  >
+                    <button
+                      type="button"
+                      class="size-9 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center transition-colors active:scale-90"
+                      [class]="
+                        isProductSelected(p.id)
+                          ? 'text-primary'
+                          : 'text-slate-400 hover:text-primary'
+                      "
+                      (click)="toggleCompare($event, p)"
+                      [title]="
+                        isProductSelected(p.id)
+                          ? ('product.compare_remove' | translate)
+                          : ('product.compare_add' | translate)
+                      "
+                    >
+                      <span class="material-symbols-outlined text-base">
+                        {{ isProductSelected(p.id) ? 'check' : 'compare_arrows' }}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex-1 flex flex-col">
+                  <span
+                    class="text-[9px] font-black text-primary uppercase tracking-[0.25em] mb-1"
+                    >{{ p.brand }}</span
+                  >
+                  <h3
+                    class="text-slate-900 dark:text-white font-bold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-relaxed mb-4 flex-1"
+                    style="min-height: 2.5rem"
+                  >
+                    {{ p.name }}
+                  </h3>
+
+                  <div class="flex flex-col mb-4">
+                    <span class="text-primary font-bold text-lg leading-none">
+                      {{ p.price | number: '1.0-0' }}đ
+                    </span>
+                    @if (hasSalePrice(p)) {
+                      <span class="text-[10px] text-slate-400 line-through mt-1">
+                        {{ p.regularPrice | number: '1.0-0' }}đ
+                      </span>
+                    }
+                  </div>
+
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="flex items-center gap-1 text-[8px] font-black text-emerald-500 bg-emerald-500/10 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 uppercase tracking-widest"
+                    >
+                      <span class="material-symbols-outlined text-[10px]">check_circle</span>
+                      {{ 'product.status_stock' | translate }}
+                    </span>
+                    <button
+                      type="button"
+                      class="size-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all active:scale-90"
+                      (click)="$event.stopPropagation()"
+                      [title]="'product.add_to_cart' | translate"
+                    >
+                      <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (totalPages() > 1) {
+            <div class="flex justify-center pt-6">
+              <div
+                class="flex gap-2 p-2 bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/10 rounded-3xl shadow-sm"
+              >
+                <button
+                  type="button"
+                  class="size-11 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  [disabled]="stateCurrentPage() === 1"
+                  (click)="goToPage(stateCurrentPage() - 1)"
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+
+                @for (page of pageNumbers(); track page) {
+                  <button
+                    type="button"
+                    (click)="goToPage(page)"
+                    class="size-11 rounded-2xl font-black text-sm transition-all"
+                    [class]="
+                      stateCurrentPage() === page
+                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                    "
+                  >
+                    {{ page }}
+                  </button>
+                }
+
+                <button
+                  type="button"
+                  class="size-11 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  [disabled]="stateCurrentPage() === totalPages()"
+                  (click)="goToPage(stateCurrentPage() + 1)"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          }
+        }
       </main>
     </div>
   </div>
 </div>
 
-<!-- Comparison Module -->
 @if (comparisonService.selectedCount() > 0) {
   <div
-    class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-surface-dark border border-slate-100 dark:border-primary/30 rounded-[2.5rem] shadow-2xl px-10 py-6 flex items-center gap-10 animate-in fade-in slide-in-from-bottom-10 duration-500"
+    class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-surface-dark border border-slate-100 dark:border-primary/30 rounded-[2.5rem] shadow-2xl px-8 py-5 flex items-center gap-8 animate-in fade-in slide-in-from-bottom-10 duration-500"
   >
-    <!-- same inner as before -->
-    <div class="flex items-center gap-6 border-r border-slate-100 dark:border-white/10 pr-10">
+    <div class="flex items-center gap-4 border-r border-slate-100 dark:border-white/10 pr-8">
       <div
-        class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"
+        class="size-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"
       >
-        <span class="material-symbols-outlined text-3xl font-black">compare_arrows</span>
+        <span class="material-symbols-outlined">compare_arrows</span>
       </div>
       <div>
-        <p class="text-slate-900 dark:text-white font-black text-sm uppercase tracking-widest">
+        <p class="text-slate-900 dark:text-white font-black text-sm">
           {{ 'product.compare_status' | translate }}
         </p>
-        <p
-          class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest font-orbitron"
-        >
-          {{ comparisonService.selectedCount() }} / 2 {{ 'common.components' | translate }}
+        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+          {{ comparisonService.selectedCount() }} / 2
         </p>
       </div>
     </div>
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
       <button
-        class="px-10 py-4 rounded-2xl font-black transition-all flex items-center gap-3 active:scale-95 shadow-xl bg-primary text-white shadow-primary/30 cursor-pointer hover:bg-primary/90"
+        type="button"
         (click)="goToCompare()"
+        class="px-8 py-3 rounded-2xl bg-primary text-white font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-transform shadow-lg shadow-primary/20"
       >
-        <span class="text-[10px] uppercase tracking-[0.2em]">{{ 'product.compare_start' | translate }}</span>
-        <span class="material-symbols-outlined text-lg">fact_check</span>
+        {{ 'product.compare_start' | translate }}
       </button>
       <button
-        class="size-12 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all cursor-pointer border border-red-100 dark:border-red-500/20 active:scale-90"
+        type="button"
         (click)="comparisonService.clearAll()"
+        class="size-11 rounded-2xl bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all border border-red-100 dark:border-red-500/20"
       >
         <span class="material-symbols-outlined">delete_sweep</span>
       </button>
