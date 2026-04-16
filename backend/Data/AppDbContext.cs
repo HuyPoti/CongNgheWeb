@@ -84,7 +84,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Status).HasDefaultValue(1);
 
             entity.HasOne(p => p.Category)
-                .WithMany()
+                .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId);
 
             entity.HasOne(p => p.Brand)
@@ -150,7 +150,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("reviews");
             entity.HasKey(e => e.ReviewId);
-            
+
             entity.HasOne(r => r.Product)
                 .WithMany()
                 .HasForeignKey(r => r.ProductId)

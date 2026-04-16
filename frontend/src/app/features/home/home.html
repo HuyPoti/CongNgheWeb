@@ -36,49 +36,9 @@
   <!-- Hero Grid: Sidebar | Slider | Right Blocks -->
   <section class="max-w-7xl mx-auto px-6 py-8">
     <div class="grid grid-cols-12 gap-6 h-[480px]">
-      <!-- Left Sidebar Categories -->
-      <aside
-        class="col-span-12 lg:col-span-3 bg-white dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm flex flex-col h-full"
-      >
-        <div
-          class="p-5 font-black text-slate-900 dark:text-white uppercase text-xs tracking-widest border-b border-slate-50 dark:border-white/5 flex items-center gap-3"
-        >
-          <span class="material-symbols-outlined text-primary">menu</span>
-          {{ 'home.cat' | translate }}
-        </div>
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
-          @for (cat of dbCategories; track cat.categoryId) {
-            <a
-              [routerLink]="['/product/list']"
-              [queryParams]="{ category: cat.slug }"
-              class="flex items-center justify-between px-6 py-4 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group cursor-pointer"
-            >
-              <div class="flex items-center gap-4">
-                <span
-                  class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-xl"
-                  >category</span
-                >
-                <span
-                  class="text-[13px] font-bold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors"
-                  >{{ cat.name }}</span
-                >
-              </div>
-              <span
-                class="material-symbols-outlined text-slate-300 text-sm group-hover:translate-x-1 transition-transform"
-                >chevron_right</span
-              >
-            </a>
-          } @empty {
-            <div class="p-6 text-sm text-slate-400 text-center animate-pulse">
-              Đang tải danh mục...
-            </div>
-          }
-        </div>
-      </aside>
-
       <!-- Main Slider -->
       <div
-        class="col-span-12 lg:col-span-6 relative rounded-3xl overflow-hidden group cursor-pointer border border-slate-100 dark:border-white/5 shadow-xl"
+        class="col-span-12 lg:col-span-8 relative rounded-3xl overflow-hidden group cursor-pointer border border-slate-100 dark:border-white/5 shadow-xl"
       >
         @if (isBannersLoading) {
           <div class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
@@ -109,7 +69,7 @@
       </div>
 
       <!-- Right Banners/Promos -->
-      <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+      <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
         @if (isBannersLoading) {
           <div
             class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5"
@@ -278,7 +238,9 @@
                 <div
                   class="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tight"
                 >
-                  <span class="truncate pr-2">{{ 'home.sold_count' | translate }}</span>
+                  <span class="truncate pr-2">
+                    {{ 'home.sold_count' | translate }}
+                  </span>
                   <span class="text-red-500 font-black">HOT</span>
                 </div>
                 <div class="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
@@ -297,24 +259,12 @@
   <!-- Featured Product Slots: Laptop Gaming, PC Gear -->
   <section class="max-w-7xl mx-auto px-6 space-y-24">
     <!-- Helper template for Product Categories -->
-    <ng-template #productGrid let-title="title" let-products="products" let-tags="tags">
+    <ng-template #productGrid let-title="title" let-products="products">
       <div>
         <div class="flex items-center justify-between mb-10 pb-6 border-b-2 border-primary/10">
-          <div class="flex items-center gap-6">
-            <h2
-              class="text-2xl font-display font-bold text-slate-900 dark:text-white uppercase tracking-tight"
-            >
-              {{ title }}
-            </h2>
-            <div class="hidden md:flex gap-4">
-              @for (tag of tags; track tag) {
-                <span
-                  class="text-[10px] font-bold text-slate-400 hover:text-primary transition-colors cursor-pointer uppercase tracking-widest"
-                  >{{ tag }}</span
-                >
-              }
-            </div>
-          </div>
+          <h2 class="text-2xl font-display font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+            {{ title }}
+          </h2>
           <a
             routerLink="/product/list"
             class="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
@@ -401,7 +351,6 @@
         context: {
           title: 'BỘ VI XỬ LÝ (CPU)',
           products: productSections.cpu,
-          tags: ['Intel Core', 'AMD Ryzen'],
         }
       "
     ></ng-container>
@@ -413,7 +362,6 @@
         context: {
           title: 'CARD ĐỒ HỌA (GPU)',
           products: productSections.gpu,
-          tags: ['RTX 40 Series', 'RX 7000 Series'],
         }
       "
     ></ng-container>
@@ -425,7 +373,6 @@
         context: {
           title: 'BỘ NHỚ (RAM)',
           products: productSections.ram,
-          tags: ['DDR4', 'DDR5', 'RGB Sync'],
         }
       "
     ></ng-container>
@@ -437,7 +384,6 @@
         context: {
           title: 'BO MẠCH CHỦ',
           products: productSections.mainboard,
-          tags: ['Z790', 'B760', 'X670'],
         }
       "
     ></ng-container>

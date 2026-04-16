@@ -1,7 +1,7 @@
 <div
   class="relative flex h-auto w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark transition-colors duration-500"
 >
-  <!-- Loading state -->
+  <!-- ── Loading ─────────────────────────────────────────────── -->
   @if (isLoading()) {
     <div class="flex items-center justify-center min-h-[60vh]">
       <div class="flex flex-col items-center gap-4">
@@ -15,88 +15,105 @@
     </div>
   }
 
-  <!-- Error state -->
+  <!-- ── Error ───────────────────────────────────────────────── -->
   @if (!isLoading() && errorMsg()) {
     <div class="flex items-center justify-center min-h-[60vh]">
       <div class="text-center">
         <span class="material-symbols-outlined text-6xl text-red-400 mb-4 block">error</span>
-        <p class="text-red-400 font-bold">{{ errorMsg() }}</p>
+        <p class="text-red-400 font-bold mb-6">{{ errorMsg() }}</p>
         <a
-          routerLink="/"
-          class="mt-6 inline-block px-8 py-3 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest"
-          >{{ 'product.home_link' | translate }}</a
+          routerLink="/product/list"
+          class="px-8 py-3 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest"
         >
+          {{ 'product.home_link' | translate }}
+        </a>
       </div>
     </div>
   }
 
-  <!-- Main content -->
+  <!-- ── Main Content ─────────────────────────────────────────── -->
   @if (!isLoading() && !errorMsg()) {
     <main class="max-w-7xl mx-auto px-6 py-12 md:py-16 w-full">
       <!-- Breadcrumbs -->
       <nav
-        class="flex items-center gap-3 text-[11px] text-slate-400 mb-12 font-bold uppercase tracking-widest animate-in fade-in slide-in-from-left-4 duration-500"
+        class="flex items-center gap-3 text-[11px] text-slate-400 mb-12 font-bold uppercase tracking-widest"
       >
-        <a class="hover:text-primary transition-colors" routerLink="/">{{ 'common.home' | translate }}</a>
+        <a class="hover:text-primary transition-colors" routerLink="/">{{
+          'common.home' | translate
+        }}</a>
         <span class="material-symbols-outlined text-[10px] opacity-40">chevron_right</span>
-        <a class="hover:text-primary transition-colors" routerLink="/product/list">{{ 'nav.shop' | translate }}</a>
+        <a class="hover:text-primary transition-colors" routerLink="/product/list">{{
+          'nav.shop' | translate
+        }}</a>
         <span class="material-symbols-outlined text-[10px] opacity-40">chevron_right</span>
-        <span class="text-slate-900 dark:text-white">{{ product().category }}</span>
+        <span class="text-slate-900 dark:text-white truncate max-w-48">{{ product().name }}</span>
       </nav>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
-        <!-- Left: Product Showcase -->
-        <div
-          class="lg:col-span-7 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700"
-        >
+      <!-- ── Product Grid ──────────────────────────────────────── -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20">
+        <!-- Left: Images -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
           <!-- Main Image -->
           <div
-            class="relative group aspect-square rounded-[3rem] bg-white dark:bg-surface-dark flex items-center justify-center overflow-hidden border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all duration-700 hover:shadow-primary/10"
+            class="relative group aspect-square rounded-[3rem] bg-white dark:bg-surface-dark flex items-center justify-center overflow-hidden border border-slate-100 dark:border-white/5 shadow-2xl"
           >
             <div
               class="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none"
             ></div>
-            <div
-              class="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style="
-                background-image: radial-gradient(circle, #0066ff 1px, transparent 1px);
-                background-size: 30px 30px;
-              "
-            ></div>
-            <img
-              [alt]="product().name"
-              class="w-[85%] h-[85%] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.1)] group-hover:scale-105 transition-transform duration-1000"
-              [src]="product().image"
-            />
+            @if (mainImageUrl) {
+              <img
+                [src]="mainImageUrl"
+                [alt]="product().name"
+                class="w-[85%] h-[85%] object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-700"
+                #mainImg
+                (error)="mainImg.style.display = 'none'; mainFallback.classList.remove('hidden')"
+              />
+              <div #mainFallback class="absolute inset-0 hidden items-center justify-center">
+                <span class="material-symbols-outlined text-slate-400 text-6xl"
+                  >image_not_supported</span
+                >
+              </div>
+            } @else {
+              <span class="material-symbols-outlined text-slate-400 text-6xl"
+                >image_not_supported</span
+              >
+            }
+
             @if (warrantyMonths() > 0) {
               <div
-                class="absolute top-8 right-8 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 shadow-primary/5"
+                class="absolute top-6 right-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2"
               >
-                <span class="material-symbols-outlined text-primary">verified_user</span>
+                <span class="material-symbols-outlined text-primary text-base">verified_user</span>
                 <span
                   class="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white"
-                  >{{ 'product.warranty' | translate }} {{ warrantyMonths() }} {{ 'product.months' | translate }}</span
                 >
+                  {{ 'product.warranty' | translate }} {{ warrantyMonths() }}
+                  {{ 'product.months' | translate }}
+                </span>
               </div>
             }
           </div>
 
-          <!-- Thumbnail Strip -->
+          <!-- Thumbnails -->
           @if (productImages().length > 1) {
-            <div class="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+            <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               @for (img of productImages(); track $index) {
                 <button
-                  class="min-w-[120px] aspect-[4/3] rounded-[1.5rem] border-2 transition-all duration-300 bg-white dark:bg-surface-dark overflow-hidden group shadow-md hover:shadow-xl"
+                  type="button"
+                  class="min-w-[100px] aspect-square rounded-2xl border-2 transition-all duration-300 bg-white dark:bg-surface-dark overflow-hidden group shadow-md hover:shadow-xl shrink-0"
                   [class]="
-                    $index === 0
+                    activeImageIndex() === $index
                       ? 'border-primary'
-                      : 'border-slate-50 dark:border-white/5 opacity-60 hover:opacity-100'
+                      : 'border-slate-100 dark:border-white/5 opacity-60 hover:opacity-100'
                   "
+                  (click)="setActiveImage($index)"
                 >
                   <img
                     [src]="img"
-                    alt="Product image"
-                    class="w-full h-full object-contain p-3 group-hover:scale-110 transition-transform duration-500"
+                    alt="Anh san pham {{ $index + 1 }}"
+                    class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
+                    #thumbImg
+                    (error)="thumbImg.style.display = 'none'"
                   />
                 </button>
               }
@@ -104,19 +121,13 @@
           }
         </div>
 
-        <!-- Right: Info & Purchase -->
-        <div
-          class="lg:col-span-5 flex flex-col gap-10 animate-in fade-in slide-in-from-right-8 duration-700"
-        >
-          <div class="flex flex-col gap-6">
-            <div class="flex items-center gap-4">
+        <!-- Right: Purchase Info -->
+        <div class="lg:col-span-5 flex flex-col gap-8">
+          <!-- Name & Price -->
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-3 flex-wrap">
               <span
                 class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-emerald-500/20 tracking-[0.2em] uppercase"
-                >{{ 'product.deployment_ready' | translate }}</span
-              >
-              <button
-                class="flex items-center gap-1.5 text-amber-500 cursor-pointer h-8 px-3 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
-                (click)="setTab('reviews')"
               >
                 <span class="material-symbols-outlined text-sm fill-1">star</span>
                 <span class="text-sm font-black">{{ averageRating() }}</span>
@@ -127,76 +138,89 @@
             </div>
 
             <h1
-              class="text-5xl md:text-6xl font-orbitron font-bold text-slate-900 dark:text-white leading-[1.1] tracking-tight"
+              class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight"
             >
               {{ product().name }}
             </h1>
-            <p class="text-xl text-slate-500 dark:text-slate-400 font-medium">
-              {{ product().category }}
-            </p>
 
-            <div class="flex items-center gap-6 mt-4">
-              <span class="text-5xl font-total font-bold text-primary tracking-tighter"
-                >${{ product().price | number: '1.0-0' }}đ</span
-              >
-              @if (salePrice() && regularPrice() > salePrice()!) {
-                <div class="flex flex-col">
-                  <span class="text-slate-400 line-through text-lg font-bold opacity-50"
-                    >{{ regularPrice() | number: '1.0-0' }}đ</span
-                  >
+            <!-- Price -->
+            <div class="flex items-end gap-4 mt-2">
+              <span class="text-4xl font-bold text-primary tracking-tighter">
+                {{ product().price | number: '1.0-0' }}d
+              </span>
+              @if (salePrice() != null && regularPrice() > (salePrice() ?? 0)) {
+                <div class="flex flex-col pb-1">
+                  <span class="text-slate-400 line-through text-base font-bold">
+                    {{ regularPrice() | number: '1.0-0' }}d
+                  </span>
                   <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest">
-                    {{ 'product.saving' | translate }} {{ regularPrice() - salePrice()! | number: '1.0-0' }}đ
+                    {{ 'product.saving' | translate }}
+                    {{ regularPrice() - (salePrice() ?? 0) | number: '1.0-0' }}d
                   </span>
                 </div>
               }
             </div>
           </div>
 
+          <!-- Add to Cart Panel -->
           <div
-            class="flex flex-col gap-8 p-10 bg-slate-50/50 dark:bg-white/5 rounded-[2.5rem] border border-slate-100 dark:border-white/5"
+            class="p-8 bg-slate-50/50 dark:bg-white/5 rounded-[2.5rem] border border-slate-100 dark:border-white/5"
           >
-            <div class="grid grid-cols-1 gap-4">
+            <div class="flex flex-col gap-4">
               <button
-                class="flex items-center justify-center gap-4 bg-primary text-white font-black py-6 rounded-2xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] transition-all uppercase tracking-[0.2em] group cursor-pointer text-sm"
+                type="button"
+                class="flex items-center justify-center gap-3 bg-primary text-white font-black py-5 rounded-2xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] transition-all uppercase tracking-[0.2em] text-sm cursor-pointer"
                 (click)="addToCart()"
               >
-                <span class="material-symbols-outlined group-hover:rotate-12 transition-transform"
-                  >shopping_cart_checkout</span
-                >
+                <span class="material-symbols-outlined">shopping_cart_checkout</span>
                 {{ 'product.add_to_cart' | translate }}
               </button>
-              <button
-                class="flex items-center justify-center gap-4 bg-white dark:bg-white/10 text-slate-900 dark:text-white font-black py-4 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-primary/50 transition-all uppercase tracking-[0.2em] cursor-pointer text-[10px]"
+              <a
                 routerLink="/cart"
+                class="flex items-center justify-center gap-3 bg-white dark:bg-white/10 text-slate-900 dark:text-white font-black py-4 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-primary/50 transition-all uppercase tracking-[0.2em] text-[10px]"
               >
                 <span class="material-symbols-outlined text-lg">bolt</span>
                 {{ 'product.buy_now' | translate }}
-              </button>
+              </a>
             </div>
-            <div class="flex flex-col gap-4 pt-6 border-t border-slate-200 dark:border-white/10">
+
+            <!-- Info rows -->
+            <div
+              class="flex flex-col gap-3 mt-6 pt-6 border-t border-slate-200 dark:border-white/10"
+            >
               @if (warrantyMonths() > 0) {
                 <div
-                  class="flex items-center gap-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
+                  class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
                 >
-                  <span class="material-symbols-outlined text-primary text-xl">security</span>
-                  {{ 'product.warranty' | translate }} {{ warrantyMonths() }} {{ 'product.months' | translate }}
+                  <span class="material-symbols-outlined text-primary">security</span>
+                  {{ 'product.warranty' | translate }} {{ warrantyMonths() }}
+                  {{ 'product.months' | translate }}
                 </div>
               }
               <div
-                class="flex items-center gap-4 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
+                class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
               >
-                <span class="material-symbols-outlined text-emerald-500 text-xl">inventory_2</span>
+                <span class="material-symbols-outlined text-emerald-500">local_shipping</span>
                 {{ 'home.shipping' | translate }}
               </div>
+              @if (product().stockQuantity > 0) {
+                <div
+                  class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
+                >
+                  <span class="material-symbols-outlined text-emerald-500">inventory_2</span>
+                  Con hang ({{ product().stockQuantity }})
+                </div>
+              }
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tabs Section -->
-      <div class="mt-32">
+      <!-- ── Tabs ──────────────────────────────────────────────── -->
+      <div class="mt-24">
+        <!-- Tab Headers -->
         <div
-          class="flex gap-4 p-2 bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-3xl mb-12 overflow-x-auto scrollbar-hide shadow-sm"
+          class="flex gap-3 p-2 bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-3xl mb-10 overflow-x-auto scrollbar-hide shadow-sm"
         >
           @for (
             tab of [
@@ -207,7 +231,8 @@
             track tab.id
           ) {
             <button
-              class="flex items-center gap-3 px-10 py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer whitespace-nowrap"
+              type="button"
+              class="flex items-center gap-2 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer whitespace-nowrap"
               [class]="
                 activeTab() === tab.id
                   ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-105'
@@ -215,19 +240,19 @@
               "
               (click)="setTab(tab.id)"
             >
-              <span class="material-symbols-outlined text-lg opacity-70">{{ tab.icon }}</span>
+              <span class="material-symbols-outlined text-base opacity-80">{{ tab.icon }}</span>
               {{ tab.key | translate }}
             </button>
           }
         </div>
 
         <!-- Tab Content -->
-        <div class="min-h-[400px] animate-in fade-in duration-500">
-          <!-- Description Tab -->
+        <div class="min-h-[300px]">
+          <!-- Description -->
           @if (activeTab() === 'description') {
-            <div class="space-y-6">
+            <div class="max-w-4xl">
               @if (description()) {
-                <p class="text-xl text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                <p class="text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                   {{ description() }}
                 </p>
               } @else {
@@ -236,15 +261,15 @@
             </div>
           }
 
-          <!-- Specs Tab (dynamic from API) -->
+          <!-- Specs -->
           @if (activeTab() === 'specs') {
-            <div class="max-w-4xl mx-auto">
+            <div class="max-w-4xl">
               @if (productSpecs().length > 0) {
                 <div
-                  class="rounded-[2rem] overflow-hidden border border-slate-100 dark:border-white/10 bg-white dark:bg-surface-dark shadow-2xl shadow-slate-200/50 dark:shadow-none"
+                  class="rounded-[2rem] overflow-hidden border border-slate-100 dark:border-white/10 bg-white dark:bg-surface-dark shadow-xl"
                 >
                   <div
-                    class="bg-slate-50 dark:bg-white/5 px-10 py-6 border-b border-slate-100 dark:border-white/10"
+                    class="bg-slate-50 dark:bg-white/5 px-8 py-5 border-b border-slate-100 dark:border-white/10"
                   >
                     <h4 class="text-xs font-black uppercase tracking-[0.3em] text-slate-400">
                       {{ 'product.specs_title' | translate }}
@@ -257,11 +282,13 @@
                           class="border-b border-slate-50 dark:border-white/5 hover:bg-primary/5 transition-all"
                         >
                           <td
-                            class="px-10 py-6 text-[10px] text-primary font-black uppercase tracking-widest w-1/3"
+                            class="px-8 py-5 text-[10px] text-primary font-black uppercase tracking-widest w-2/5"
                           >
                             {{ spec.specKey }}
                           </td>
-                          <td class="px-10 py-6 font-bold text-slate-700 dark:text-slate-200">
+                          <td
+                            class="px-8 py-5 font-bold text-slate-700 dark:text-slate-200 text-sm"
+                          >
                             {{ spec.specValue }}
                           </td>
                         </tr>
@@ -270,17 +297,22 @@
                   </table>
                 </div>
               } @else {
-                <p class="text-slate-400 italic text-center py-12">{{ 'product.no_specs' | translate }}</p>
+                <p class="text-slate-400 italic text-center py-12">
+                  {{ 'product.no_specs' | translate }}
+                </p>
               }
             </div>
           }
 
-          <!-- Reviews Tab -->
+          <!-- Reviews (placeholder - chua co API) -->
           @if (activeTab() === 'reviews') {
-            <div class="space-y-12">
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div
-                  class="lg:col-span-4 bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-10 flex flex-col items-center justify-center text-center shadow-2xl shadow-slate-200/40 dark:shadow-none"
+            <div class="max-w-4xl">
+              <div
+                class="bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-12 text-center shadow-xl"
+              >
+                <span
+                  class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block"
+                  >reviews</span
                 >
                   <div
                     class="text-7xl font-total font-bold text-slate-900 dark:text-white mb-2 tracking-tighter"
@@ -431,51 +463,56 @@
 <!-- Write Review Modal -->
 @if (isWriteReviewOpen()) {
   <div
-    class="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-500"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-[100] p-6"
     (click)="toggleWriteReview()"
     (keyup.escape)="toggleWriteReview()"
     tabindex="-1"
+    role="dialog"
+    aria-modal="true"
   >
     <div
-      class="bg-white dark:bg-surface-dark w-full max-w-3xl rounded-[3rem] overflow-hidden flex flex-col border border-white/20 shadow-2xl animate-in zoom-in-95 duration-500"
+      class="bg-white dark:bg-surface-dark w-full max-w-2xl rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl"
       (click)="$event.stopPropagation()"
       (keyup.enter)="$event.stopPropagation()"
       tabindex="0"
-      role="dialog"
     >
+      <!-- Header -->
       <div
-        class="flex items-center justify-between p-10 border-b border-slate-50 dark:border-white/5"
+        class="flex items-center justify-between p-8 border-b border-slate-50 dark:border-white/5"
       >
         <div>
-          <h2
-            class="text-4xl font-orbitron font-bold text-slate-900 dark:text-white uppercase tracking-tight"
-          >
+          <h2 class="text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
             {{ 'product.write_review' | translate }}
           </h2>
-          <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">{{ product().name }}</p>
+          <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">{{ product().name }}</p>
         </div>
         <button
-          class="size-12 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer border border-slate-100 dark:border-white/10"
+          type="button"
+          class="size-11 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border border-slate-100 dark:border-white/10"
           (click)="toggleWriteReview()"
         >
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
-      <div class="p-10 space-y-8 overflow-y-auto max-h-[60vh] scrollbar-hide">
-        <div class="flex flex-col items-center gap-6">
+
+      <!-- Body -->
+      <div class="p-8 space-y-6 overflow-y-auto max-h-[60vh]">
+        <!-- Star rating -->
+        <div class="flex flex-col items-center gap-4">
           <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
             {{ 'product.overall_rating' | translate }}
           </h3>
-          <div class="flex gap-4">
+          <div class="flex gap-3">
             @for (num of [1, 2, 3, 4, 5]; track num) {
               <button
-                class="group relative cursor-pointer"
+                type="button"
+                class="group"
                 (click)="setRating(num)"
                 (mouseenter)="setHoverRating(num)"
                 (mouseleave)="setHoverRating(0)"
               >
                 <span
-                  class="material-symbols-outlined text-5xl transition-all duration-300 group-hover:scale-125"
+                  class="material-symbols-outlined text-4xl transition-all group-hover:scale-125"
                   [class]="
                     (hoverRating() > 0 ? num <= hoverRating() : num <= selectedRating())
                       ? 'text-amber-500 fill-1'
@@ -487,43 +524,52 @@
             }
           </div>
         </div>
-        <div class="space-y-4">
+
+        <!-- Title input -->
+        <div class="space-y-2">
           <label
             for="review-title"
-            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1"
-            >{{ 'product.review_title' | translate }}</label
+            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]"
           >
+            {{ 'product.review_title' | translate }}
+          </label>
           <input
             id="review-title"
             type="text"
-            class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-2xl p-5 text-slate-900 dark:text-white font-bold text-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+            class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
             [placeholder]="'product.review_title_placeholder' | translate"
             [ngModel]="reviewTitle()" (ngModelChange)="reviewTitle.set($event)"
           />
         </div>
-        <div class="space-y-4">
+
+        <!-- Body textarea -->
+        <div class="space-y-2">
           <label
             for="review-body"
-            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1"
-            >{{ 'product.review_body' | translate }}</label
+            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]"
           >
+            {{ 'product.review_body' | translate }}
+          </label>
           <textarea
             id="review-body"
-            class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-[2rem] p-6 text-slate-900 dark:text-white font-medium text-base focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[160px] resize-none outline-none transition-all"
+            class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-[2rem] p-5 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[130px] resize-none outline-none transition-all"
             [placeholder]="'product.review_body_placeholder' | translate"
             [ngModel]="reviewBody()" (ngModelChange)="reviewBody.set($event)"
           ></textarea>
         </div>
       </div>
+
+      <!-- Footer -->
       <div
-        class="p-10 border-t border-slate-50 dark:border-white/5 flex items-center justify-between"
+        class="p-8 border-t border-slate-50 dark:border-white/5 flex items-center justify-between"
       >
-        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic"
-          >{{ 'product.review_public_notice' | translate }}</span
-        >
-        <div class="flex gap-4">
+        <span class="text-[10px] text-slate-400 italic">{{
+          'product.review_public_notice' | translate
+        }}</span>
+        <div class="flex gap-3">
           <button
-            class="px-8 py-3 rounded-xl font-black text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-widest text-[10px]"
+            type="button"
+            class="px-6 py-3 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-[10px] font-black uppercase tracking-widest"
             (click)="toggleWriteReview()"
           >
             {{ 'product.cancel' | translate }}

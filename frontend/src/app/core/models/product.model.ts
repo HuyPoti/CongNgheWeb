@@ -1,13 +1,20 @@
-// ==========================================
-// DTOs khớp với backend (camelCase JSON)
-// ==========================================
+// ================================================================
+// DTOs – khop 1-1 voi backend JSON response (camelCase)
+// ================================================================
 
 export interface ProductListItemDto {
   id: string;
   name: string;
+  // price = SalePrice ?? RegularPrice (gia ban thuc te)
   price: number;
+  regularPrice: number;
+  salePrice: number | null;
   categoryName: string;
   thumbnailUrl: string | null;
+  brandName: string;
+  brandId: string;
+  stockQuantity: number;
+  warrantyMonths: number;
 }
 
 export interface ProductDto {
@@ -28,7 +35,7 @@ export interface ProductDto {
 }
 
 export interface ProductImageDto {
-  productImageId: string;
+  imageId: string;
   imageUrl: string;
   isPrimary: boolean;
   sortOrder: number;
@@ -60,9 +67,9 @@ export interface ProductListResponse {
   pageSize: number;
 }
 
-// ==========================================
-// Request DTOs gửi lên backend
-// ==========================================
+// ================================================================
+// Request DTOs gui len backend
+// ================================================================
 
 export interface CreateProductDto {
   categoryId: string;
@@ -105,20 +112,41 @@ export interface CreateProductSpecDto {
   specValue: string;
 }
 
-// ==========================================
-// UI Models (dùng nội bộ frontend)
-// ==========================================
+// ================================================================
+// Options object cho fetchClientProducts (thay the overload cu)
+// ================================================================
+
+export interface ClientProductsQuery {
+  page?: number;
+  pageSize?: number;
+  categorySlug?: string;
+  keyword?: string;
+  brandId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
+}
+
+// ================================================================
+// UI Models – chi dung noi bo trong component/template
+// ================================================================
 
 export interface ProductCard {
   id: string;
   name: string;
   price: number;
+  regularPrice: number;
+  salePrice: number | null;
   image: string;
   category: string;
+  brand: string;
+  brandId: string;
+  stockQuantity: number;
+  warrantyMonths: number;
   specs: Record<string, string>;
-  brand?: string;
 }
 
+// Giu lai de tuong thich voi cac component cu (reviews, comparison)
 export interface Review {
   id: string;
   userName: string;

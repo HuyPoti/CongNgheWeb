@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { CartService } from '../../../core/services/cart.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { ProductService } from '../../../core/services/product.service';
 import { ProductCard, ProductFullDto, ProductSpecDto } from '../../../core/models/product.model';
 import { ReviewService } from '../../../core/services/review.service';
@@ -14,7 +15,6 @@ import { ReviewDto } from '../../../core/models/review.model';
   standalone: true,
   imports: [RouterLink, CommonModule, TranslatePipe, FormsModule],
   templateUrl: './product-detail.html',
-  styles: ``,
 })
 export class ProductDetail implements OnInit {
   private route = inject(ActivatedRoute);
@@ -32,19 +32,23 @@ export class ProductDetail implements OnInit {
   isLoading = signal(true);
   errorMsg = signal('');
 
-  // product() được dùng bởi HTML - giữ kiểu ProductCard để template không đổi
+  // ── Product data ──────────────────────────────────────────────────
+  // product() → UI model de dung trong template (gia, anh, ten...)
   product = signal<ProductCard>({
     id: '',
-    name: 'Đang tải...',
+    name: '',
     price: 0,
+    regularPrice: 0,
+    salePrice: null,
     image: '',
     category: '',
-    specs: {},
     brand: '',
+    brandId: '',
+    stockQuantity: 0,
+    warrantyMonths: 0,
+    specs: {},
   });
 
-  // Dữ liệu thêm từ API
-  productFull = signal<ProductFullDto | null>(null);
   productImages = signal<string[]>([]);
   productSpecs = signal<ProductSpecDto[]>([]);
   regularPrice = signal(0);
@@ -58,25 +62,31 @@ export class ProductDetail implements OnInit {
   totalReviews = signal(0);
   ratingDistribution = signal<{ stars: number; count: number; percentage: number }[]>([]);
 
-  ngOnInit() {
+  // ── Lifecycle ─────────────────────────────────────────────────────
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.errorMsg.set('Không tìm thấy sản phẩm');
+      this.errorMsg.set('Khong tim thay san pham');
       this.isLoading.set(false);
       return;
     }
+    this.loadProduct(id);
+  }
+
+  // ── Data ──────────────────────────────────────────────────────────
+  private loadProduct(id: string): void {
+    this.isLoading.set(true);
+    this.errorMsg.set('');
 
     this.productService.getFullById(id).subscribe({
       next: (full: ProductFullDto) => {
         const dto = full.product;
 
-        // Lấy ảnh chính (isPrimary = true hoặc ảnh đầu tiên)
+        // Anh chinh: isPrimary hoac anh dau tien
         const primaryImg =
-          full.images.find((i) => i.isPrimary)?.imageUrl ||
-          full.images[0]?.imageUrl ||
-          'https://via.placeholder.com/600x600?text=No+Image';
+          full.images.find((i) => i.isPrimary)?.imageUrl || full.images[0]?.imageUrl || '';
 
-        // Map specs thành Record<string, string> cho ProductCard
+        // Specs → Record de dung trong ProductCard
         const specsMap: Record<string, string> = {};
         full.specs.forEach((s) => (specsMap[s.specKey] = s.specValue));
 
@@ -84,19 +94,24 @@ export class ProductDetail implements OnInit {
           id: dto.productId,
           name: dto.name,
           price: dto.salePrice ?? dto.regularPrice,
+          regularPrice: dto.regularPrice,
+          salePrice: dto.salePrice,
           image: primaryImg,
           category: dto.categoryName,
-          specs: specsMap,
           brand: '',
+          brandId: dto.brandId,
+          stockQuantity: dto.stockQuantity,
+          warrantyMonths: dto.warrantyMonths,
+          specs: specsMap,
         });
 
-        this.productFull.set(full);
         this.productImages.set(full.images.map((i) => i.imageUrl));
         this.productSpecs.set(full.specs);
         this.regularPrice.set(dto.regularPrice);
         this.salePrice.set(dto.salePrice);
         this.description.set(dto.description);
         this.warrantyMonths.set(dto.warrantyMonths);
+        this.activeImageIndex.set(0);
         this.isLoading.set(false);
         this.reviewsService.getByProductId(id).subscribe({
           next: (data) => {
@@ -109,38 +124,50 @@ export class ProductDetail implements OnInit {
           },
         });
       },
-      error: (err) => {
-        console.error('Lỗi tải sản phẩm:', err);
-        this.errorMsg.set('Không thể tải thông tin sản phẩm');
+      error: () => {
+        this.errorMsg.set('Khong the tai thong tin san pham. Vui long thu lai.');
         this.isLoading.set(false);
       },
     });
   }
 
-  setTab(tab: string) {
+  // ── Tab ───────────────────────────────────────────────────────────
+  setTab(tab: string): void {
     this.activeTab.set(tab);
   }
 
-  getStarArray(rating: number): boolean[] {
-    return Array.from({ length: 5 }, (_, i) => i < rating);
+  // ── Image gallery ─────────────────────────────────────────────────
+  setActiveImage(index: number): void {
+    this.activeImageIndex.set(index);
   }
 
-  toggleWriteReview() {
+  get mainImageUrl(): string {
+    const imgs = this.productImages();
+    return imgs[this.activeImageIndex()] ?? this.product().image;
+  }
+
+  // ── Review modal ──────────────────────────────────────────────────
+  toggleWriteReview(): void {
     this.isWriteReviewOpen.update((v) => !v);
     this.selectedRating.set(0);
     this.hoverRating.set(0);
   }
 
-  setRating(rating: number) {
+  setRating(rating: number): void {
     this.selectedRating.set(rating);
   }
-
-  setHoverRating(rating: number) {
+  setHoverRating(rating: number): void {
     this.hoverRating.set(rating);
   }
 
-  addToCart() {
+  getStarArray(rating: number): boolean[] {
+    return Array.from({ length: 5 }, (_, i) => i < Math.round(rating));
+  }
+
+  // ── Cart ──────────────────────────────────────────────────────────
+  addToCart(): void {
     this.cartService.addToCart(this.product());
+    this.toastService.success(`Da them "${this.product().name}" vao gio hang`);
   }
 
   private calculateRatingRate(reviews: ReviewDto[]) {

@@ -9,12 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace backend.Services;
 
 public class ProductService(
-    IUnitOfWork uow, 
+    IUnitOfWork uow,
     IMapper mapper,
     IProductImageService imageService,
     IProductSpecService specService) : IProductService
 {
-    // GET ALL ASYNC
+    // ── Admin: danh sach co filter ─────────────────────────────────
     public async Task<PagedResult<ProductDto>> GetAllAsync(
         string? keyword,
         Guid? categoryId,
@@ -25,21 +25,19 @@ public class ProductService(
         int pageSize)
     {
         page = page <= 0 ? 1 : page;
-        pageSize = pageSize <= 0 ? 10 : pageSize;
-        pageSize = pageSize > 20 ? 20 : pageSize;
+        pageSize = Math.Clamp(pageSize, 1, 20);
 
         var query = uow.Products.Query()
             .Where(p => p.Status != 3)
             .Include(p => p.Category)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(keyword))
+        if (!string.IsNullOrWhiteSpace(keyword))
         {
-            var trimmed = keyword.Trim();
-
-            query = trimmed.Length <= 3
-                ? query.Where(p => EF.Functions.ILike(p.Name, $"{trimmed}%"))
-                : query.Where(p => EF.Functions.ILike(p.Name, $"%{trimmed}%"));
+            var kw = keyword.Trim();
+            query = kw.Length <= 3
+                ? query.Where(p => EF.Functions.ILike(p.Name, $"{kw}%"))
+                : query.Where(p => EF.Functions.ILike(p.Name, $"%{kw}%"));
         }
 
         if (categoryId.HasValue)
@@ -69,10 +67,10 @@ public class ProductService(
         };
     }
 
+    // ── Get full (product + images + specs) ───────────────────────
     public async Task<ProductFullDto> GetFullByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var product = await GetByIdAsync(id, cancellationToken);
-
         var images = await imageService.GetByProductIdAsync(id, cancellationToken);
         var specs = await specService.GetByProductIdAsync(id, cancellationToken);
 
@@ -84,7 +82,7 @@ public class ProductService(
         };
     }
 
-    // GET BY ID ASYNC
+    // ── Get by ID ──────────────────────────────────────────────────
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var product = await uow.Products.Query()
@@ -92,27 +90,29 @@ public class ProductService(
             .Include(p => p.Category)
             .ProjectTo<ProductDto>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(p => p.ProductId == id, cancellationToken);
-            
-        if (product == null) throw new NotFoundException("Product not found");
+
+        if (product == null)
+            throw new NotFoundException("Product not found");
+
         return product;
     }
 
-
-    // GET BY SLUG
-   public async Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken)
+    // ── Get by Slug ────────────────────────────────────────────────
+    public async Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken)
     {
-        var product = await uow.Products
-            .Query()
+        var product = await uow.Products.Query()
             .Where(p => p.Status != 3)
             .Include(p => p.Category)
             .ProjectTo<ProductDto>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(p => p.Slug == slug, cancellationToken);
-            
-        if (product == null) throw new NotFoundException("Product not found");
+
+        if (product == null)
+            throw new NotFoundException("Product not found");
+
         return product;
     }
 
-    // CREATE
+    // ── Create ─────────────────────────────────────────────────────
     public async Task<ProductDto?> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken)
     {
         var category = await uow.Categories.GetByIdAsync<CategoryDto>(dto.CategoryId, cancellationToken);
@@ -122,47 +122,52 @@ public class ProductService(
         var brand = await uow.Brands.GetByIdAsync<BrandDto>(dto.BrandId, cancellationToken);
         if (brand == null)
             throw new NotFoundException("Brand not found");
-            
-        var existing = await uow.Products.Query()
+
+        var slugExists = await uow.Products.Query()
             .AnyAsync(p => p.Slug == dto.Slug, cancellationToken);
 
-        if (existing)
+        if (slugExists)
             throw new BadRequestException("Slug already exists");
 
         var product = mapper.Map<Product>(dto);
-
         product.CreatedAt = DateTime.UtcNow;
         product.UpdatedAt = DateTime.UtcNow;
-        product.Status = dto.Status.HasValue ? (int)dto.Status.Value : 1; 
-        // 1: draft, 2: published
+        product.Status = dto.Status ?? 1;
 
         uow.Products.Insert(product);
         await uow.SaveAsync(cancellationToken);
         return mapper.Map<ProductDto>(product);
     }
 
-
-    // UPDATE
+    // ── Update ─────────────────────────────────────────────────────
     public async Task<ProductDto?> UpdateAsync(Guid id, UpdateProductDto dto, CancellationToken cancellationToken)
     {
-        var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == id, cancellationToken);
-        if (product == null) throw new NotFoundException("Product not found");
-        
-        if (!string.IsNullOrEmpty(dto.Slug)) {
-            var exists = await uow.Products
-                .Query()
+        var product = await uow.Products.Query()
+            .FirstOrDefaultAsync(p => p.ProductId == id, cancellationToken);
+
+        if (product == null)
+            throw new NotFoundException("Product not found");
+
+        if (!string.IsNullOrEmpty(dto.Slug))
+        {
+            var exists = await uow.Products.Query()
                 .AnyAsync(p => p.Slug == dto.Slug && p.ProductId != id, cancellationToken);
-            if (exists) throw new BadRequestException("Slug already exists");
-        }
-        
-        if (dto.CategoryId.HasValue) {
-            var category = await uow.Categories.GetByIdAsync<CategoryDto>(dto.CategoryId.Value, cancellationToken);
-            if (category == null) throw new NotFoundException("Category not found");
+            if (exists)
+                throw new BadRequestException("Slug already exists");
         }
 
-        if (dto.BrandId.HasValue) {
+        if (dto.CategoryId.HasValue)
+        {
+            var cat = await uow.Categories.GetByIdAsync<CategoryDto>(dto.CategoryId.Value, cancellationToken);
+            if (cat == null)
+                throw new NotFoundException("Category not found");
+        }
+
+        if (dto.BrandId.HasValue)
+        {
             var brand = await uow.Brands.GetByIdAsync<BrandDto>(dto.BrandId.Value, cancellationToken);
-            if (brand == null) throw new NotFoundException("Brand not found");
+            if (brand == null)
+                throw new NotFoundException("Brand not found");
         }
 
         mapper.Map(dto, product);
@@ -172,43 +177,89 @@ public class ProductService(
         return mapper.Map<ProductDto>(product);
     }
 
-    // DELETE
+    // ── Delete (soft delete: an khoi ca admin va client) ──────────
+    // BUG FIX: truoc day dat Status = 1 (draft), phai la Status = 3 (deleted)
+    // Admin query: Status != 3 → Status = 3 se an khoi admin
+    // Client query: Status == 2 → da khong hien, nhung de nhat quan dung Status = 3
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == id, cancellationToken);
-        if (product == null) throw new NotFoundException("Product not found");
+        var product = await uow.Products.Query()
+            .FirstOrDefaultAsync(p => p.ProductId == id, cancellationToken);
 
-        product.Status = 1; // 1: Inactive (Soft Deleted)
+        if (product == null)
+            throw new NotFoundException("Product not found");
+
+        product.Status = 3;
         product.UpdatedAt = DateTime.UtcNow;
         uow.Products.Update(product);
         await uow.SaveAsync(cancellationToken);
     }
 
+    // ── Client: danh sach san pham voi day du filter ───────────────
     public async Task<PagedResult<ProductListItemDto>> GetProductListAsync(
         CancellationToken cancellationToken,
         int page,
         int pageSize,
-        string? categorySlug = null
-    )
+        string? categorySlug = null,
+        string? keyword = null,
+        Guid? brandId = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string? sortBy = null)
     {
         page = page <= 0 ? 1 : page;
-        pageSize = pageSize <= 0 ? 12 : pageSize;
-        pageSize = pageSize > 50 ? 50 : pageSize;
+        pageSize = Math.Clamp(pageSize, 1, 50);
 
         var query = uow.Products.Query()
-            .Where(p => p.Status == 2) // Chỉ khách hàng mới thấy sản phẩm Hoạt động
+            .Where(p => p.Status == 2)
             .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .Include(p => p.Images)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(categorySlug))
+        // MỚI - lấy cả category cha + con
+        if (!string.IsNullOrWhiteSpace(categorySlug))
         {
-            query = query.Where(p => p.Category.Slug == categorySlug);
+            var cat = await uow.Categories.Query()
+                .FirstOrDefaultAsync(c => c.Slug == categorySlug, cancellationToken);
+
+            if (cat != null)
+            {
+                var childIds = await uow.Categories.Query()
+                    .Where(c => c.ParentId == cat.CategoryId)
+                    .Select(c => c.CategoryId)
+                    .ToListAsync(cancellationToken);
+
+                var allIds = new HashSet<Guid>(childIds) { cat.CategoryId };
+                query = query.Where(p => allIds.Contains(p.CategoryId));
+            }
         }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+            query = query.Where(p => EF.Functions.ILike(p.Name, $"%{keyword.Trim()}%"));
+
+        if (brandId.HasValue)
+            query = query.Where(p => p.BrandId == brandId.Value);
+
+        // Filter gia theo gia ban thuc te (SalePrice neu co, nguoc lai RegularPrice)
+        if (minPrice.HasValue)
+            query = query.Where(p => (p.SalePrice ?? p.RegularPrice) >= minPrice.Value);
+
+        if (maxPrice.HasValue)
+            query = query.Where(p => (p.SalePrice ?? p.RegularPrice) <= maxPrice.Value);
+
+        // Sort
+        query = sortBy switch
+        {
+            "price_asc" => query.OrderBy(p => p.SalePrice ?? p.RegularPrice),
+            "price_desc" => query.OrderByDescending(p => p.SalePrice ?? p.RegularPrice),
+            "name_asc" => query.OrderBy(p => p.Name),
+            _ => query.OrderByDescending(p => p.CreatedAt)
+        };
 
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderByDescending(p => p.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(p => new ProductListItemDto
@@ -216,8 +267,15 @@ public class ProductService(
                 Id = p.ProductId,
                 Name = p.Name,
                 Price = p.SalePrice ?? p.RegularPrice,
+                RegularPrice = p.RegularPrice,
+                SalePrice = p.SalePrice,
                 CategoryName = p.Category.Name,
-
+                CategorySlug = p.Category.Slug,
+                CategoryId = p.CategoryId,
+                BrandName = p.Brand.Name,
+                BrandId = p.BrandId,
+                StockQuantity = p.StockQuantity,
+                WarrantyMonths = p.WarrantyMonths,
                 ThumbnailUrl = p.Images
                     .Where(i => i.IsPrimary)
                     .OrderBy(i => i.SortOrder)

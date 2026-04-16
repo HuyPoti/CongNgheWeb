@@ -13,18 +13,24 @@ public interface IProductService
         int page,
         int pageSize
     );
+
     Task<ProductFullDto> GetFullByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken);
 
     Task<ProductDto?> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken);
     Task<ProductDto?> UpdateAsync(Guid id, UpdateProductDto dto, CancellationToken cancellationToken);
-
     Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+
     Task<PagedResult<ProductListItemDto>> GetProductListAsync(
         CancellationToken cancellationToken,
         int page,
         int pageSize,
-        string? categorySlug = null
+        string? categorySlug = null,
+        string? keyword = null,
+        Guid? brandId = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string? sortBy = null
     );
 }
