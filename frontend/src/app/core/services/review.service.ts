@@ -11,16 +11,15 @@ import {
   ReviewImageDto,
   CreateReviewImageDto,
   ToggleVoteDto,
-  ToggleVoteResponse
+  ToggleVoteResponse,
 } from '../models/review.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ReviewService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/reviews`;
-
 
   // ============================
   // REVIEWS
@@ -28,6 +27,10 @@ export class ReviewService {
 
   getAll(): Observable<ReviewDto[]> {
     return this.http.get<ReviewDto[]>(this.baseUrl);
+  }
+
+  getByProductId(productId: string): Observable<ReviewDto[]> {
+    return this.http.get<ReviewDto[]>(`${this.baseUrl}/product/${productId}`);
   }
 
   getById(id: string): Observable<ReviewDto> {
@@ -41,7 +44,6 @@ export class ReviewService {
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
-
 
   // ============================
   // REVIEW REPLIES
@@ -88,6 +90,18 @@ export class ReviewService {
   }
 
   checkUserVoted(reviewId: string, userId: string): Observable<{ hasVoted: boolean }> {
-    return this.http.get<{ hasVoted: boolean }>(`${this.baseUrl}/${reviewId}/votes/check/${userId}`);
+    return this.http.get<{ hasVoted: boolean }>(
+      `${this.baseUrl}/${reviewId}/votes/check/${userId}`,
+    );
+  }
+
+  createReview(dto: {
+    productId: string;
+    userId: string;
+    rating: number;
+    comment: string;
+    isVerifiedPurchase: boolean;
+  }): Observable<ReviewDto> {
+    return this.http.post<ReviewDto>(this.baseUrl, dto);
   }
 }
