@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using backend.DTOs;
-using backend.MapperProfiles;
 
 namespace backend.Controllers;
 
@@ -16,7 +15,7 @@ public class ProductController : ControllerBase
         _service = service;
     }
 
-    // GET: api/products?keyword=abc&categoryId=...
+    // GET: api/product?keyword=&categoryId=&minPrice=&maxPrice=&page=&pageSize=
     [HttpGet]
     public async Task<IActionResult> GetAll(
         string? keyword,
@@ -28,19 +27,12 @@ public class ProductController : ControllerBase
         int pageSize = 10)
     {
         var result = await _service.GetAllAsync(
-            keyword,
-            categoryId,
-            minPrice,
-            maxPrice,
-            cancellationToken,
-            page,
-            pageSize
-        );
-
+            keyword, categoryId, minPrice, maxPrice,
+            cancellationToken, page, pageSize);
         return Ok(result);
     }
 
-    // GET: api/products/{id}
+    // GET: api/product/{id}
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
@@ -49,6 +41,7 @@ public class ProductController : ControllerBase
         return Ok(product);
     }
 
+    // GET: api/product/{id}/full  →  product + images + specs
     [HttpGet("{id}/full")]
     public async Task<IActionResult> GetFull(Guid id, CancellationToken cancellationToken)
     {
@@ -56,7 +49,7 @@ public class ProductController : ControllerBase
         return Ok(result);
     }
 
-    // GET: api/products/slug/{slug}
+    // GET: api/product/slug/{slug}
     [HttpGet("slug/{slug}")]
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken cancellationToken)
     {
@@ -65,12 +58,11 @@ public class ProductController : ControllerBase
         return Ok(product);
     }
 
-    // POST: api/products
+    // POST: api/product
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
         var product = await _service.CreateAsync(dto, cancellationToken);
         if (product == null) return BadRequest("Invalid data or duplicate slug");
@@ -78,17 +70,16 @@ public class ProductController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = product.ProductId }, product);
     }
 
-    // PUT: api/products/{id}
+    // PUT: api/product/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto, CancellationToken cancellationToken)
     {
         var product = await _service.UpdateAsync(id, dto, cancellationToken);
         if (product == null) return BadRequest("Update failed");
-
         return Ok(product);
     }
 
-    // DELETE: api/products/{id}
+    // DELETE: api/product/{id}
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -97,20 +88,24 @@ public class ProductController : ControllerBase
     }
 
     // GET: api/product/client
+    // Client-facing: chi hien san pham published (Status = 2)
+    // Ho tro: categorySlug, keyword, brandId, minPrice, maxPrice, sortBy, page, pageSize
     [HttpGet("client")]
     public async Task<IActionResult> GetClientProducts(
         [FromQuery] string? categorySlug,
+        [FromQuery] string? keyword,
+        [FromQuery] Guid? brandId,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] string? sortBy,
         CancellationToken cancellationToken,
-        int page = 1,
-        int pageSize = 12)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 12)
     {
         var result = await _service.GetProductListAsync(
-            cancellationToken,
-            page,
-            pageSize,
-            categorySlug
-        );
-
+            cancellationToken, page, pageSize,
+            categorySlug, keyword, brandId,
+            minPrice, maxPrice, sortBy);
         return Ok(result);
     }
 }

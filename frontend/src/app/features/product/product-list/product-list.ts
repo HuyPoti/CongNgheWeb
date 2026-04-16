@@ -1,107 +1,303 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import {
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  takeUntil,
+  switchMap,
+  tap,
+  map,
+  merge,
+} from 'rxjs';
+
 import { ComparisonService, CompareProduct } from '../../../core/services/comparison';
 import { ProductCard, ProductListItemDto } from '../../../core/models/product.model';
 import { ProductService } from '../../../core/services/product.service';
+import { BrandService } from '../../../core/services/brand.service';
+import { CategoryService } from '../../../core/services/category.service';
+import { Brand } from '../../../core/models/brand.model';
+import { Category } from '../../../core/models/category.model';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { ShopStateService, PriceRange } from '../../../core/services/shop-state.service';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [RouterLink, CommonModule, TranslatePipe],
+  imports: [RouterLink, CommonModule, FormsModule, TranslatePipe],
   templateUrl: './product-list.html',
-  styles: ``,
 })
-export class ProductList implements OnInit {
-  // ── DI ──────────────────────────────────────────────────────────
-  comparisonService = inject(ComparisonService);
-  private router = inject(Router);
-  private productService = inject(ProductService);
+export class ProductList implements OnInit, OnDestroy {
+  readonly comparisonService = inject(ComparisonService);
+  readonly shopStateService = inject(ShopStateService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly productService = inject(ProductService);
+  private readonly brandService = inject(BrandService);
+  private readonly categoryService = inject(CategoryService);
 
-  // ── State ────────────────────────────────────────────────────────
-  featuredProducts: ProductCard[] = [];
-  categories: string[] = ['settings.all'];
-  selectedCategory = 'settings.all';
-  totalCount = 0;
-  isLoading = true;
+  products = signal<ProductCard[]>([]);
+  brands = signal<Brand[]>([]);
+  categories = signal<Category[]>([]);
+  currentCategorySlug = signal<string | null>(null);
+  activeCategory: Category | null = null;
+  isLoading = signal(true);
+  hasError = signal(false);
+  totalCount = signal(0);
 
-  priceRanges = [
-    { key: 'product.filter_price_under_10', label: 'Dưới 10 triệu' },
-    { key: 'product.filter_price_10_20', label: '10 - 20 triệu' },
-    { key: 'product.filter_price_20_30', label: '20 - 30 triệu' },
-    { key: 'product.filter_price_30_50', label: '30 - 50 triệu' },
-    { key: 'product.filter_price_over_50', label: 'Trên 50 triệu' }
+  readonly pageSize = 12;
+
+  private readonly destroy$ = new Subject<void>();
+  private readonly searchInput$ = new Subject<string>();
+
+  readonly priceRanges: PriceRange[] = [
+    { labelKey: 'product.filter_price_under_10', max: 10_000_000 },
+    { labelKey: 'product.filter_price_10_20', min: 10_000_000, max: 20_000_000 },
+    { labelKey: 'product.filter_price_20_30', min: 20_000_000, max: 30_000_000 },
+    { labelKey: 'product.filter_price_30_50', min: 30_000_000, max: 50_000_000 },
+    { labelKey: 'product.filter_price_over_50', min: 50_000_000 },
   ];
 
-  sortOptions = [
-    { key: 'product.sort_newest', label: 'Mới nhất' },
-    { key: 'product.sort_price_asc', label: 'Giá thấp - cao' },
-    { key: 'product.sort_price_desc', label: 'Giá cao - thấp' },
-    { key: 'product.sort_best_selling', label: 'Bán chạy' }
+  readonly sortOptions = [
+    { value: 'newest', labelKey: 'product.sort_newest' },
+    { value: 'price_asc', labelKey: 'product.sort_price_asc' },
+    { value: 'price_desc', labelKey: 'product.sort_price_desc' },
   ];
 
-  // ── Lifecycle ────────────────────────────────────────────────────
-  ngOnInit(): void {
-    this.loadProducts();
+  readonly stateSearchKeyword = this.shopStateService.searchKeyword;
+  readonly stateBrandIds = this.shopStateService.selectedBrandIds;
+  readonly statePriceRange = this.shopStateService.selectedPriceRange;
+  readonly stateSort = this.shopStateService.selectedSort;
+  readonly stateCurrentPage = this.shopStateService.currentPage;
+  readonly stateHasActiveFilters = this.shopStateService.hasActiveFilters;
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
+
+  readonly pageNumbers = computed(() => {
+    const visible = 5;
+    let start = Math.max(1, this.stateCurrentPage() - Math.floor(visible / 2));
+    const end = Math.min(this.totalPages(), start + visible - 1);
+    start = Math.max(1, end - visible + 1);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  });
+
+  // ── Category tree ──────────────────────────────────────────────
+  readonly rootCategories = computed(() => this.categories().filter((c) => c.parentId === null));
+
+  readonly childrenByParentId = computed(() => {
+    const grouped = new Map<string, Category[]>();
+
+    for (const category of this.categories()) {
+      if (!category.parentId) continue;
+
+      const children = grouped.get(category.parentId) ?? [];
+      children.push(category);
+      grouped.set(category.parentId, children);
+    }
+
+    return grouped;
+  });
+
+  getChildren(parentId: string): Category[] {
+    return this.childrenByParentId().get(parentId) ?? [];
   }
 
-  // ── Data loaders ─────────────────────────────────────────────────
-  private loadProducts(): void {
-    this.productService.fetchClientProducts(1, 100).subscribe({
-      next: (res) => {
-        this.totalCount = res.totalCount;
-        this.featuredProducts = res.items.map((p: ProductListItemDto) => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          image: p.thumbnailUrl || 'https://ttgshop.vn/media/product/250_1072100124_dsc09857_copy.jpg',
-          category: p.categoryName,
-          specs: {},
-        }));
-        const unique = Array.from(
-          new Set(res.items.map((p: ProductListItemDto) => p.categoryName)),
-        );
-        this.categories = ['settings.all', ...unique];
-        this.isLoading = false;
-      },
-      error: (err: unknown) => {
-        console.error('Lỗi tải sản phẩm:', err);
-        this.isLoading = false;
-      },
+  onParentHover(category: Category): void {
+    this.activeCategory = category;
+  }
+
+  onCategoryMenuLeave(): void {
+    this.activeCategory = null;
+  }
+
+  isCategoryActive(slug: string): boolean {
+    return this.currentCategorySlug() === slug;
+  }
+
+  isParentCategoryActive(parent: Category): boolean {
+    const currentSlug = this.currentCategorySlug();
+    if (!currentSlug) return false;
+    if (parent.slug === currentSlug) return true;
+    return this.getChildren(parent.categoryId).some((child) => child.slug === currentSlug);
+  }
+
+  selectCategory(slug: string | null): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: slug },
+      queryParamsHandling: 'merge',
+    });
+  }
+  // ──────────────────────────────────────────────────────────────
+
+  ngOnInit(): void {
+    this.loadBrands();
+    this.loadCategories();
+
+    // SEARCH
+    this.searchInput$
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((keyword) => {
+        this.shopStateService.setSearchKeyword(keyword);
+        this.shopStateService.setCurrentPage(1);
+      });
+
+    // CATEGORY từ URL
+    const category$ = this.route.queryParams.pipe(
+      takeUntil(this.destroy$),
+      map((params) => (params['category'] as string | undefined) ?? null),
+      distinctUntilChanged(),
+      tap((category) => {
+        this.currentCategorySlug.set(category);
+        this.shopStateService.setCategorySlug(category);
+        this.shopStateService.setCurrentPage(1);
+      }),
+    );
+
+    // FILTER CHANGES
+    const filters$ = this.shopStateService.filterChanged.pipe(takeUntil(this.destroy$));
+
+    // MAIN DATA FLOW
+    merge(category$, filters$)
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(50),
+        tap(() => {
+          this.isLoading.set(true);
+          this.hasError.set(false);
+        }),
+        switchMap(() => {
+          const filters = this.shopStateService.getSnapshot();
+
+          const brandId =
+            filters.selectedBrandIds.size === 1 ? [...filters.selectedBrandIds][0] : undefined;
+
+          return this.productService.fetchClientProducts({
+            page: filters.currentPage,
+            pageSize: this.pageSize,
+            categorySlug: filters.categorySlug || undefined,
+            keyword: filters.searchKeyword.trim() || undefined,
+            brandId,
+            minPrice: filters.selectedPriceRange?.min,
+            maxPrice: filters.selectedPriceRange?.max,
+            sortBy: filters.selectedSort as 'newest' | 'price_asc' | 'price_desc',
+          });
+        }),
+      )
+      .subscribe((res) => {
+        this.totalCount.set(res.totalCount);
+        this.products.set(res.items.map((p) => this.toCard(p)));
+        this.isLoading.set(false);
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadBrands(): void {
+    this.brandService.getAll().subscribe({
+      next: (data) => this.brands.set(data.filter((b) => b.isActive)),
+      error: () => this.brands.set([]),
     });
   }
 
-  // ── Computed getters ─────────────────────────────────────────────
-  get filteredProducts(): ProductCard[] {
-    if (this.selectedCategory === 'settings.all') return this.featuredProducts;
-    return this.featuredProducts.filter((p) => p.category === this.selectedCategory);
+  private loadCategories(): void {
+    this.categoryService.getAll().subscribe({
+      next: (data) => this.categories.set(data.filter((c) => c.isActive)),
+      error: () => this.categories.set([]),
+    });
   }
 
-  // ── Category filter ──────────────────────────────────────────────
-  setCategory(category: string): void {
-    this.selectedCategory = category;
+  onSearchInput(value: string): void {
+    this.searchInput$.next(value);
   }
 
-  // ── Comparison helpers ────────────────────────────────────────────
-  isProductSelected(productId: string): boolean {
-    return this.comparisonService.isSelected(productId);
+  clearSearch(): void {
+    this.shopStateService.setSearchKeyword('');
+    this.searchInput$.next('');
   }
 
-  toggleCompare(event: Event, product: ProductCard): void {
-    event.stopPropagation();
-    const cp: CompareProduct = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      category: product.category,
-      specs: product.specs,
+  toggleBrand(brandId: string): void {
+    this.shopStateService.toggleBrand(brandId);
+  }
+
+  isBrandSelected(brandId: string): boolean {
+    return this.shopStateService.isBrandSelected(brandId);
+  }
+
+  togglePriceRange(range: PriceRange): void {
+    this.shopStateService.togglePriceRange(range);
+  }
+
+  isPriceRangeSelected(range: PriceRange): boolean {
+    return this.shopStateService.isPriceRangeSelected(range);
+  }
+
+  setSort(value: string): void {
+    this.shopStateService.setSort(value);
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages() || page === this.stateCurrentPage()) return;
+    this.shopStateService.setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  clearFilters(): void {
+    this.shopStateService.clearFilters();
+  }
+
+  private toCard(p: ProductListItemDto): ProductCard {
+    return {
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      regularPrice: p.regularPrice,
+      salePrice: p.salePrice,
+      image: p.thumbnailUrl ?? '',
+      category: p.categoryName,
+      brand: p.brandName,
+      brandId: p.brandId,
+      stockQuantity: p.stockQuantity,
+      warrantyMonths: p.warrantyMonths,
+      specs: {},
     };
+  }
+
+  hasSalePrice(p: ProductCard): boolean {
+    return p.salePrice != null && p.salePrice < p.regularPrice;
+  }
+
+  savingPercent(p: ProductCard): number {
+    if (!this.hasSalePrice(p) || p.regularPrice === 0) return 0;
+    return Math.round(((p.regularPrice - p.price) / p.regularPrice) * 100);
+  }
+
+  isProductSelected(id: string): boolean {
+    return this.comparisonService.isSelected(id);
+  }
+
+  toggleCompare(event: Event, p: ProductCard): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const cp: CompareProduct = {
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.image,
+      category: p.category,
+      specs: p.specs,
+    };
+
     this.comparisonService.toggleProduct(cp);
   }
 
   goToCompare(): void {
-    this.router.navigate(['/product/comparison']);
+    this.router.navigate(['/comparison']);
   }
 }
