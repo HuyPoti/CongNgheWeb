@@ -9,6 +9,11 @@ public interface IReviewService
     Task<ReviewDto?> UpdateActiveAsync(Guid id, UpdateReviewActiveDto dto, CancellationToken ct);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
+    Task<ReviewDto?> CreateAsync(CreateReviewDto dto, CancellationToken ct);
+
+    // === Reviews by Product ===
+    Task<List<ReviewDto>> GetByProductIdAsync(Guid productId, CancellationToken ct);
+
     // === Review Replies ===
     Task<ReviewReplyDto?> CreateReplyAsync(Guid reviewId, CreateReviewReplyDto dto, CancellationToken ct);
     Task<ReviewReplyDto?> UpdateReplyAsync(Guid replyId, UpdateReviewReplyDto dto, CancellationToken ct);

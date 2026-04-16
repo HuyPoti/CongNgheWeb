@@ -1,6 +1,7 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using backend.DTOs;
+using backend.Exceptions;
 using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,23 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
             .ProjectTo<ReviewDto>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(r => r.ReviewId == id, ct);
         return review;
+    }
+
+    public async Task<List<ReviewDto>> GetByProductIdAsync(Guid productId, CancellationToken ct)
+    {
+        var reviews = await uow.Reviews.Query()
+            .Include(r => r.Product)
+            .Include(r => r.User)
+            .Include(r => r.Images)
+            .Include(r => r.Replies).
+            ThenInclude(rp => rp.User)
+            .Include(r => r.HelpfulVotes)
+            .ThenInclude(v => v.User)
+            .Where(r => r.ProductId == productId && r.IsActive == 1)
+            .OrderByDescending(r => r.CreatedAt)
+            .ProjectTo<ReviewDto>(mapper.ConfigurationProvider)
+            .ToListAsync(ct);
+        return reviews;
     }
 
     public async Task<ReviewDto?> UpdateActiveAsync(Guid id, UpdateReviewActiveDto dto, CancellationToken ct)
@@ -194,5 +212,52 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
     {
         return await uow.ReviewHelpfulVotes.Query()
             .AnyAsync(v => v.ReviewId == reviewId && v.UserId == userId, ct);
+    }
+
+    public async Task<ReviewDto?> CreateAsync(CreateReviewDto dto, CancellationToken ct)
+    {
+        // Parse string to Guid
+        if (!Guid.TryParse(dto.ProductId, out var productGuid))
+            throw new BadRequestException("Invalid ProductId");
+        if (!Guid.TryParse(dto.UserId, out var userGuid))
+            throw new BadRequestException("Invalid UserId");
+
+        var product = await uow.Products.GetByIdAsync<Product>(productGuid, ct);
+        if (product == null) throw new NotFoundException("Product not found");
+        var user = await uow.Users.GetByIdAsync<User>(userGuid, ct);
+        if (user == null) throw new NotFoundException("User not found");
+        var review = new Review
+        {
+            ReviewId = Guid.NewGuid(),
+            ProductId = productGuid,
+            UserId = userGuid,
+            Rating = dto.Rating,
+            Comment = dto.Comment,
+            IsActive = 1,
+            IsVerifiedPurchase = dto.IsVerifiedPurchase,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        uow.Reviews.Insert(review);
+        await uow.SaveAsync(ct);
+        // Load user name for response
+        return new ReviewDto
+        {
+            ReviewId = review.ReviewId,
+            ProductId = review.ProductId,
+            ProductName = product.Name,
+            UserId = review.UserId,
+            UserName = user.FullName,
+            Rating = review.Rating,
+            Comment = review.Comment ?? "",
+            IsActive = review.IsActive,
+            IsVerifiedPurchase = review.IsVerifiedPurchase,
+            CreatedAt = review.CreatedAt,
+            UpdatedAt = review.UpdatedAt,
+            Images = new List<ReviewImageDto>(),
+            Replies = new List<ReviewReplyDto>(),
+            HelpfulVotes = new List<ReviewHelpfulVoteDto>(),
+            HelpfulVoteCount = 0
+        };
     }
 }

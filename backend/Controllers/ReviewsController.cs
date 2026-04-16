@@ -22,12 +22,29 @@ public class ReviewsController : ControllerBase
         return Ok(result);
     }
 
+    // GET: api/reviews/product/{productId}
+    [HttpGet("product/{productId}")]
+    public async Task<IActionResult> GetByProductId(Guid productId, CancellationToken ct)
+    {
+        var reviews = await _reviewService.GetByProductIdAsync(productId, ct);
+        return Ok(reviews);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await _reviewService.GetByIdAsync(id, ct);
         if (result == null) return NotFound();
         return Ok(result);
+    }
+
+    // POST api/reviews
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateReviewDto dto, CancellationToken ct)
+    {
+        var result = await _reviewService.CreateAsync(dto, ct);
+        if (result == null) return BadRequest("Failed to create review");
+        return CreatedAtAction(nameof(GetById), new { id = result.ReviewId }, result);
     }
 
     [HttpPatch("{id}/active")]

@@ -20,6 +20,15 @@ public class ReviewDto
     public int HelpfulVoteCount { get; set; }
 }
 
+public class CreateReviewDto
+{
+    public string ProductId { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public int Rating { get; set; }
+    public string? Comment { get; set; }
+    public bool IsVerifiedPurchase { get; set; }
+}
+
 public class UpdateReviewActiveDto
 {
     public int IsActive { get; set; }
