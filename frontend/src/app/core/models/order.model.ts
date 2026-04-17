@@ -47,11 +47,21 @@ export interface CreateOrderItemDto {
 }
 
 export interface CreateOrderDto {
-  userId: string;
-  shippingAddressId: string;
+  userId?: string;
+  shippingAddressId?: string;
+  shippingAddress?: CreateOrderShippingAddressDto;
   paymentMethod: string;
   notes?: string;
   items: CreateOrderItemDto[];
+}
+
+export interface CreateOrderShippingAddressDto {
+  recipientName: string;
+  phone: string;
+  addressLine: string;
+  province?: string;
+  district?: string;
+  ward?: string;
 }
 
 export interface PagedResult<T> {

@@ -142,6 +142,17 @@
                 </div>
             </div>
 
+            @if (compatibilityIssues().length > 0) {
+                <div class="mb-6 p-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-800">
+                    <p class="text-[10px] font-black uppercase tracking-widest mb-2">{{ 'build.compat_title' | translate }}</p>
+                    <ul class="space-y-1 text-xs font-semibold">
+                        @for (issue of compatibilityIssues(); track issue) {
+                            <li>- {{ issue | translate }}</li>
+                        }
+                    </ul>
+                </div>
+            }
+
             <button (click)="addBuildToCart()" [disabled]="!canAddToCart()" class="w-full py-5 bg-primary hover:bg-primary/90 disabled:opacity-30 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 group relative z-10">
                 {{ 'build.add_to_cart' | translate }}
                 <span class="material-symbols-outlined ml-2 text-lg align-middle group-hover:translate-x-1 transition-transform">shopping_cart</span>

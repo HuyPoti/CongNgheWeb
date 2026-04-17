@@ -59,6 +59,7 @@ export class BuildPc {
   });
 
   availableProducts = signal<ProductCard[]>([]);
+  productSpecsByProductId = signal<Record<string, Record<string, string>>>({});
   isLoadingProducts = signal(false);
   hasLoadingError = signal(false);
   isSaving = signal(false);
@@ -74,11 +75,64 @@ export class BuildPc {
 
   selectedCount = computed(() => Object.values(this.selectedComponents()).filter((p) => p !== null).length);
 
-  canAddToCart = computed(() => this.selectedCount() === this.steps.length);
+  compatibilityIssues = computed(() => {
+    const selected = this.selectedComponents();
+    const issues: string[] = [];
+
+    const cpu = selected.cpu;
+    const mb = selected.mb;
+    const ram = selected.ram;
+    const gpu = selected.gpu;
+    const psu = selected.psu;
+
+    if (cpu && mb) {
+      const cpuSocket = this.getSpecValue(cpu.id, ['socket', 'cpu_socket', 'socket_type']);
+      const mbSocket = this.getSpecValue(mb.id, ['socket', 'cpu_socket', 'supported_socket']);
+
+      if (cpuSocket && mbSocket && !this.isSameSpec(cpuSocket, mbSocket)) {
+        issues.push('build.compat_cpu_mb_socket');
+      }
+    }
+
+    if (ram && mb) {
+      const ramType = this.getSpecValue(ram.id, ['ram_type', 'memory_type', 'type']);
+      const mbRamType = this.getSpecValue(mb.id, ['ram_type', 'memory_type', 'supported_memory']);
+
+      if (ramType && mbRamType && !this.isSameSpec(ramType, mbRamType)) {
+        issues.push('build.compat_ram_mb_type');
+      }
+    }
+
+    if (psu) {
+      const cpuTdp = this.parseWatts(this.getSpecValue(cpu?.id, ['tdp', 'power_draw', 'power']));
+      const gpuTdp = this.parseWatts(this.getSpecValue(gpu?.id, ['tdp', 'power_draw', 'power']));
+      const psuWatt = this.parseWatts(this.getSpecValue(psu.id, ['wattage', 'power', 'capacity_watt']));
+
+      const estimatedLoad = cpuTdp + gpuTdp + 120;
+      const required = Math.round(estimatedLoad * 1.2);
+
+      if (psuWatt > 0 && required > psuWatt) {
+        issues.push('build.compat_psu_power');
+      }
+    }
+
+    return issues;
+  });
+
+  canAddToCart = computed(
+    () => this.selectedCount() === this.steps.length && this.compatibilityIssues().length === 0,
+  );
 
   constructor() {
     this.restoreState();
     void this.loadProductsForStep(this.currentStepId());
+
+    const restored = Object.values(this.selectedComponents()).filter(
+      (item): item is ProductCard => item !== null,
+    );
+    for (const item of restored) {
+      void this.loadProductSpecs(item.id);
+    }
   }
 
   selectStep(id: string) {
@@ -99,6 +153,7 @@ export class BuildPc {
       ...prev,
       [this.currentStepId()]: product,
     }));
+    void this.loadProductSpecs(product.id);
     this.persistState();
 
     // Auto advance to next step
@@ -222,6 +277,64 @@ export class BuildPc {
       warrantyMonths: p.warrantyMonths,
       specs: {},
     };
+  }
+
+  private async loadProductSpecs(productId: string): Promise<void> {
+    const cached = this.productSpecsByProductId()[productId];
+    if (cached) return;
+
+    try {
+      const specs = await firstValueFrom(this.productService.getSpecs(productId));
+      const normalized: Record<string, string> = {};
+      for (const spec of specs) {
+        normalized[this.normalizeSpecKey(spec.specKey)] = spec.specValue;
+      }
+
+      this.productSpecsByProductId.update((prev) => ({
+        ...prev,
+        [productId]: normalized,
+      }));
+    } catch {
+      this.productSpecsByProductId.update((prev) => ({
+        ...prev,
+        [productId]: {},
+      }));
+    }
+  }
+
+  private getSpecValue(productId: string | undefined, keys: string[]): string {
+    if (!productId) return '';
+
+    const specs = this.productSpecsByProductId()[productId];
+    if (!specs) return '';
+
+    for (const key of keys) {
+      const value = specs[this.normalizeSpecKey(key)];
+      if (value && value.trim().length > 0) {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
+  private normalizeSpecKey(key: string): string {
+    return key
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+
+  private isSameSpec(a: string, b: string): boolean {
+    return this.normalizeSpecKey(a).includes(this.normalizeSpecKey(b)) ||
+      this.normalizeSpecKey(b).includes(this.normalizeSpecKey(a));
+  }
+
+  private parseWatts(input: string): number {
+    if (!input) return 0;
+    const match = input.match(/\d+/);
+    return match ? Number(match[0]) : 0;
   }
 
   private persistState() {
