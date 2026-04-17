@@ -1,0 +1,259 @@
+<div class="p-8">
+  <!-- Header -->
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-slate-100 mb-2">Tra cứu Khách hàng</h2>
+      <p class="text-slate-500">
+        {{ customerStats.total }} khách hàng · {{ customerStats.thisMonth }} mới tháng này
+      </p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-3 gap-4 mb-8">
+    @for (
+      stat of [
+        {
+          label: 'Tổng KH',
+          value: customerStats.total,
+          icon: 'group',
+          color: 'text-emerald-400',
+          bg: 'bg-emerald-500/10',
+        },
+        {
+          label: 'Mới tháng này',
+          value: customerStats.thisMonth,
+          icon: 'person_add',
+          color: 'text-cyan-400',
+          bg: 'bg-cyan-500/10',
+        },
+        {
+          label: 'Đang hiển thị',
+          value: filteredCustomers.length,
+          icon: 'filter_list',
+          color: 'text-purple-400',
+          bg: 'bg-purple-500/10',
+        },
+      ];
+      track stat.label
+    ) {
+      <div
+        class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all"
+      >
+        <div class="size-12 rounded-xl flex items-center justify-center" [ngClass]="stat.bg">
+          <span class="material-symbols-outlined text-2xl" [ngClass]="stat.color">{{
+            stat.icon
+          }}</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-100">{{ stat.value }}</p>
+          <p class="text-xs text-slate-500">{{ stat.label }}</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Search -->
+  <div class="mb-6">
+    <div class="relative max-w-md">
+      <span
+        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg"
+        >search</span
+      >
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Tìm tên, email, số điện thoại..."
+        class="w-full bg-surface-dark/40 border border-emerald-500/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40"
+      />
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="flex items-center justify-center py-20">
+      <div
+        class="animate-spin size-8 border-2 border-emerald-500 border-t-transparent rounded-full"
+      ></div>
+      <span class="ml-3 text-slate-400">Đang tải...</span>
+    </div>
+  } @else {
+    <!-- Customers Table -->
+    <div class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-emerald-500/10 text-left">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Khách hàng
+            </th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Email
+            </th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Điện thoại
+            </th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Ngày đăng ký
+            </th>
+            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Thao tác
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (customer of filteredCustomers; track customer.userId) {
+            <tr class="border-b border-emerald-500/5 hover:bg-emerald-500/5 transition-colors">
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="size-9 bg-emerald-500/10 rounded-full flex items-center justify-center"
+                  >
+                    <span class="text-emerald-400 font-bold text-sm">{{
+                      customer.fullName.charAt(0)
+                    }}</span>
+                  </div>
+                  <span class="text-slate-200 font-semibold">{{ customer.fullName }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-4 text-slate-400 text-xs">{{ customer.email }}</td>
+              <td class="px-5 py-4 text-slate-400 text-xs font-mono">
+                {{ customer.phone || '—' }}
+              </td>
+              <td class="px-5 py-4 text-xs text-slate-500">
+                {{ customer.createdAt | date: 'dd/MM/yyyy' }}
+              </td>
+              <td class="px-5 py-4">
+                <button
+                  (click)="openCustomerDetail(customer)"
+                  class="p-2 hover:bg-emerald-500/10 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                  title="Xem chi tiết & lịch sử mua hàng"
+                >
+                  <span class="material-symbols-outlined text-sm">visibility</span>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="px-5 py-16 text-center">
+                <span class="material-symbols-outlined text-4xl text-slate-600 mb-2">group</span>
+                <p class="text-slate-500">Không tìm thấy khách hàng</p>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Customer Detail Modal -->
+@if (selectedCustomer()) {
+  <div
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    (click)="closeDetail()"
+  >
+    <div
+      class="bg-surface-dark border border-emerald-500/20 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="p-6 border-b border-emerald-500/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="size-12 bg-emerald-500/10 rounded-xl flex items-center justify-center">
+            <span class="text-emerald-400 font-bold text-lg">{{
+              selectedCustomer()!.fullName.charAt(0)
+            }}</span>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-100">{{ selectedCustomer()!.fullName }}</h3>
+            <p class="text-xs text-slate-500">Thông tin khách hàng</p>
+          </div>
+        </div>
+        <button
+          (click)="closeDetail()"
+          class="text-slate-400 hover:text-white p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-6">
+        <!-- Customer Info -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-slate-800/50 rounded-xl p-4">
+            <p class="text-xs text-slate-500 mb-1">Email</p>
+            <p class="text-sm text-slate-200 font-medium">{{ selectedCustomer()!.email }}</p>
+          </div>
+          <div class="bg-slate-800/50 rounded-xl p-4">
+            <p class="text-xs text-slate-500 mb-1">Điện thoại</p>
+            <p class="text-sm text-slate-200 font-medium">
+              {{ selectedCustomer()!.phone || 'Chưa cập nhật' }}
+            </p>
+          </div>
+          <div class="bg-slate-800/50 rounded-xl p-4">
+            <p class="text-xs text-slate-500 mb-1">Ngày đăng ký</p>
+            <p class="text-sm text-slate-200 font-medium">
+              {{ selectedCustomer()!.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+          <div class="bg-slate-800/50 rounded-xl p-4">
+            <p class="text-xs text-slate-500 mb-1">Tổng chi tiêu</p>
+            <p class="text-sm text-emerald-400 font-bold">
+              {{ getCustomerOrderTotal(customerOrders()) | number: '1.0-0' }}₫
+            </p>
+          </div>
+        </div>
+
+        <!-- Order History -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+            Lịch sử đơn hàng ({{ customerOrders().length }})
+          </h4>
+
+          @if (isLoadingOrders()) {
+            <div class="flex items-center justify-center py-8">
+              <div
+                class="animate-spin size-6 border-2 border-emerald-500 border-t-transparent rounded-full"
+              ></div>
+              <span class="ml-2 text-sm text-slate-400">Đang tải...</span>
+            </div>
+          } @else {
+            @if (customerOrders().length) {
+              <div class="space-y-2">
+                @for (order of customerOrders(); track order.orderId) {
+                  <div
+                    class="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-3"
+                  >
+                    <div class="flex items-center gap-3">
+                      <span class="text-emerald-400 font-mono font-bold text-xs">{{
+                        order.orderCode
+                      }}</span>
+                      <span
+                        class="text-[10px] font-bold px-2 py-1 rounded-full border"
+                        [ngClass]="statusColors[order.status]"
+                      >
+                        {{ statusLabels[order.status] }}
+                      </span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-sm text-emerald-400 font-bold"
+                        >{{ order.totalAmount | number: '1.0-0' }}₫</span
+                      >
+                      <p class="text-[10px] text-slate-500">
+                        {{ order.createdAt | date: 'dd/MM/yyyy' }}
+                      </p>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="text-center py-8 bg-slate-800/30 rounded-xl">
+                <span class="material-symbols-outlined text-3xl text-slate-600">receipt_long</span>
+                <p class="text-sm text-slate-500 mt-2">Chưa có đơn hàng nào</p>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

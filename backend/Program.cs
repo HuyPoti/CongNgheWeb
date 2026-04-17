@@ -7,6 +7,9 @@ using backend.MapperProfiles;
 using backend.UnitOfWork;
 using System.Reflection;
 using backend.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 
@@ -21,7 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
-
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<INewsCategoryService, NewsCategoryService>();
@@ -29,16 +32,30 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductImageService, ProductImageService>();
 builder.Services.AddScoped<IProductSpecService, ProductSpecService>();
-
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
 
 // Them Automapper
 builder.Services.AddAutoMapper(cfg => { }, Assembly.GetExecutingAssembly());
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddAuthorization();
 
 
 
@@ -59,7 +76,7 @@ builder.Services.AddCors(options =>
         options.AddPolicy("AllowAngular", policy =>
         {
             var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-            if (origins != null && origins.Length > 0)
+            if (origins != null && origins.Length > 0 && origins[0] != "*")
             {
                 policy.WithOrigins(origins)
                       .AllowAnyMethod()
@@ -88,6 +105,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAngular");
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

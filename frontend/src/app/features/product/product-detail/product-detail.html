@@ -373,79 +373,83 @@
                   </div>
                 </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                @for (review of reviews(); track review.reviewId) {
-                  <div
-                    class="bg-white dark:bg-surface-dark rounded-[2.5rem] border border-slate-50 dark:border-white/5 p-8 shadow-xl hover:border-primary/30 transition-all group overflow-hidden relative"
-                  >
-                    <div class="flex items-start justify-between mb-8 relative z-10">
-                      <div class="flex items-center gap-4">
-                        <div
-                          class="size-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 flex items-center justify-center font-orbitron font-bold text-xl shadow-sm"
+              <div
+                class="lg:col-span-8 bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-10 shadow-2xl"
+              >
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">
+                  {{ 'product.distribution' | translate }}
+                </h3>
+                <div class="space-y-6">
+                  @for (item of ratingDistribution(); track item.stars) {
+                    <div class="flex items-center gap-6">
+                      <div class="flex items-center gap-2 w-14 shrink-0">
+                        <span class="text-sm font-black text-slate-900 dark:text-white">{{
+                          item.stars
+                        }}</span>
+                        <span class="material-symbols-outlined text-amber-500 text-sm fill-1"
+                          >star</span
                         >
-                          {{ review.userName.charAt(0) }}
-                        </div>
-                        <div>
-                          <div class="flex items-center gap-3">
-                            <h4 class="font-bold text-slate-900 dark:text-white text-base">
-                              {{ review.userName }}
-                            </h4>
-                            @if (review.isVerifiedPurchase) {
-                              <span
-                                class="material-symbols-outlined text-emerald-500 text-lg"
-                                [title]="'product.verified' | translate"
-                                >verified</span
-                              >
-                            }
-                          </div>
-                          <p
-                            class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1"
-                          >
-                            {{ review.createdAt | date: 'MMMM yyyy'}}
-                          </p>
-                        </div>
                       </div>
-                      <div class="flex gap-0.5">
-                        @for (star of getStarArray(review.rating); track $index) {
-                          <span
-                            class="material-symbols-outlined text-sm"
-                            [class]="
-                              star ? 'text-amber-500 fill-1' : 'text-slate-200 dark:text-slate-800'
-                            "
-                            >star</span
-                          >
-                        }
-                      </div>
-                    </div>
-                    <div class="relative z-10">
-                      <h3
-                        class="font-bold text-slate-900 dark:text-white mb-3 text-lg leading-snug"
+                      <div
+                        class="flex-1 h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden"
                       >
-                        {{ review.comment }}
-                      </h3>
-                      <!-- Review Images -->
-                      @if (review.images && review.images.length > 0) {
-                        <div class="flex gap-3 mb-6 overflow-x-auto">
-                          @for (img of review.images; track img.imageId) {
-                            <img
-                              [src]="img.imageUrl"
-                              alt="Review image"
-                              class="w-24 h-24 rounded-2xl object-cover border border-slate-100 dark:border-white/10 hover:scale-105 transition-transform cursor-pointer shrink-0"
-                            />
+                        <div
+                          class="h-full bg-primary shadow-[0_0_10px_rgba(0,102,255,0.4)] rounded-full transition-all duration-1000"
+                          [style.width.%]="item.percentage"
+                        ></div>
+                      </div>
+                      <span
+                        class="text-[10px] font-black text-slate-400 w-12 text-right uppercase tracking-widest"
+                        >{{ item.percentage }}%</span
+                      >
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              @for (review of reviews(); track review.reviewId) {
+                <div
+                  class="bg-white dark:bg-surface-dark rounded-[2.5rem] border border-slate-50 dark:border-white/5 p-8 shadow-xl hover:border-primary/30 transition-all group overflow-hidden relative"
+                >
+                  <div class="flex items-start justify-between mb-8 relative z-10">
+                    <div class="flex items-center gap-4">
+                      <div
+                        class="size-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 flex items-center justify-center font-orbitron font-bold text-xl shadow-sm"
+                      >
+                        {{ review.userName.charAt(0) }}
+                      </div>
+                      <div>
+                        <div class="flex items-center gap-3">
+                          <h4 class="font-bold text-slate-900 dark:text-white text-base">
+                            {{ review.userName }}
+                          </h4>
+                          @if (review.isVerifiedPurchase) {
+                            <span
+                              class="material-symbols-outlined text-emerald-500 text-lg"
+                              [title]="'product.verified' | translate"
+                              >verified</span
+                            >
                           }
                         </div>
-                      }
-                      <div
-                        class="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-white/5"
-                      >
-                        <button
-                          (click)="toggleHelpfulVote(review, $event)"
-                          class="flex cursor-pointer items-center gap-2 text-slate-400 hover:text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
+                        <p
+                          class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1"
                         >
-                          <span class="material-symbols-outlined text-sm">thumb_up</span>
-                          {{ 'product.helpful' | translate }} ({{ review.helpfulVoteCount }})
-                        </button>
+                          {{ review.createdAt | date: 'MMMM yyyy' }}
+                        </p>
                       </div>
+                    </div>
+                    <div class="flex gap-0.5">
+                      @for (star of getStarArray(review.rating); track $index) {
+                        <span
+                          class="material-symbols-outlined text-sm"
+                          [class]="
+                            star ? 'text-amber-500 fill-1' : 'text-slate-200 dark:text-slate-800'
+                          "
+                          >star</span
+                        >
+                      }
                     </div>
                   </div>
                 }
@@ -535,7 +539,8 @@
             type="text"
             class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
             [placeholder]="'product.review_title_placeholder' | translate"
-            [ngModel]="reviewTitle()" (ngModelChange)="reviewTitle.set($event)"
+            [ngModel]="reviewTitle()"
+            (ngModelChange)="reviewTitle.set($event)"
           />
         </div>
 
@@ -551,7 +556,8 @@
             id="review-body"
             class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-[2rem] p-5 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[130px] resize-none outline-none transition-all"
             [placeholder]="'product.review_body_placeholder' | translate"
-            [ngModel]="reviewBody()" (ngModelChange)="reviewBody.set($event)"
+            [ngModel]="reviewBody()"
+            (ngModelChange)="reviewBody.set($event)"
           ></textarea>
         </div>
       </div>
@@ -584,6 +590,68 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+}
+
+<!-- Image Modal -->
+@if (activeImageIndex() >= 0) {
+  <div
+    class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
+    (click)="activeImageIndex.set(-1)"
+    (keyup.escape)="activeImageIndex.set(-1)"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div
+      class="relative bg-white dark:bg-surface-dark rounded-3xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh]"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Close button -->
+      <button
+        type="button"
+        class="absolute top-6 right-6 size-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm flex items-center justify-center transition-all z-20"
+        (click)="activeImageIndex.set(-1)"
+      >
+        <span class="material-symbols-outlined text-2xl">close</span>
+      </button>
+
+      <!-- Image -->
+      <img
+        [src]="productImages()[activeImageIndex()]"
+        alt="Product image"
+        class="w-full h-auto max-h-[90vh] object-contain"
+      />
+
+      <!-- Navigation -->
+      @if (productImages().length > 1) {
+        <button
+          type="button"
+          class="absolute left-6 top-1/2 -translate-y-1/2 size-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm flex items-center justify-center transition-all z-20"
+          (click)="
+            activeImageIndex.set(
+              (activeImageIndex() - 1 + productImages().length) % productImages().length
+            )
+          "
+        >
+          <span class="material-symbols-outlined text-2xl">chevron_left</span>
+        </button>
+        <button
+          type="button"
+          class="absolute right-6 top-1/2 -translate-y-1/2 size-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm flex items-center justify-center transition-all z-20"
+          (click)="activeImageIndex.set((activeImageIndex() + 1) % productImages().length)"
+        >
+          <span class="material-symbols-outlined text-2xl">chevron_right</span>
+        </button>
+
+        <!-- Image counter -->
+        <div
+          class="absolute bottom-6 right-6 px-4 py-2 rounded-full bg-black/50 text-white text-sm font-bold backdrop-blur-sm z-20"
+        >
+          {{ activeImageIndex() + 1 }} / {{ productImages().length }}
+        </div>
+      }
     </div>
   </div>
 }

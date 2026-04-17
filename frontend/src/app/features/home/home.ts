@@ -49,6 +49,7 @@ export class HomeComponent implements OnInit {
   dbCategories: Category[] = [];
   isLoading = true;
   isBannersLoading = true;
+  bannerImageError: Record<string, boolean> = {};
 
   // ── Lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -199,6 +200,11 @@ export class HomeComponent implements OnInit {
       news_top: 'NEWS_TOP',
     };
     return map[pos] ?? pos;
+  }
+
+  handleBannerError(id: string): void {
+    this.bannerImageError[id] = true;
+    this.cdr.markForCheck();
   }
 
   // ── Comparison ────────────────────────────────────────────────────

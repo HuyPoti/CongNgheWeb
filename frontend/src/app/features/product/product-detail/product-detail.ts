@@ -1,19 +1,20 @@
 import { FormsModule } from '@angular/forms';
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+
 import { CartService } from '../../../core/services/cart.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { ProductService } from '../../../core/services/product.service';
 import { ProductCard, ProductFullDto, ProductSpecDto } from '../../../core/models/product.model';
 import { ReviewService } from '../../../core/services/review.service';
 import { ReviewDto } from '../../../core/models/review.model';
+import { ToastService } from '../../../core/services/toast.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [RouterLink, CommonModule, TranslatePipe, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './product-detail.html',
 })
 export class ProductDetail implements OnInit {
@@ -50,7 +51,7 @@ export class ProductDetail implements OnInit {
     warrantyMonths: 0,
     specs: {},
   });
-
+  activeImageIndex = signal(0);
   productImages = signal<string[]>([]);
   productSpecs = signal<ProductSpecDto[]>([]);
   regularPrice = signal(0);
