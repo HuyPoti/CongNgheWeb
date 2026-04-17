@@ -111,18 +111,22 @@
                                 <div class="grid grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div class="col-span-1 space-y-3">
                                         <label for="fname" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">{{ 'cart.fname' | translate }}</label>
-                                        <input id="fname" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="Minh" type="text"/>
+                                        <input id="fname" name="fname" [(ngModel)]="firstName" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="Minh" type="text"/>
                                     </div>
                                     <div class="col-span-1 space-y-3">
                                         <label for="lname" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">{{ 'cart.lname' | translate }}</label>
-                                        <input id="lname" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="Nguyen" type="text"/>
+                                        <input id="lname" name="lname" [(ngModel)]="lastName" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="Nguyen" type="text"/>
+                                    </div>
+                                    <div class="col-span-2 space-y-3">
+                                        <label for="phone" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">Phone</label>
+                                        <input id="phone" name="phone" [(ngModel)]="phone" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="090xxxxxxx" type="text"/>
                                     </div>
                                     <div class="col-span-2 space-y-3">
                                         <label for="address" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">{{ 'cart.address' | translate }}</label>
-                                        <input id="address" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="Sector 7, Neo Saigon Urban Block" type="text"/>
+                                        <input id="address" name="address" [(ngModel)]="addressLine" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 focus:ring-4 focus:ring-primary/10 transition-all font-bold dark:text-white" placeholder="Sector 7, Neo Saigon Urban Block" type="text"/>
                                     </div>
                                     <div class="col-span-2 flex justify-end">
-                                        <button (click)="nextStep()" class="px-12 py-5 bg-primary text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+                                        <button (click)="proceedStep1()" [disabled]="!canProceedStep1()" class="px-12 py-5 bg-primary text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-40 disabled:hover:scale-100">
                                             {{ 'cart.proceed' | translate }}
                                         </button>
                                     </div>
@@ -131,7 +135,7 @@
                             
                             @if (currentStep() > 1) {
                                 <div class="text-slate-900 dark:text-white font-bold animate-in fade-in duration-500">
-                                    Minh Nguyen, Sector 7, Neo Saigon Urban Block
+                                    {{ firstName }} {{ lastName }}, {{ addressLine }}
                                 </div>
                             }
                         </div>
@@ -179,18 +183,18 @@
                                     <div class="grid grid-cols-2 gap-8">
                                         <div class="col-span-2 space-y-3">
                                             <label for="cardnum" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">{{ 'cart.card_number' | translate }}</label>
-                                            <input id="cardnum" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 font-bold dark:text-white" placeholder="4532 0212 9981 8892" type="text"/>
+                                            <input id="cardnum" name="cardnum" [(ngModel)]="cardNumber" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 font-bold dark:text-white" placeholder="4532 0212 9981 8892" type="text"/>
                                         </div>
                                         <div class="col-span-1 space-y-3">
                                             <label for="expiry" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">{{ 'cart.expiry' | translate }}</label>
-                                            <input id="expiry" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 font-bold dark:text-white transition-all text-center" placeholder="12 / 28" type="text"/>
+                                            <input id="expiry" name="expiry" [(ngModel)]="expiry" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 font-bold dark:text-white transition-all text-center" placeholder="12 / 28" type="text"/>
                                         </div>
                                         <div class="col-span-1 space-y-3">
                                             <label for="cvv" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">{{ 'cart.cvv' | translate }}</label>
-                                            <input id="cvv" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 font-bold dark:text-white transition-all text-center" placeholder="•••" type="password"/>
+                                            <input id="cvv" name="cvv" [(ngModel)]="cvv" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 font-bold dark:text-white transition-all text-center" placeholder="•••" type="password"/>
                                         </div>
                                         <div class="col-span-2 flex justify-end pt-4">
-                                            <button (click)="nextStep()" class="px-12 py-5 bg-primary text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+                                            <button (click)="proceedStep2()" [disabled]="!canProceedStep2()" class="px-12 py-5 bg-primary text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-40 disabled:hover:scale-100">
                                                 {{ 'cart.review' | translate }}
                                             </button>
                                         </div>
@@ -259,8 +263,8 @@
                                 <span class="material-symbols-outlined text-3xl mt-1 animate-pulse">login</span>
                             </button>
                         } @else if (currentStep() === 3) {
-                            <button class="w-full h-24 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-3xl shadow-2xl shadow-emerald-500/30 hover:scale-[1.03] active:scale-95 transition-all flex flex-col items-center justify-center group uppercase tracking-[0.3em] text-xs">
-                                <span>{{ 'cart.deploy_btn' | translate }}</span>
+                            <button (click)="placeOrder()" [disabled]="!canDeployOrder()" class="w-full h-24 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-3xl shadow-2xl shadow-emerald-500/30 hover:scale-[1.03] active:scale-95 transition-all flex flex-col items-center justify-center group uppercase tracking-[0.3em] text-xs disabled:opacity-40 disabled:hover:scale-100">
+                                <span>{{ isPlacingOrder() ? 'Deploying...' : ('cart.deploy_btn' | translate) }}</span>
                                 <span class="material-symbols-outlined text-3xl mt-1 group-hover:translate-y-[-4px] transition-transform">rocket_launch</span>
                             </button>
                         } @else {

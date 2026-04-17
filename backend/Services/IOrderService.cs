@@ -4,6 +4,12 @@ namespace backend.Services;
 
 public interface IOrderService
 {
+    // POST: Create order from client cart items
+    Task<OrderDetailDto> CreateAsync(
+        CreateOrderDto dto,
+        CancellationToken cancellationToken
+    );
+
     // GET: Order list with pagination + filter
     Task<PagedResult<OrderDto>> GetAllAsync(
         string? status, // Filter by status

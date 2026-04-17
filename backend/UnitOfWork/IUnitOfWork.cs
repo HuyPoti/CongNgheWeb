@@ -14,6 +14,7 @@ public interface IUnitOfWork
     IRepository<News> News { get; }
     IRepository<NewsCategory> NewsCategories { get; }
     IRepository<Order> Orders { get; }
+    IRepository<Address> Addresses { get; }
 
     IRepository<Review> Reviews { get; }
     IRepository<ReviewImage> ReviewImages { get; }

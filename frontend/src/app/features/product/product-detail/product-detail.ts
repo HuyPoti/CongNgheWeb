@@ -21,8 +21,10 @@ export class ProductDetail implements OnInit {
   private cartService = inject(CartService);
   private productService = inject(ProductService);
   private reviewsService = inject(ReviewService);
+  private toastService = inject(ToastService);
 
   activeTab = signal<string>('specs');
+  activeImageIndex = signal<number>(0);
   isWriteReviewOpen = signal(false);
   selectedRating = signal(0);
   hoverRating = signal(0);
