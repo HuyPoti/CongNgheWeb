@@ -41,6 +41,19 @@ export interface UpdateOrderDto {
   paymentStatus?: 'unpaid' | 'paid' | 'refunded';
 }
 
+export interface CreateOrderItemDto {
+  productId: string;
+  quantity: number;
+}
+
+export interface CreateOrderDto {
+  userId: string;
+  shippingAddressId: string;
+  paymentMethod: string;
+  notes?: string;
+  items: CreateOrderItemDto[];
+}
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;

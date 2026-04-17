@@ -16,6 +16,19 @@ public class OrdersController : ControllerBase
         _service = service;
     }
 
+    // POST: api/orders
+    [HttpPost]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateOrderDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var order = await _service.CreateAsync(dto, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
+    }
+
     // GET: api/orders?status=&page=1&pageSize=10
     [HttpGet]
     public async Task<IActionResult> GetAll(

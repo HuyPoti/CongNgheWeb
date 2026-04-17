@@ -2,6 +2,7 @@
 // using AutoMapper.QueryableExtensions;
 using backend.DTOs;
 using backend.Exceptions;
+using backend.Models;
 // using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,93 @@ namespace backend.Services;
 public class OrderService(
     IUnitOfWork uow) : IOrderService
 {
+    // CREATE ORDER
+    public async Task<OrderDetailDto> CreateAsync(
+        CreateOrderDto dto,
+        CancellationToken cancellationToken)
+    {
+        if (dto.Items.Count == 0)
+            throw new BadRequestException("Order must have at least one item");
+
+        var user = await uow.Users.Query()
+            .FirstOrDefaultAsync(u => u.UserId == dto.UserId, cancellationToken);
+        if (user == null)
+            throw new NotFoundException("User not found");
+
+        var shippingAddress = await uow.Addresses.Query()
+            .FirstOrDefaultAsync(
+                a => a.AddressId == dto.ShippingAddressId && a.UserId == dto.UserId,
+                cancellationToken
+            );
+        if (shippingAddress == null)
+            throw new BadRequestException("Shipping address is invalid");
+
+        var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = await uow.Products.Query()
+            .Where(p => productIds.Contains(p.ProductId))
+            .ToDictionaryAsync(p => p.ProductId, cancellationToken);
+
+        if (products.Count != productIds.Count)
+            throw new BadRequestException("One or more products are invalid");
+
+        var orderItems = new List<OrderItem>();
+        decimal totalAmount = 0;
+
+        foreach (var item in dto.Items)
+        {
+            if (item.Quantity <= 0)
+                throw new BadRequestException("Item quantity must be greater than zero");
+
+            var product = products[item.ProductId];
+            if (product.Status != 2)
+                throw new BadRequestException($"Product {product.Name} is not available");
+
+            if (product.StockQuantity < item.Quantity)
+                throw new BadRequestException($"Product {product.Name} does not have enough stock");
+
+            var unitPrice = product.SalePrice.HasValue && product.SalePrice.Value > 0
+                ? product.SalePrice.Value
+                : product.RegularPrice;
+
+            totalAmount += unitPrice * item.Quantity;
+            product.StockQuantity -= item.Quantity;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            orderItems.Add(new OrderItem
+            {
+                OrderItemId = Guid.NewGuid(),
+                ProductId = product.ProductId,
+                Quantity = item.Quantity,
+                UnitPrice = unitPrice,
+            });
+        }
+
+        var order = new Order
+        {
+            OrderId = Guid.NewGuid(),
+            UserId = dto.UserId,
+            ShippingAddressId = dto.ShippingAddressId,
+            OrderCode = GenerateOrderCode(),
+            PaymentMethod = dto.PaymentMethod,
+            Notes = dto.Notes,
+            TotalAmount = totalAmount,
+            Status = 1,
+            PaymentStatus = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            OrderItems = orderItems,
+        };
+
+        uow.Orders.Insert(order);
+        await uow.SaveAsync(cancellationToken);
+
+        var detail = await GetByIdAsync(order.OrderId, cancellationToken);
+        if (detail == null)
+            throw new NotFoundException("Order created but cannot be loaded");
+
+        return detail;
+    }
+
     // GET ALL WITH PAGINATION + FILTER
     public async Task<PagedResult<OrderDto>> GetAllAsync(
         string? status,
@@ -71,6 +159,8 @@ public class OrderService(
             .Include(o => o.User)
             .Include(o => o.Address)
             .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Product)
+            .ThenInclude(p => p.Images)
             .FirstOrDefaultAsync(o => o.OrderId == id, cancellationToken);
 
         if (order == null) return null;
@@ -183,4 +273,9 @@ public class OrderService(
         "refunded" => 3,
         _ => 1
     };
+
+    private static string GenerateOrderCode()
+    {
+        return $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+    }
 }
