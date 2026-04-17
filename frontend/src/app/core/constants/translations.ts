@@ -95,6 +95,9 @@ export const TRANSLATIONS = {
     'product.compare_status': 'So sánh cấu trúc',
     'product.new': 'Mới',
     'product.filter_category': 'Danh mục',
+    'product.empty_title': 'Không tìm thấy sản phẩm',
+    'product.empty_filter_desc': 'Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại của bạn. Vui lòng thử thay đổi tiêu chí tìm kiếm.',
+    'product.empty_desc': 'Hiện tại danh mục này chưa có sản phẩm nào. Quay lại sau bạn nhé!',
 
     // Cart & Checkout
     'cart.title': 'Giỏ hàng',
@@ -500,6 +503,9 @@ export const TRANSLATIONS = {
     'product.compare_status': 'Compare Matrix',
     'product.new': 'New',
     'product.filter_category': 'Category',
+    'product.empty_title': 'No products found',
+    'product.empty_filter_desc': 'Sorry, no products match your current filters. Please try changing your search criteria.',
+    'product.empty_desc': 'There are no products in this category yet. Please check back later!',
 
     // News
     'news.title': 'Tech Intelligence',

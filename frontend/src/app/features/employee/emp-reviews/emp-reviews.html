@@ -1,0 +1,258 @@
+<div class="p-8">
+  <!-- Header -->
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h2 class="text-3xl font-black text-slate-100 mb-2">Phản hồi Đánh giá</h2>
+      <p class="text-slate-500">
+        {{ reviewStats.total }} đánh giá · Trung bình {{ reviewStats.avgRating }}⭐ ·
+        {{ reviewStats.needReply }} chưa phản hồi
+      </p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-4 gap-4 mb-8">
+    @for (
+      stat of [
+        {
+          label: 'Tổng đánh giá',
+          value: reviewStats.total,
+          icon: 'rate_review',
+          color: 'text-emerald-400',
+          bg: 'bg-emerald-500/10',
+        },
+        {
+          label: 'Điểm TB',
+          value: reviewStats.avgRating,
+          icon: 'star',
+          color: 'text-yellow-400',
+          bg: 'bg-yellow-500/10',
+        },
+        {
+          label: 'Chưa phản hồi',
+          value: reviewStats.needReply,
+          icon: 'chat_bubble',
+          color: 'text-orange-400',
+          bg: 'bg-orange-500/10',
+        },
+        {
+          label: 'Đã phản hồi',
+          value: reviewStats.replied,
+          icon: 'mark_chat_read',
+          color: 'text-emerald-400',
+          bg: 'bg-emerald-500/10',
+        },
+      ];
+      track stat.label
+    ) {
+      <div
+        class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all"
+      >
+        <div class="size-12 rounded-xl flex items-center justify-center" [ngClass]="stat.bg">
+          <span class="material-symbols-outlined text-2xl" [ngClass]="stat.color">{{
+            stat.icon
+          }}</span>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-100">{{ stat.value }}</p>
+          <p class="text-xs text-slate-500">{{ stat.label }}</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Filters -->
+  <div class="flex gap-4 mb-6">
+    <div class="relative flex-1 max-w-md">
+      <span
+        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg"
+        >search</span
+      >
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Tìm theo sản phẩm, khách hàng..."
+        class="w-full bg-surface-dark/40 border border-emerald-500/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40"
+      />
+    </div>
+    <div class="flex gap-2">
+      <button
+        (click)="ratingFilter.set(null)"
+        class="px-3 py-2 rounded-lg text-xs font-bold transition-all"
+        [ngClass]="
+          ratingFilter() === null
+            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+            : 'text-slate-500 hover:text-slate-300 border border-transparent'
+        "
+      >
+        Tất cả
+      </button>
+      @for (r of [5, 4, 3, 2, 1]; track r) {
+        <button
+          (click)="ratingFilter.set(r)"
+          class="px-3 py-2 rounded-lg text-xs font-bold transition-all"
+          [ngClass]="
+            ratingFilter() === r
+              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+              : 'text-slate-500 hover:text-slate-300 border border-transparent'
+          "
+        >
+          {{ r }}⭐
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="flex items-center justify-center py-20">
+      <div
+        class="animate-spin size-8 border-2 border-emerald-500 border-t-transparent rounded-full"
+      ></div>
+      <span class="ml-3 text-slate-400">Đang tải...</span>
+    </div>
+  } @else {
+    <!-- Reviews List -->
+    <div class="space-y-4">
+      @for (review of filteredReviews; track review.reviewId) {
+        <div
+          class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-6 hover:border-emerald-500/20 transition-all"
+        >
+          <!-- Review Header -->
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="size-10 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                <span class="text-emerald-400 font-bold text-sm">{{
+                  review.userName.charAt(0)
+                }}</span>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-slate-200">{{ review.userName }}</p>
+                <p class="text-xs text-slate-500">
+                  {{ review.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- Rating Stars -->
+              <div class="flex items-center gap-0.5">
+                @for (_ of getRatingStars(review.rating); track $index) {
+                  <span class="material-symbols-outlined text-yellow-400 text-lg">star</span>
+                }
+                @for (_ of getEmptyStars(review.rating); track $index) {
+                  <span class="material-symbols-outlined text-slate-600 text-lg">star</span>
+                }
+              </div>
+              @if (review.isVerifiedPurchase) {
+                <span
+                  class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full"
+                  >✓ Đã mua</span
+                >
+              }
+            </div>
+          </div>
+
+          <!-- Product Name -->
+          <div class="mb-3">
+            <span class="text-xs text-slate-500 bg-slate-800/50 px-2 py-1 rounded">
+              <span class="material-symbols-outlined text-xs align-middle mr-1">inventory_2</span>
+              {{ review.productName }}
+            </span>
+          </div>
+
+          <!-- Comment -->
+          <p class="text-sm text-slate-300 leading-relaxed mb-4">{{ review.comment }}</p>
+
+          <!-- Review Images -->
+          @if (review.images && review.images.length) {
+            <div class="flex gap-2 mb-4">
+              @for (img of review.images; track img.imageId) {
+                <img
+                  [src]="img.imageUrl"
+                  class="h-16 rounded-lg object-cover border border-emerald-500/10"
+                  alt=""
+                />
+              }
+            </div>
+          }
+
+          <!-- Existing Replies -->
+          @if (review.replies && review.replies.length) {
+            <div class="border-t border-emerald-500/5 pt-4 mt-4 space-y-3">
+              @for (reply of review.replies; track reply.replyId) {
+                <div class="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-4 ml-6">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-emerald-400 text-sm"
+                      >support_agent</span
+                    >
+                    <span class="text-xs font-bold text-emerald-400">{{ reply.fullName }}</span>
+                    <span class="text-[10px] text-slate-500">{{
+                      reply.createdAt | date: 'dd/MM/yyyy HH:mm'
+                    }}</span>
+                  </div>
+                  <p class="text-sm text-slate-300">{{ reply.content }}</p>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Reply Button & Form -->
+          <div class="mt-4 border-t border-emerald-500/5 pt-4">
+            <button
+              (click)="toggleReplyForm(review.reviewId)"
+              class="flex items-center gap-2 text-sm font-medium transition-colors"
+              [ngClass]="
+                replyingToId() === review.reviewId
+                  ? 'text-red-400 hover:text-red-300'
+                  : 'text-emerald-400 hover:text-emerald-300'
+              "
+            >
+              <span class="material-symbols-outlined text-sm">
+                {{ replyingToId() === review.reviewId ? 'close' : 'reply' }}
+              </span>
+              {{ replyingToId() === review.reviewId ? 'Hủy' : 'Phản hồi' }}
+            </button>
+
+            @if (replyingToId() === review.reviewId) {
+              <div class="mt-3 space-y-3">
+                <textarea
+                  [ngModel]="replyContent()"
+                  (ngModelChange)="replyContent.set($event)"
+                  placeholder="Nhập nội dung phản hồi cho khách hàng..."
+                  rows="3"
+                  class="w-full bg-slate-800/50 border border-emerald-500/20 rounded-xl p-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40 resize-none"
+                ></textarea>
+                <div class="flex justify-end gap-2">
+                  <button
+                    (click)="toggleReplyForm(review.reviewId)"
+                    class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    (click)="submitReply(review.reviewId)"
+                    [disabled]="isSubmittingReply() || !replyContent().trim()"
+                    class="px-5 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-bold hover:bg-emerald-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    @if (isSubmittingReply()) {
+                      <span
+                        class="animate-spin inline-block size-4 border-2 border-emerald-400 border-t-transparent rounded-full mr-2 align-middle"
+                      ></span>
+                    }
+                    Gửi phản hồi
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-16 text-center">
+          <span class="material-symbols-outlined text-4xl text-slate-600 mb-2">rate_review</span>
+          <p class="text-slate-500">Không có đánh giá nào</p>
+        </div>
+      }
+    </div>
+  }
+</div>

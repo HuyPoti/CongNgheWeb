@@ -1,0 +1,23 @@
+/* Employee Layout Styles - Forced Dark Environment */
+:host {
+  display: block;
+  background-color: var(--color-background-dark);
+  color: var(--color-slate-100);
+}
+
+.emp-glass {
+  background: rgba(18, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.emp-card {
+  background: #121827;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  transition: all 0.3s ease;
+}
+
+.emp-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+}
