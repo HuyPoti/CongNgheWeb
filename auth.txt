@@ -1,0 +1,397 @@
+# HƯỚNG DẪN TRIỂN KHAI AUTHENTICATION & GOOGLE LOGIN 
+Dành cho: MÔ HÌNH ĐĂNG NHẬP TOÀN TRANG (Dedicated Page) trên .NET & Angular
+
+Tài liệu này cung cấp toàn bộ code và luồng xử lý chi tiết để bạn code logic Đăng nhập/Đăng ký thường VÀ Google Login cho trang đăng nhập toàn màn hình của bạn.
+
+---
+
+## PHẦN 1: BACKEND (.NET CORE)
+
+### Bước 1: Cài đặt các thư viện (Nuget Packages) cần thiết
+Mở Terminal tại thư mục `backend` và chạy các lệnh sau:
+```bash
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package BCrypt.Net-Next
+dotnet add package Google.Apis.Auth
+```
+
+### Bước 2: Thêm biến cấu hình vào `appsettings.json`
+Thêm section `"Jwt"` và `"GoogleAuth"` vào file `appsettings.json`:
+```json
+  "Jwt": {
+    "Key": "MotChuoiKiTuBiMatRatDaiVaKhoDoan_ChoDuAnNay123!!",
+    "Issuer": "http://localhost:5000",
+    "Audience": "http://localhost:4200",
+    "ExpireMinutes": 1440
+  },
+  "GoogleAuth": {
+    "ClientId": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+  }
+```
+
+### Bước 3: Tạo các DTO (Data Transfer Objects)
+Tạo file `DTOs/AuthDTOs.cs`:
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace backend.DTOs;
+
+public class LoginDto
+{
+    [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
+    [Required] public string Password { get; set; } = string.Empty;
+}
+
+public class RegisterDto
+{
+    [Required] [EmailAddress] public string Email { get; set; } = string.Empty;
+    [Required] public string Password { get; set; } = string.Empty;
+    [Required] public string FullName { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+}
+
+public class GoogleLoginDto
+{
+    [Required] public string IdToken { get; set; } = string.Empty;
+}
+
+public class AuthResponseDto
+{
+    public string Token { get; set; } = string.Empty;
+    public UserDto User { get; set; } = null!;
+}
+```
+
+### Bước 4: Tạo `IAuthService` và `AuthService`
+Tạo file `Services/IAuthService.cs`:
+```csharp
+using backend.DTOs;
+
+namespace backend.Services;
+
+public interface IAuthService
+{
+    Task<AuthResponseDto?> LoginAsync(LoginDto dto, CancellationToken cancellationToken);
+    Task<AuthResponseDto?> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken);
+    Task<AuthResponseDto?> GoogleLoginAsync(string idToken, CancellationToken cancellationToken);
+}
+```
+
+Tạo file `Services/AuthService.cs`:
+```csharp
+using backend.Data;
+using backend.DTOs;
+using backend.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using AutoMapper;
+using Google.Apis.Auth;
+
+namespace backend.Services;
+
+public class AuthService : IAuthService
+{
+    private readonly AppDbContext _context;
+    private readonly IConfiguration _config;
+    private readonly IMapper _mapper;
+
+    public AuthService(AppDbContext context, IConfiguration config, IMapper mapper)
+    {
+        _context = context;
+        _config = config;
+        _mapper = mapper;
+    }
+
+    public async Task<AuthResponseDto?> LoginAsync(LoginDto dto, CancellationToken cancellationToken)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken);
+        if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            return null;
+
+        if (!user.IsActive) throw new Exception("Tài khoản đã bị khóa.");
+
+        return new AuthResponseDto { Token = GenerateJwtToken(user), User = _mapper.Map<UserDto>(user) };
+    }
+
+    public async Task<AuthResponseDto?> RegisterAsync(RegisterDto dto, CancellationToken cancellationToken)
+    {
+        if (await _context.Users.AnyAsync(u => u.Email == dto.Email, cancellationToken))
+            throw new Exception("Email đã tồn tại.");
+
+        var user = new User
+        {
+            UserId = Guid.NewGuid(),
+            Email = dto.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            FullName = dto.FullName,
+            Phone = dto.Phone,
+            Role = UserRole.customer, // Mặc định là quyền customer
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new AuthResponseDto { Token = GenerateJwtToken(user), User = _mapper.Map<UserDto>(user) };
+    }
+
+    // Xác minh token Google và xử lý đăng nhập/đăng ký tự động
+    public async Task<AuthResponseDto?> GoogleLoginAsync(string idToken, CancellationToken cancellationToken)
+    {
+        try 
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new List<string> { _config["GoogleAuth:ClientId"]! }
+            };
+
+            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+            
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email, cancellationToken);
+            
+            if (user == null)
+            {
+                user = new User
+                {
+                    UserId = Guid.NewGuid(),
+                    Email = payload.Email,
+                    FullName = payload.Name,
+                    PasswordHash = "", 
+                    Role = UserRole.customer,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            else if (!user.IsActive)
+            {
+                throw new Exception("Tài khoản đã bị khóa.");
+            }
+
+            return new AuthResponseDto { Token = GenerateJwtToken(user), User = _mapper.Map<UserDto>(user) };
+        }
+        catch (InvalidJwtException)
+        {
+            throw new Exception("Google Token không hợp lệ.");
+        }
+    }
+
+    private string GenerateJwtToken(User user)
+    {
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role.ToString().ToLower()),
+            new Claim(ClaimTypes.Name, user.FullName)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(double.Parse(_config["Jwt:ExpireMinutes"]!)),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+```
+
+### Bước 5: Cập nhật `AuthController`
+Trong `Controllers/AuthController.cs`:
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using backend.DTOs;
+using backend.Services;
+
+namespace backend.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService) { _authService = authService; }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
+    {
+        try 
+        {
+            var response = await _authService.LoginAsync(dto, cancellationToken);
+            if (response == null) return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
+            return Ok(response);
+        }
+        catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto, CancellationToken cancellationToken)
+    {
+        try { return Ok(await _authService.RegisterAsync(dto, cancellationToken)); }
+        catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("google-login")]
+    public async Task<ActionResult<AuthResponseDto>> GoogleLogin([FromBody] GoogleLoginDto dto, CancellationToken cancellationToken)
+    {
+        try { return Ok(await _authService.GoogleLoginAsync(dto.IdToken, cancellationToken)); }
+        catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+    }
+}
+```
+
+### Bước 6: Đăng ký dịch vụ JWT vào `Program.cs`
+Các dòng code sau thêm TRƯỚC `var app = builder.Build();`:
+```csharp
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    // ... logic như bản cũ
+builder.Services.AddAuthorization(); 
+
+// Phải gọi trước app.UseAuthorization();
+app.UseAuthentication();
+```
+
+---
+
+## PHẦN 2: FRONTEND (ANGULAR)
+
+### Bước 1: Cài đặt thư viện Social Login
+Mở terminal thư mục `frontend`:
+```bash
+npm install @abacritt/angularx-social-login
+```
+
+### Bước 2: Khai báo ở `app.config.ts`
+```typescript
+import { ApplicationConfig } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
+import { GoogleLoginProvider, SocialAuthServiceConfig } from '@abacritt/angularx-social-login';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(withInterceptors([jwtInterceptor])),
+    {
+      provide: 'SocialAuthServiceConfig',
+      useValue: {
+        autoLogin: false,
+        providers: [
+          {
+            id: GoogleLoginProvider.PROVIDER_ID,
+            provider: new GoogleLoginProvider('YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com')
+          }
+        ],
+        onError: (err) => console.error(err)
+      } as SocialAuthServiceConfig,
+    }
+  ]
+};
+```
+
+### Bước 3: Code `AuthService`
+Giữ nguyên file `auth.service.ts` y hệt như bản cập nhật tích hợp Google, cung cấp 3 API: `login`, `register`, `googleLogin`.
+
+### Bước 4: Logic ĐĂNG NHẬP TOÀN TRANG (Component Giao diện)
+Vì bạn tạo giao diện Đăng Nhập Chiếm toàn trang, bạn cần kỹ thuật xử lý `returnUrl` (chuyển hướng khách hàng quay trở lại đúng trang họ vừa xem trước khi bị bắt login).
+
+Ví dụ trong `login.component.ts`:
+```typescript
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, GoogleSigninButtonModule], // Nhớ import module này
+  templateUrl: './login.component.html', // Chỗ này trỏ vào file giao diện HTML bạn đã thiết kế
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private socialAuthService = inject(SocialAuthService);
+
+  loginForm: FormGroup;
+  returnUrl: string = '/';
+  errorMessage: string = '';
+
+  constructor() {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    // Lấy URL trước đó trên trình duyệt, ví dụ: /login?returnUrl=/gio-hang
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+
+    // Xử lý sự kiện đăng nhập bằng phần Google của @abacritt
+    this.socialAuthService.authState.subscribe((socialUser) => {
+      if (socialUser) {
+        this.authService.googleLogin(socialUser.idToken).subscribe({
+          next: () => {
+            console.log("Đăng nhập bằng Google thành công");
+            this.router.navigateByUrl(this.returnUrl); // Trả về trang cũ hoặc trang chủ
+          },
+          error: (err) => this.errorMessage = 'Lỗi đăng nhập Google: ' + err.error?.message
+        });
+      }
+    });
+  }
+
+  // Xử lý khi nhấn form do bạn thiết kế (Email/Password)
+  onSubmit(): void {
+    if (this.loginForm.invalid) return;
+
+    this.authService.login(this.loginForm.value).subscribe({
+      next: () => {
+         console.log("Đăng nhập tài khoản thường thành công");
+         this.router.navigateByUrl(this.returnUrl); // Trả về trang cũ
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Email hoặc mật khẩu không đúng.';
+      }
+    });
+  }
+}
+```
+
+Và trên file **HTML của bạn đã code** (`login.component.html`), hãy chèn Nút Mạng Xã Hội chuẩn như sau:
+```html
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+  <!-- Các input Email, Password do bạn thiết kế -->
+  
+  <div class="error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <button type="submit">Đăng nhập</button>
+
+  <div class="divider">Hoặc</div>
+
+  <!-- Đây là component render sẵn hiển thị Nút "Continue to Google" do Google cung cấp bảo mật -->
+  <div class="google-btn-wrapper">
+    <asl-google-signin-button type="standard" size="large" width="300"></asl-google-signin-button>
+  </div>
+</form>
+```
+Đặc điểm: Cả Form truyền thống hay Google Button, khi thành công đều sẽ kích hoạt biến `returnUrl` nhảy lại thẳng về trang trước đó mà người dùng đang thao tác một cách trơn tru!

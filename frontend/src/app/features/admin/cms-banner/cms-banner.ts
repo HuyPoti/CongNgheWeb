@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Banner, CreateBanner, UpdateBanner } from '../../../core/models/banner.model';
+import { Banner, CreateBanner } from '../../../core/models/banner.model';
 import { BannerService } from '../../../core/services/banner.service';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -25,10 +25,22 @@ export class CmsBanner implements OnInit {
     homepage_slider: 'Homepage Slider',
     homepage_mid: 'Homepage Mid',
     category_top: 'Category Top',
-    news_top: 'News Top'
+    news_top: 'News Top',
   };
 
   form: Partial<Banner> = {};
+  bannerImageError = signal<Record<string, boolean>>({});
+
+  handleImageError(id: string) {
+    this.bannerImageError.update((prev) => ({ ...prev, [id]: true }));
+  }
+
+  resetPreviewError() {
+    this.bannerImageError.update((prev) => {
+      const { preview, ...rest } = prev;
+      return rest;
+    });
+  }
 
   ngOnInit(): void {
     this.loadBanners();
@@ -37,7 +49,7 @@ export class CmsBanner implements OnInit {
   loadBanners() {
     this.isLoading.set(true);
     this.bannerService.getAll().subscribe({
-      next: banners => {
+      next: (banners) => {
         this.banners.set(banners);
         this.isLoading.set(false);
       },
@@ -50,10 +62,11 @@ export class CmsBanner implements OnInit {
   }
 
   get activeBannersCount() {
-    return this.banners().filter(b => b.isActive).length;
+    return this.banners().filter((b) => b.isActive).length;
   }
 
   openCreateModal() {
+    this.resetPreviewError();
     this.editingBanner.set(null);
     this.form = {
       title: '',
@@ -70,6 +83,7 @@ export class CmsBanner implements OnInit {
   }
 
   openEditModal(banner: Banner) {
+    this.resetPreviewError();
     this.editingBanner.set(banner);
     this.form = {
       ...banner,
@@ -99,7 +113,7 @@ export class CmsBanner implements OnInit {
           this.loadBanners();
           this.closeModal();
         },
-        error: () => this.toast.error('Lỗi khi cập nhật banner')
+        error: () => this.toast.error('Lỗi khi cập nhật banner'),
       });
     } else {
       this.bannerService.create(payload).subscribe({
@@ -108,25 +122,26 @@ export class CmsBanner implements OnInit {
           this.loadBanners();
           this.closeModal();
         },
-        error: () => this.toast.error('Lỗi khi tạo banner')
+        error: () => this.toast.error('Lỗi khi tạo banner'),
       });
     }
   }
 
   toggleStatus(banner: Banner) {
     const newStatus = !banner.isActive;
-    
+
     this.bannerService.update(banner.bannerId, { isActive: newStatus }).subscribe({
       next: (updated) => {
         this.banners.update((list) =>
-          list.map((b) => (b.bannerId === banner.bannerId ? { ...b, isActive: updated.isActive } : b))
+          list.map((b) =>
+            b.bannerId === banner.bannerId ? { ...b, isActive: updated.isActive } : b,
+          ),
         );
         this.toast.success(`Đã ${newStatus ? 'kích hoạt' : 'tạm ngưng'} banner thành công`);
       },
-      error: () => this.toast.error('Lỗi khi đổi trạng thái banner')
+      error: () => this.toast.error('Lỗi khi đổi trạng thái banner'),
     });
   }
-
 
   private buildPayload(): CreateBanner {
     return {
@@ -147,4 +162,3 @@ export class CmsBanner implements OnInit {
     return value.split('T')[0]; // Extract YYYY-MM-DD
   }
 }
-

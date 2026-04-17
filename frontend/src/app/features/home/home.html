@@ -40,26 +40,25 @@
       <div
         class="col-span-12 lg:col-span-8 relative rounded-3xl overflow-hidden group cursor-pointer border border-slate-100 dark:border-white/5 shadow-xl"
       >
-        @if (isBannersLoading) {
-          <div class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+        @if (
+          isBannersLoading || !heroBanner?.imageUrl || bannerImageError[heroBanner?.id ?? 'hero']
+        ) {
+          <div
+            class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center"
+          >
+            <span class="material-symbols-outlined text-slate-400 text-6xl opacity-20">image</span>
+          </div>
         } @else {
           <div class="absolute inset-0 bg-slate-900/30 z-10"></div>
-          @if (heroBanner) {
-            <img
-              [src]="heroBanner.imageUrl"
-              class="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110"
-              [alt]="heroBanner.targetAlt"
-            />
-          } @else {
-            <img
-              src="https://gearvn.com/cdn/shop/files/Laptop_Gaming_Slider_600x480.jpg?v=1712741926"
-              class="w-full h-full object-cover"
-              alt="Hero"
-            />
-          }
+          <img
+            [src]="heroBanner!.imageUrl"
+            class="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110"
+            [alt]="heroBanner!.targetAlt"
+            (error)="handleBannerError(heroBanner!.id)"
+          />
           <div class="absolute bottom-10 left-10 z-20">
             <h2 class="text-3xl font-display font-bold text-white mb-2 uppercase tracking-tight">
-              {{ heroBanner ? heroBanner.title : ('home.hero_title' | translate) }}
+              {{ heroBanner?.title || ('home.hero_title' | translate) }}
             </h2>
             <p class="text-white/80 font-medium text-sm">
               {{ heroBanner?.subtitle || ('home.hero_subtitle' | translate) }}
@@ -70,55 +69,34 @@
 
       <!-- Right Banners/Promos -->
       <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
-        @if (isBannersLoading) {
-          <div
-            class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5"
-          ></div>
-          <div
-            class="flex-1 rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5"
-          ></div>
-        } @else {
+        @for (i of [0, 1]; track i) {
           <div
             class="flex-1 rounded-3xl overflow-hidden relative group cursor-pointer border border-slate-100 dark:border-white/5"
-            [routerLink]="midBanners[0]?.linkUrl || '/product/list'"
+            [routerLink]="midBanners[i]?.linkUrl || '/product/list'"
           >
-            @if (midBanners[0]) {
-              <img
-                [src]="midBanners[0].imageUrl"
-                class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                [alt]="midBanners[0].targetAlt"
-              />
+            @if (
+              isBannersLoading ||
+              !midBanners[i]?.imageUrl ||
+              bannerImageError[midBanners[i]?.id ?? 'mid-' + i]
+            ) {
+              <div
+                class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center min-h-[150px]"
+              >
+                <span class="material-symbols-outlined text-slate-400 text-3xl opacity-20"
+                  >image</span
+                >
+              </div>
             } @else {
               <img
-                src="https://phongvu.vn/media/banner/06_Jun607548773950fb28fc586ecc495f5ac2.png"
+                [src]="midBanners[i].imageUrl"
                 class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                alt="Promo 1"
+                [alt]="midBanners[i].targetAlt"
+                (error)="handleBannerError(midBanners[i].id)"
               />
+              <div
+                class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+              ></div>
             }
-            <div
-              class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
-          </div>
-          <div
-            class="flex-1 rounded-3xl overflow-hidden relative group cursor-pointer border border-slate-100 dark:border-white/5"
-            [routerLink]="midBanners[1]?.linkUrl || '/product/list'"
-          >
-            @if (midBanners[1]) {
-              <img
-                [src]="midBanners[1].imageUrl"
-                class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                [alt]="midBanners[1].targetAlt"
-              />
-            } @else {
-              <img
-                src="https://phongvu.vn/media/banner/06_Jun73248386e8ca779430c77431e7f09805.png"
-                class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                alt="Promo 2"
-              />
-            }
-            <div
-              class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
-            ></div>
           </div>
         }
       </div>
@@ -262,7 +240,9 @@
     <ng-template #productGrid let-title="title" let-products="products">
       <div>
         <div class="flex items-center justify-between mb-10 pb-6 border-b-2 border-primary/10">
-          <h2 class="text-2xl font-display font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+          <h2
+            class="text-2xl font-display font-bold text-slate-900 dark:text-white uppercase tracking-tight"
+          >
             {{ title }}
           </h2>
           <a
@@ -389,51 +369,59 @@
     ></ng-container>
 
     <!-- Large Promo Banner -->
-    @if (isBannersLoading) {
-      <div
-        class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden mt-12 bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5 shadow-sm"
-      ></div>
-    } @else if (midBanners[2]) {
-      <div
-        class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden group cursor-pointer border border-primary/10 shadow-2xl mt-12"
-      >
-        <!-- Ảnh Banner rõ nét -->
-        <img
-          [src]="midBanners[2].imageUrl"
-          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[10s]"
-          [alt]="midBanners[2].targetAlt"
-        />
-
-        <!-- Lớp Gradient bảo vệ chữ (Cực mờ) -->
+    <div class="mt-12">
+      @if (
+        isBannersLoading ||
+        (midBanners[2] && (!midBanners[2].imageUrl || bannerImageError[midBanners[2].id]))
+      ) {
         <div
-          class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent flex items-center p-12 md:p-20"
+          class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5 shadow-sm flex items-center justify-center"
         >
-          <div class="max-w-2xl">
-            <!-- Tiêu đề lớn -->
-            <h2 class="text-3xl font-display font-bold text-white mb-2 uppercase tracking-tight">
-              <span class="block mb-2">{{
-                midBanners[2].title || ('home.promo_title' | translate)
-              }}</span>
-              @if (midBanners[2].subtitle) {
-                <span
-                  class="text-2xl md:text-3xl font-medium normal-case tracking-normal block text-slate-200"
-                >
-                  {{ midBanners[2].subtitle }}
-                </span>
-              }
-            </h2>
+          <span class="material-symbols-outlined text-slate-400 text-6xl opacity-20">image</span>
+        </div>
+      } @else if (midBanners[2]) {
+        <div
+          class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden group cursor-pointer border border-primary/10 shadow-2xl"
+        >
+          <!-- Ảnh Banner rõ nét -->
+          <img
+            [src]="midBanners[2].imageUrl"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[10s]"
+            [alt]="midBanners[2].targetAlt"
+            (error)="handleBannerError(midBanners[2].id)"
+          />
 
-            <!-- Nút bấm -->
-            <button
-              class="px-10 py-4 bg-primary text-white rounded-full font-black text-[12px] uppercase tracking-widest hover:bg-white hover:text-primary transition-all shadow-2xl shadow-primary/40"
-              [routerLink]="midBanners[2].linkUrl || '/product/list'"
-            >
-              {{ 'home.buy_now' | translate }}
-            </button>
+          <!-- Lớp Gradient bảo vệ chữ (Cực mờ) -->
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent flex items-center p-12 md:p-20"
+          >
+            <div class="max-w-2xl">
+              <!-- Tiêu đề lớn -->
+              <h2 class="text-3xl font-display font-bold text-white mb-2 uppercase tracking-tight">
+                <span class="block mb-2">{{
+                  midBanners[2].title || ('home.promo_title' | translate)
+                }}</span>
+                @if (midBanners[2].subtitle) {
+                  <span
+                    class="text-2xl md:text-3xl font-medium normal-case tracking-normal block text-slate-200"
+                  >
+                    {{ midBanners[2].subtitle }}
+                  </span>
+                }
+              </h2>
+
+              <!-- Nút bấm -->
+              <button
+                class="px-10 py-4 bg-primary text-white rounded-full font-black text-[12px] uppercase tracking-widest hover:bg-white hover:text-primary transition-all shadow-2xl shadow-primary/40"
+                [routerLink]="midBanners[2].linkUrl || '/product/list'"
+              >
+                {{ 'home.buy_now' | translate }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    }
+      }
+    </div>
   </section>
 
   <!-- Improved Comparison Sticky Bar -->

@@ -1,9 +1,14 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+// --- PHẦN THÊM MỚI TỪ AUTH.TXT ---
+import { GoogleLoginProvider, SocialAuthServiceConfig } from '@abacritt/angularx-social-login';
+import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 
 import { routes } from './app.routes';
+
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -11,6 +16,19 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })),
 
     provideClientHydration(withEventReplay()),
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([jwtInterceptor])),
+    {
+      provide: 'SocialAuthServiceConfig',
+      useValue: {
+        autoLogin: false,
+        providers: [
+          {
+            id: GoogleLoginProvider.PROVIDER_ID,
+            provider: new GoogleLoginProvider(environment.googleClientId),
+          },
+        ],
+        onError: (err: unknown) => console.error(err),
+      } as SocialAuthServiceConfig,
+    },
   ],
 };

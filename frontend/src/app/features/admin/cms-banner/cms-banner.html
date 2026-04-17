@@ -9,15 +9,22 @@
         <span class="w-1 h-1 rounded-full bg-slate-700"></span>
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-green-500"></span>
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">{{ activeBannersCount }} Active</span>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter"
+            >{{ activeBannersCount }} Active</span
+          >
         </div>
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-slate-600"></span>
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter">{{ banners().length }} Total</span>
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter"
+            >{{ banners().length }} Total</span
+          >
         </div>
       </div>
     </div>
-    <button (click)="openCreateModal()" class="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20">
+    <button
+      (click)="openCreateModal()"
+      class="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+    >
       <span class="material-symbols-outlined text-sm">add</span> Thêm Banner
     </button>
   </div>
@@ -26,10 +33,16 @@
   <div class="relative min-h-[400px]">
     <!-- Loading Overlay -->
     @if (isLoading()) {
-      <div class="absolute inset-0 bg-surface-dark/20 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+      <div
+        class="absolute inset-0 bg-surface-dark/20 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl"
+      >
         <div class="flex flex-col items-center gap-3">
-          <div class="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-          <span class="text-xs font-bold text-primary uppercase tracking-widest animate-pulse">Đang tải...</span>
+          <div
+            class="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+          ></div>
+          <span class="text-xs font-bold text-primary uppercase tracking-widest animate-pulse"
+            >Đang tải...</span
+          >
         </div>
       </div>
     }
@@ -39,80 +52,139 @@
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-primary/10 text-left bg-primary/5">
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hình ảnh</th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nội dung</th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vị trí</th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Thứ tự</th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời gian</th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
+            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Hình ảnh
+            </th>
+            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Nội dung
+            </th>
+            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Vị trí
+            </th>
+            <th
+              class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center"
+            >
+              Thứ tự
+            </th>
+            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Thời gian
+            </th>
+            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Trạng thái
+            </th>
+            <th
+              class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right"
+            >
+              Thao tác
+            </th>
           </tr>
         </thead>
         <tbody>
           @for (banner of banners(); track banner.bannerId) {
             <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors group">
               <td class="px-6 py-4">
-                <div class="relative w-32 h-16 rounded-lg overflow-hidden border border-primary/10 shadow-sm transition-transform group-hover:scale-110 group-hover:z-10 bg-slate-800">
-                  @if (banner.imageUrl) {
-                    <img [src]="banner.imageUrl" [alt]="banner.title || 'Banner'" class="w-full h-full object-cover"/>
+                <div
+                  class="relative w-32 h-16 rounded-lg overflow-hidden border border-primary/10 shadow-sm transition-transform group-hover:scale-110 group-hover:z-10 bg-slate-800"
+                >
+                  @if (banner.imageUrl && !bannerImageError()[banner.bannerId]) {
+                    <img
+                      [src]="banner.imageUrl"
+                      [alt]="banner.title || 'Banner'"
+                      class="w-full h-full object-cover"
+                      (error)="handleImageError(banner.bannerId)"
+                    />
                   } @else {
-                    <div class="w-full h-full flex items-center justify-center">
-                      <span class="material-symbols-outlined text-slate-600">image</span>
+                    <div
+                      class="w-full h-full flex items-center justify-center bg-slate-800 animate-pulse"
+                    >
+                      <span class="material-symbols-outlined text-slate-600">{{
+                        banner.imageUrl ? 'image_not_supported' : 'image'
+                      }}</span>
                     </div>
                   }
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="max-w-xs">
-                  <p class="text-slate-100 font-bold text-sm">{{ banner.title || 'Banner không tiêu đề' }}</p>
+                  <p class="text-slate-100 font-bold text-sm">
+                    {{ banner.title || 'Banner không tiêu đề' }}
+                  </p>
                   @if (banner.subtitle) {
-                    <p class="text-slate-500 text-xs mt-1 line-clamp-1 italic">{{ banner.subtitle }}</p>
+                    <p class="text-slate-500 text-xs mt-1 line-clamp-1 italic">
+                      {{ banner.subtitle }}
+                    </p>
                   }
                   @if (banner.linkUrl) {
                     <p class="text-[10px] text-primary/60 mt-2 font-mono flex items-center gap-1">
-                      <span class="material-symbols-outlined text-[10px]">link</span> {{ banner.linkUrl }}
+                      <span class="material-symbols-outlined text-[10px]">link</span>
+                      {{ banner.linkUrl }}
                     </p>
                   }
                 </div>
               </td>
               <td class="px-6 py-4">
-                <span class="bg-primary/10 text-primary text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider border border-primary/20">
+                <span
+                  class="bg-primary/10 text-primary text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider border border-primary/20"
+                >
                   {{ positionLabels[banner.position] || banner.position }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-center font-mono text-slate-400 font-bold">{{ banner.sortOrder }}</td>
+              <td class="px-6 py-4 text-center font-mono text-slate-400 font-bold">
+                {{ banner.sortOrder }}
+              </td>
               <td class="px-6 py-4">
                 <div class="flex flex-col gap-1">
                   @if (banner.startDate || banner.endDate) {
                     <div class="flex items-center gap-2 text-[10px] font-bold">
-                       <span class="text-slate-500 uppercase">Từ:</span>
-                       <span class="text-slate-300">{{ banner.startDate ? (banner.startDate | date:'dd/MM/yyyy') : '--' }}</span>
+                      <span class="text-slate-500 uppercase">Từ:</span>
+                      <span class="text-slate-300">{{
+                        banner.startDate ? (banner.startDate | date: 'dd/MM/yyyy') : '--'
+                      }}</span>
                     </div>
                     <div class="flex items-center gap-2 text-[10px] font-bold">
-                       <span class="text-slate-500 uppercase">Đến:</span>
-                       <span class="text-slate-300">{{ banner.endDate ? (banner.endDate | date:'dd/MM/yyyy') : '--' }}</span>
+                      <span class="text-slate-500 uppercase">Đến:</span>
+                      <span class="text-slate-300">{{
+                        banner.endDate ? (banner.endDate | date: 'dd/MM/yyyy') : '--'
+                      }}</span>
                     </div>
                   } @else {
-                    <span class="text-[10px] font-bold text-slate-600 uppercase italic">Vô thời hạn</span>
+                    <span class="text-[10px] font-bold text-slate-600 uppercase italic"
+                      >Vô thời hạn</span
+                    >
                   }
                 </div>
               </td>
               <td class="px-6 py-4">
-                <span [ngClass]="{
-                  'bg-green-500/20 text-green-400': banner.isActive,
-                  'bg-red-500/20 text-red-400': !banner.isActive
-                }" class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                <span
+                  [ngClass]="{
+                    'bg-green-500/20 text-green-400': banner.isActive,
+                    'bg-red-500/20 text-red-400': !banner.isActive,
+                  }"
+                  class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter"
+                >
                   {{ banner.isActive ? 'Active' : 'Inactive' }}
                 </span>
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end gap-1">
-                  <button (click)="toggleStatus(banner)" [title]="banner.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                  <button
+                    (click)="toggleStatus(banner)"
+                    [title]="banner.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'"
                     class="p-2.5 rounded-xl transition-all active:scale-90"
-                    [ngClass]="banner.isActive ? 'text-slate-500 hover:bg-red-500/10 hover:text-red-400' : 'text-primary hover:bg-primary/10'">
-                    <span class="material-symbols-outlined text-base">{{ banner.isActive ? 'visibility_off' : 'visibility' }}</span>
+                    [ngClass]="
+                      banner.isActive
+                        ? 'text-slate-500 hover:bg-red-500/10 hover:text-red-400'
+                        : 'text-primary hover:bg-primary/10'
+                    "
+                  >
+                    <span class="material-symbols-outlined text-base">{{
+                      banner.isActive ? 'visibility_off' : 'visibility'
+                    }}</span>
                   </button>
-                  <button (click)="openEditModal(banner)" class="p-2.5 hover:bg-primary/20 rounded-xl transition-all text-slate-500 hover:text-primary active:scale-90">
+                  <button
+                    (click)="openEditModal(banner)"
+                    class="p-2.5 hover:bg-primary/20 rounded-xl transition-all text-slate-500 hover:text-primary active:scale-90"
+                  >
                     <span class="material-symbols-outlined text-base">edit</span>
                   </button>
                 </div>
@@ -126,9 +198,14 @@
                     <span class="material-symbols-outlined text-6xl">gallery_thumbnail</span>
                     <div class="flex flex-col gap-1">
                       <p class="text-lg font-bold text-slate-100">Chưa có banner nào</p>
-                      <p class="text-sm text-slate-500">Tạo banner đầu tiên để làm nổi bật website của bạn</p>
+                      <p class="text-sm text-slate-500">
+                        Tạo banner đầu tiên để làm nổi bật website của bạn
+                      </p>
                     </div>
-                    <button (click)="openCreateModal()" class="mt-4 text-xs font-bold text-primary uppercase tracking-widest hover:underline decoration-2 underline-offset-8 transition-all">
+                    <button
+                      (click)="openCreateModal()"
+                      class="mt-4 text-xs font-bold text-primary uppercase tracking-widest hover:underline decoration-2 underline-offset-8 transition-all"
+                    >
                       Bắt đầu ngay
                     </button>
                   </div>
@@ -144,19 +221,33 @@
 
 <!-- Modal Create/Edit -->
 @if (showModal()) {
-  <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300" 
-    (click)="closeModal()" (keydown.enter)="closeModal()" tabindex="0" role="button" aria-label="Close modal">
-    
-    <div class="bg-surface-dark border border-primary/20 rounded-[2rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200" 
-      (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" tabindex="-1" role="dialog">
-      
+  <div
+    class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300"
+    (click)="closeModal()"
+    (keydown.enter)="closeModal()"
+    tabindex="0"
+    role="button"
+    aria-label="Close modal"
+  >
+    <div
+      class="bg-surface-dark border border-primary/20 rounded-[2rem] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      tabindex="-1"
+      role="dialog"
+    >
       <!-- Modal Header -->
       <div class="p-8 border-b border-primary/10 flex items-center justify-between bg-primary/5">
         <div>
-          <h3 class="text-2xl font-black text-slate-100 tracking-tight">{{ editingBanner() ? 'Hiệu chỉnh Banner' : 'Thiết lập Banner Mới' }}</h3>
+          <h3 class="text-2xl font-black text-slate-100 tracking-tight">
+            {{ editingBanner() ? 'Hiệu chỉnh Banner' : 'Thiết lập Banner Mới' }}
+          </h3>
           <p class="text-slate-500 text-sm mt-1">Cấu hình thông tin và vị trí hiển thị</p>
         </div>
-        <button (click)="closeModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all active:scale-90">
+        <button
+          (click)="closeModal()"
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all active:scale-90"
+        >
           <span class="material-symbols-outlined text-xl">close</span>
         </button>
       </div>
@@ -167,38 +258,94 @@
         <div class="space-y-6">
           <div class="flex items-center gap-3 mb-2">
             <span class="w-1.5 h-6 bg-primary rounded-full"></span>
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Nội dung hiển thị</h4>
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">
+              Nội dung hiển thị
+            </h4>
           </div>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4 md:col-span-2">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tiêu đề chính</label>
-              <input [(ngModel)]="form.title" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-700" placeholder="VD: Siêu sale điện tử Laptop & PC"/>
-            </div>
-            
-            <div class="space-y-4 md:col-span-2">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Phụ đề / Mô tả ngắn</label>
-              <input [(ngModel)]="form.subtitle" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-700" placeholder="VD: Ưu đãi lên đến 40% - Duy nhất hôm nay"/>
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Tiêu đề chính</label
+              >
+              <input
+                [(ngModel)]="form.title"
+                class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-700"
+                placeholder="VD: Siêu sale điện tử Laptop & PC"
+              />
             </div>
 
             <div class="space-y-4 md:col-span-2">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Đường dẫn hình ảnh *</label>
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Phụ đề / Mô tả ngắn</label
+              >
+              <input
+                [(ngModel)]="form.subtitle"
+                class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-700"
+                placeholder="VD: Ưu đãi lên đến 40% - Duy nhất hôm nay"
+              />
+            </div>
+
+            <div class="space-y-4 md:col-span-2">
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Đường dẫn hình ảnh *</label
+              >
               <div class="relative group">
-                <input [(ngModel)]="form.imageUrl" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-12 font-mono text-xs text-primary/80" placeholder="https://domain.com/path/to/image.jpg"/>
-                <span class="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-600">image</span>
+                <input
+                  [(ngModel)]="form.imageUrl"
+                  class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-12 font-mono text-xs text-primary/80"
+                  placeholder="https://domain.com/path/to/image.jpg"
+                />
+                <span
+                  class="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-600"
+                  >image</span
+                >
               </div>
               @if (form.imageUrl) {
-                <div class="mt-4 p-2 bg-slate-900/50 border border-primary/5 rounded-2xl overflow-hidden aspect-[21/9] flex items-center justify-center">
-                  <img [src]="form.imageUrl" alt="Preview" class="max-w-full max-h-full object-contain rounded-lg"/>
+                <div
+                  class="mt-4 p-2 bg-slate-900/50 border border-primary/5 rounded-2xl overflow-hidden aspect-[21/9] flex items-center justify-center"
+                >
+                  @if (!bannerImageError()['preview']) {
+                    <img
+                      [src]="form.imageUrl"
+                      alt="Preview"
+                      class="max-w-full max-h-full object-contain rounded-lg"
+                      (error)="handleImageError('preview')"
+                    />
+                  } @else {
+                    <div
+                      class="w-full h-full flex flex-col items-center justify-center bg-slate-800/50 animate-pulse rounded-lg gap-2"
+                    >
+                      <span class="material-symbols-outlined text-slate-600 text-4xl"
+                        >image_not_supported</span
+                      >
+                      <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest"
+                        >Lỗi tải ảnh</span
+                      >
+                    </div>
+                  }
                 </div>
               }
             </div>
 
             <div class="space-y-4 md:col-span-2">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Liên kết khi click (Link URL)</label>
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Liên kết khi click (Link URL)</label
+              >
               <div class="relative">
-                <input [(ngModel)]="form.linkUrl" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-12 font-mono text-xs" placeholder="/san-pham/khuyen-mai-shock"/>
-                <span class="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-600">link</span>
+                <input
+                  [(ngModel)]="form.linkUrl"
+                  class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-12 font-mono text-xs"
+                  placeholder="/san-pham/khuyen-mai-shock"
+                />
+                <span
+                  class="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-600"
+                  >link</span
+                >
               </div>
             </div>
           </div>
@@ -208,13 +355,21 @@
         <div class="space-y-6 pt-6 border-t border-primary/5">
           <div class="flex items-center gap-3 mb-2">
             <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
-            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Cài đặt hiển thị</h4>
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">
+              Cài đặt hiển thị
+            </h4>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Vị trí</label>
-              <select [(ngModel)]="form.position" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer">
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Vị trí</label
+              >
+              <select
+                [(ngModel)]="form.position"
+                class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
+              >
                 <option value="homepage_slider">Homepage Slider (Top)</option>
                 <option value="homepage_mid">Homepage Middle (Quảng cáo)</option>
                 <option value="category_top">Category Header</option>
@@ -223,30 +378,60 @@
             </div>
 
             <div class="space-y-4">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Thứ tự ưu tiên</label>
-              <input [(ngModel)]="form.sortOrder" type="number" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono" placeholder="0"/>
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Thứ tự ưu tiên</label
+              >
+              <input
+                [(ngModel)]="form.sortOrder"
+                type="number"
+                class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
+                placeholder="0"
+              />
             </div>
 
             <div class="space-y-4">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Ngày bắt đầu</label>
-              <input [(ngModel)]="form.startDate" type="date" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all color-scheme-dark"/>
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Ngày bắt đầu</label
+              >
+              <input
+                [(ngModel)]="form.startDate"
+                type="date"
+                class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all color-scheme-dark"
+              />
             </div>
 
             <div class="space-y-4">
-              <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Ngày kết thúc</label>
-              <input [(ngModel)]="form.endDate" type="date" class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all color-scheme-dark"/>
+              <label
+                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1"
+                >Ngày kết thúc</label
+              >
+              <input
+                [(ngModel)]="form.endDate"
+                type="date"
+                class="w-full bg-slate-900/50 border border-primary/10 rounded-2xl px-5 py-4 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all color-scheme-dark"
+              />
             </div>
           </div>
 
           <!-- Active Toggle Overlay Style -->
-          <div class="flex items-center justify-between p-6 bg-slate-900/80 border border-primary/10 rounded-3xl mt-4">
+          <div
+            class="flex items-center justify-between p-6 bg-slate-900/80 border border-primary/10 rounded-3xl mt-4"
+          >
             <div class="flex flex-col gap-1">
-              <span class="text-sm font-black text-slate-100 uppercase tracking-tight">Kích hoạt hiển thị</span>
-              <p class="text-[10px] text-slate-500 tracking-wide">Banner sẽ được hiển thị ngay nếu được bật</p>
+              <span class="text-sm font-black text-slate-100 uppercase tracking-tight"
+                >Kích hoạt hiển thị</span
+              >
+              <p class="text-[10px] text-slate-500 tracking-wide">
+                Banner sẽ được hiển thị ngay nếu được bật
+              </p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" [(ngModel)]="form.isActive" class="sr-only peer">
-              <div class="w-14 h-8 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:rotate-0 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary/40 peer-checked:after:bg-primary"></div>
+              <input type="checkbox" [(ngModel)]="form.isActive" class="sr-only peer" />
+              <div
+                class="w-14 h-8 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:rotate-0 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary/40 peer-checked:after:bg-primary"
+              ></div>
             </label>
           </div>
         </div>
@@ -254,11 +439,19 @@
 
       <!-- Modal Footer -->
       <div class="p-8 border-t border-primary/10 flex items-center justify-end gap-4 bg-primary/5">
-        <button (click)="closeModal()" class="px-8 py-4 rounded-2xl text-xs font-black text-slate-500 hover:text-white hover:bg-slate-800 transition-all uppercase tracking-widest">Huỷ bỏ</button>
-        <button (click)="saveForm()" class="px-10 py-4 bg-primary hover:bg-primary/80 rounded-2xl text-xs font-black text-white transition-all shadow-xl shadow-primary/20 uppercase tracking-widest active:scale-95">
+        <button
+          (click)="closeModal()"
+          class="px-8 py-4 rounded-2xl text-xs font-black text-slate-500 hover:text-white hover:bg-slate-800 transition-all uppercase tracking-widest"
+        >
+          Huỷ bỏ
+        </button>
+        <button
+          (click)="saveForm()"
+          class="px-10 py-4 bg-primary hover:bg-primary/80 rounded-2xl text-xs font-black text-white transition-all shadow-xl shadow-primary/20 uppercase tracking-widest active:scale-95"
+        >
           {{ editingBanner() ? 'Lưu thay đổi' : 'Khởi tạo Banner' }}
         </button>
       </div>
     </div>
   </div>
-}
+}
