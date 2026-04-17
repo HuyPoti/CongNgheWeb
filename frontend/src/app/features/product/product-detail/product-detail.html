@@ -306,20 +306,19 @@
 
           <!-- Reviews (placeholder - chua co API) -->
           @if (activeTab() === 'reviews') {
-            <div class="max-w-4xl">
               <div
-                class="bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-12 text-center shadow-xl"
+                class="bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-12 text-center shadow-xl mb-8"
               >
                 <span
                   class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block"
                   >reviews</span
                 >
                 <div
-                  class="text-7xl font-total font-bold text-slate-900 dark:text-white mb-2 tracking-tighter"
+                  class="text-7xl font-bold text-slate-900 dark:text-white mb-2 tracking-tighter"
                 >
                   {{ averageRating() }}
                 </div>
-                <div class="flex items-center gap-1.5 mb-6">
+                <div class="flex items-center justify-center gap-1.5 mb-6">
                   @for (star of getStarArray(5); track $index) {
                     <span
                       class="material-symbols-outlined text-2xl"
@@ -339,6 +338,40 @@
                   {{ 'product.write_review' | translate }}
                 </button>
               </div>
+
+              <div
+                class="bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-10 shadow-2xl mb-8"
+              >
+                  <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">
+                    {{ 'product.distribution' | translate }}
+                  </h3>
+                  <div class="space-y-6">
+                    @for (item of ratingDistribution(); track item.stars) {
+                      <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2 w-14 shrink-0">
+                          <span class="text-sm font-black text-slate-900 dark:text-white">{{
+                            item.stars
+                          }}</span>
+                          <span class="material-symbols-outlined text-amber-500 text-sm fill-1"
+                            >star</span
+                          >
+                        </div>
+                        <div
+                          class="flex-1 h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden"
+                        >
+                          <div
+                            class="h-full bg-primary shadow-[0_0_10px_rgba(0,102,255,0.4)] rounded-full transition-all duration-1000"
+                            [style.width.%]="item.percentage"
+                          ></div>
+                        </div>
+                        <span
+                          class="text-[10px] font-black text-slate-400 w-12 text-right uppercase tracking-widest"
+                          >{{ item.percentage }}%</span
+                        >
+                      </div>
+                    }
+                  </div>
+                </div>
 
               <div
                 class="lg:col-span-8 bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-10 shadow-2xl"
@@ -419,38 +452,9 @@
                       }
                     </div>
                   </div>
-                  <div class="relative z-10">
-                    <h3 class="font-bold text-slate-900 dark:text-white mb-3 text-lg leading-snug">
-                      {{ review.comment }}
-                    </h3>
-                    <!-- Review Images -->
-                    @if (review.images && review.images.length > 0) {
-                      <div class="flex gap-3 mb-6 overflow-x-auto">
-                        @for (img of review.images; track img.imageId) {
-                          <img
-                            [src]="img.imageUrl"
-                            alt="Review image"
-                            class="w-24 h-24 rounded-2xl object-cover border border-slate-100 dark:border-white/10 hover:scale-105 transition-transform cursor-pointer shrink-0"
-                          />
-                        }
-                      </div>
-                    }
-                    <div
-                      class="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-white/5"
-                    >
-                      <button
-                        (click)="toggleHelpfulVote(review, $event)"
-                        class="flex cursor-pointer items-center gap-2 text-slate-400 hover:text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
-                      >
-                        <span class="material-symbols-outlined text-sm">thumb_up</span>
-                        {{ 'product.helpful' | translate }} ({{ review.helpfulVoteCount }})
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
+                }
+              </div>
+            }
         </div>
       </div>
     </main>

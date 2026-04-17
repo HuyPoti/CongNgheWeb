@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 import {
   ApiResponse,
+  CreateOrderDto,
   OrderDetailDto,
   OrderDto,
   PagedResult,
@@ -27,6 +28,11 @@ export class OrderService {
   // GET: /api/orders/{id}
   getById(id: string): Observable<OrderDetailDto> {
     return this.http.get<OrderDetailDto>(`${this.baseUrl}/${id}`);
+  }
+
+  // POST: /api/orders
+  create(dto: CreateOrderDto): Observable<OrderDetailDto> {
+    return this.http.post<OrderDetailDto>(this.baseUrl, dto);
   }
 
   // PUT: /api/orders/{id}
