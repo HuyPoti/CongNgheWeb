@@ -7,6 +7,29 @@ export const TRANSLATIONS = {
     'nav.news': 'Tin tức',
     'nav.reviews': 'Đánh giá',
     'nav.login': 'Đăng nhập',
+    'nav.register': 'Đăng ký',
+
+    // Auth
+    'auth.login_title': 'Chào mừng quay lại',
+    'auth.login_subtitle': 'Đăng nhập để tiếp tục trải nghiệm mua sắm tuyệt vời',
+    'auth.register_title': 'Tạo tài khoản',
+    'auth.register_subtitle': 'Tham gia cộng đồng công nghệ số 1 Việt Nam',
+    'auth.email_label': 'Địa chỉ Email',
+    'auth.email_placeholder': 'name@example.com',
+    'auth.password_label': 'Mật khẩu',
+    'auth.password_placeholder': '********',
+    'auth.fullname_label': 'Họ và tên',
+    'auth.fullname_placeholder': 'Nguyễn Văn A',
+    'auth.forgot_password': 'Quên mật khẩu?',
+    'auth.no_account': 'Chưa có tài khoản?',
+    'auth.have_account': 'Đã có tài khoản?',
+    'auth.login_btn': 'Đăng nhập',
+    'auth.register_btn': 'Đăng ký',
+    'auth.google_login': 'Đăng nhập bằng Google',
+    'auth.terms': 'Tôi đồng ý với các điều khoản và chính sách',
+    'auth.processing': 'Đang xử lý...',
+    'auth.success': 'Thành công!',
+    'auth.error': 'Có lỗi xảy ra',
 
     'home.hero_title': 'SIÊU ƯU ĐÃI THÁNG 5',
     'home.hero_subtitle': 'SẢN PHẨM CÔNG NGHỆ CHÍNH HÃNG - GIÁ TỐT NHẤT',
@@ -96,7 +119,8 @@ export const TRANSLATIONS = {
     'product.new': 'Mới',
     'product.filter_category': 'Danh mục',
     'product.empty_title': 'Không tìm thấy sản phẩm',
-    'product.empty_filter_desc': 'Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại của bạn. Vui lòng thử thay đổi tiêu chí tìm kiếm.',
+    'product.empty_filter_desc':
+      'Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại của bạn. Vui lòng thử thay đổi tiêu chí tìm kiếm.',
     'product.empty_desc': 'Hiện tại danh mục này chưa có sản phẩm nào. Quay lại sau bạn nhé!',
 
     // Cart & Checkout
@@ -390,6 +414,29 @@ export const TRANSLATIONS = {
     'nav.news': 'News',
     'nav.reviews': 'Reviews',
     'nav.login': 'Login',
+    'nav.register': 'Register',
+
+    // Auth
+    'auth.login_title': 'Welcome Back',
+    'auth.login_subtitle': 'Sign in to continue your premium shopping experience',
+    'auth.register_title': 'Create Account',
+    'auth.register_subtitle': 'Join the #1 tech community in Vietnam',
+    'auth.email_label': 'Email Address',
+    'auth.email_placeholder': 'name@example.com',
+    'auth.password_label': 'Security Cipher',
+    'auth.password_placeholder': '********',
+    'auth.fullname_label': 'Full Name',
+    'auth.fullname_placeholder': 'John Doe',
+    'auth.forgot_password': 'Forgot Password?',
+    'auth.no_account': "Don't have an account?",
+    'auth.have_account': 'Already have an account?',
+    'auth.login_btn': 'Sign In',
+    'auth.register_btn': 'Sign Up',
+    'auth.google_login': 'Continue with Google',
+    'auth.terms': 'I agree to the Terms and Conditions',
+    'auth.processing': 'Processing...',
+    'auth.success': 'Success!',
+    'auth.error': 'An error occurred',
 
     // Home
     'home.hero_title': 'MAY SUPER DEALS',
@@ -515,7 +562,8 @@ export const TRANSLATIONS = {
     'product.new': 'New',
     'product.filter_category': 'Category',
     'product.empty_title': 'No products found',
-    'product.empty_filter_desc': 'Sorry, no products match your current filters. Please try changing your search criteria.',
+    'product.empty_filter_desc':
+      'Sorry, no products match your current filters. Please try changing your search criteria.',
     'product.empty_desc': 'There are no products in this category yet. Please check back later!',
 
     // News

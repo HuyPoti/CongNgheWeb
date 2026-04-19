@@ -22,12 +22,11 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authServices.LoginAsync(dto, cancellationToken);
-            if (response == null) return Unauthorized(new {message = "Email hoặc mật khẩu không đúng."});
             return Ok(response);
         }
         catch (Exception ex)
         {
-            return BadRequest(new {message = ex.Message});
+            return Unauthorized(new {message = ex.Message});
         }
     }
 

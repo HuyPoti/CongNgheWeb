@@ -5,11 +5,12 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, GoogleSigninButtonModule],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, GoogleSigninButtonModule, TranslatePipe],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -37,17 +38,20 @@ export class Login implements OnInit {
 
     this.socialAuthService.authState.subscribe((socialUser) => {
       if (socialUser && socialUser.idToken) {
-        this.isLoading = true;
-        this.authService.googleLogin(socialUser.idToken).subscribe({
-          next: () => {
-            this.toastService.success('Đăng nhập thành công với Google');
-            this.router.navigateByUrl(this.returnUrl);
-          },
-          error: (err) => {
-            this.isLoading = false;
-            const msg = err.error?.message || 'Lỗi đăng nhập Google';
-            this.toastService.error(msg);
-          },
+        setTimeout(() => {
+          this.isLoading = true;
+          this.authService.googleLogin(socialUser.idToken as string).subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.toastService.success('Đăng nhập thành công với Google');
+              this.router.navigateByUrl(this.returnUrl || '/');
+            },
+            error: (err) => {
+              this.isLoading = false;
+              const msg = err.error?.message || 'Lỗi xác thực Google';
+              this.toastService.error(msg);
+            },
+          });
         });
       }
     });
@@ -62,12 +66,14 @@ export class Login implements OnInit {
     this.isLoading = true;
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        this.toastService.success('Khởi tạo quyền truy cập thành công!');
+        this.isLoading = false;
+        this.toastService.success('Đăng nhập thành công!');
         this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
         this.isLoading = false;
-        const msg = err.error?.message || 'Email hoặc mật khẩu không chính xác';
+        console.log(err);
+        const msg = err.error?.message || 'Đã có lỗi xảy ra trong quá trình đăng nhập';
         this.toastService.error(msg);
       },
     });

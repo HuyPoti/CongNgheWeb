@@ -23,7 +23,7 @@ export class CategoryService {
     return this.http.get<Category[]>(this.apiUrl).pipe(
       tap((categories) => {
         this.categoriesCache = categories;
-      })
+      }),
     );
   }
 
@@ -32,20 +32,16 @@ export class CategoryService {
   }
 
   create(category: CreateCategory): Observable<Category> {
-    return this.http.post<Category>(this.apiUrl, category).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.http.post<Category>(this.apiUrl, category).pipe(tap(() => this.clearCache()));
   }
 
   update(id: string, category: UpdateCategory): Observable<Category> {
-    return this.http.put<Category>(`${this.apiUrl}/${id}`, category).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.http
+      .put<Category>(`${this.apiUrl}/${id}`, category)
+      .pipe(tap(() => this.clearCache()));
   }
 
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(() => this.clearCache()));
   }
 }

@@ -1,0 +1,123 @@
+<div
+  class="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center"
+>
+  <div
+    class="max-w-4xl w-full bg-white dark:bg-surface-dark rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/5 overflow-hidden"
+  >
+    <!-- Header -->
+    <div
+      class="bg-primary/10 dark:bg-primary/5 p-8 sm:p-12 border-b border-primary/20 dark:border-primary/10 relative overflow-hidden"
+    >
+      <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+
+      <div class="relative z-10 flex flex-col items-center text-center">
+        <span class="material-symbols-outlined text-6xl text-primary mb-4">gavel</span>
+        <h1
+          class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2"
+        >
+          Terms and Conditions
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 font-medium">
+          Please read these terms carefully before using our services
+        </p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-8 sm:p-12 space-y-10">
+      <div
+        class="prose prose-slate dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 font-medium leading-relaxed space-y-8"
+      >
+        <section class="group">
+          <h2
+            class="text-xl font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-4 flex items-center gap-3"
+          >
+            <span
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
+              >1</span
+            >
+            Welcome to Our Store
+          </h2>
+          <p class="pl-11">
+            These terms and conditions outline the rules and regulations for the use of our PC
+            Components & Accessories web store. By accessing this website, we assume you accept
+            these terms and conditions. Do not continue to use our store if you do not agree to take
+            all of the terms and conditions stated on this page.
+          </p>
+        </section>
+
+        <section class="group">
+          <h2
+            class="text-xl font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-4 flex items-center gap-3"
+          >
+            <span
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
+              >2</span
+            >
+            Products and Availability
+          </h2>
+          <p class="pl-11">
+            All PC parts and accessories listed on our store are subject to availability. We reserve
+            the right to modify or discontinue any product at any time without notice. We have made
+            every effort to display as accurately as possible the colors and images of our products
+            that appear in the store.
+          </p>
+        </section>
+
+        <section class="group">
+          <h2
+            class="text-xl font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-4 flex items-center gap-3"
+          >
+            <span
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
+              >3</span
+            >
+            Warranty and Returns
+          </h2>
+          <p class="pl-11">
+            We provide standard manufacturer warranties for most PC components. For our in-house
+            pre-built PCs, we offer a dedicated service warranty. Returns are accepted within 30
+            days of purchase for items in unopened, original condition, subject to a restocking fee.
+            Defective components will be RMA'd subject to the individual brand's policy.
+          </p>
+        </section>
+
+        <section class="group">
+          <h2
+            class="text-xl font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-4 flex items-center gap-3"
+          >
+            <span
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors"
+              >4</span
+            >
+            User Accounts
+          </h2>
+          <p class="pl-11">
+            If you create an account on our platform, you are responsible for maintaining the
+            security of your account, and you are fully responsible for all activities that occur
+            under the account and any other actions taken in connection with it. You must
+            immediately notify us of any unauthorized uses of your account or any other breaches of
+            security.
+          </p>
+        </section>
+      </div>
+
+      <!-- Footer & Actions -->
+      <div
+        class="mt-12 pt-8 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6"
+      >
+        <p class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+          Last updated: {{ currentDate | date: 'longDate' }}
+        </p>
+        <button
+          routerLink="/auth/register"
+          class="h-12 px-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
+        >
+          <span class="material-symbols-outlined text-lg">arrow_back</span>
+          <span>Back to Register</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

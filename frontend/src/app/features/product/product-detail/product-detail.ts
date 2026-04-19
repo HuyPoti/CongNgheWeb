@@ -51,7 +51,6 @@ export class ProductDetail implements OnInit {
     warrantyMonths: 0,
     specs: {},
   });
-  activeImageIndex = signal(0);
   productImages = signal<string[]>([]);
   productSpecs = signal<ProductSpecDto[]>([]);
   regularPrice = signal(0);

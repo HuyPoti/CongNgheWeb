@@ -3,7 +3,12 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 // --- PHẦN THÊM MỚI TỪ AUTH.TXT ---
-import { GoogleLoginProvider, SocialAuthServiceConfig } from '@abacritt/angularx-social-login';
+import {
+  GoogleLoginProvider,
+  SOCIAL_AUTH_CONFIG,
+  SocialAuthService,
+  SocialAuthServiceConfig,
+} from '@abacritt/angularx-social-login';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 
 import { routes } from './app.routes';
@@ -17,8 +22,9 @@ export const appConfig: ApplicationConfig = {
 
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([jwtInterceptor])),
+    SocialAuthService,
     {
-      provide: 'SocialAuthServiceConfig',
+      provide: SOCIAL_AUTH_CONFIG,
       useValue: {
         autoLogin: false,
         providers: [

@@ -49,7 +49,6 @@ export class HomeComponent implements OnInit {
   dbCategories: Category[] = [];
   isLoading = true;
   isBannersLoading = true;
-  bannerImageError: Record<string, boolean> = {};
 
   // ── Lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -71,7 +70,7 @@ export class HomeComponent implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          this.dbCategories = data.filter((c) => c.isActive);
+          this.dbCategories = data.filter((c) => c.isActive && !c.parentId);
           this.cdr.markForCheck(); // Báo cho Angular biết state đã đổi
         },
       });
@@ -200,11 +199,6 @@ export class HomeComponent implements OnInit {
       news_top: 'NEWS_TOP',
     };
     return map[pos] ?? pos;
-  }
-
-  handleBannerError(id: string): void {
-    this.bannerImageError[id] = true;
-    this.cdr.markForCheck();
   }
 
   // ── Comparison ────────────────────────────────────────────────────
