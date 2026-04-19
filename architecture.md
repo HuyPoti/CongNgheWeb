@@ -49,6 +49,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
   - `admin/`: Quản lý Dashboard, Products, News, Banners.
   - `employee/`: Quản lý đơn hàng, kho sản phẩm, phản hồi đánh giá và tra cứu khách hàng (dành riêng cho role Staff).
   - `customer/`: Màn hình trang chủ, danh sách sản phẩm, tin tức cho khách hàng.
+  - `product/`: Chi tiết sản phẩm, thư viện hình ảnh, cấu hình kỹ thuật và đánh giá khách hàng.
   - `auth/`: Đăng nhập, đăng ký.
 - `src/app/layouts/`: Các bộ khung layout khác nhau (`AdminLayoutComponent`, `EmployeeLayoutComponent`, `MainLayoutComponent`).
 

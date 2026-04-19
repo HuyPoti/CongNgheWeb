@@ -16,8 +16,11 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto, CancellationToken cancellationToken)
     {
         var user = await context.Users.FirstOrDefaultAsync( u => u.Email == dto.Email, cancellationToken);
-        if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return null;
+        if (user == null)
+            throw new Exception("Tài khoản không tồn tại.");
+            
+        if (string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            throw new Exception("Mật khẩu không chính xác.");
         
         if (!user.IsActive) throw new Exception("Tài khoản đã bị khóa.");
 

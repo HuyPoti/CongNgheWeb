@@ -24,7 +24,8 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/assets"
             ],
             "styles": ["src/styles.css"],
             "server": "src/main.server.ts",
@@ -84,7 +85,6 @@
             "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"],
             "_comment": "Dòng ở dưới để chạy được trên wsl2",
             "allowedHosts": ["all"]
-
           }
         }
       }

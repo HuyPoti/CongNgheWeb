@@ -45,6 +45,10 @@ export const routes: Routes = [
         loadChildren: () => import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
       },
       {
+        path: 'terms',
+        loadComponent: () => import('./features/terms/terms').then((m) => m.TermsComponent),
+      },
+      {
         path: 'user',
         loadChildren: () => import('./features/user/user.routes').then((m) => m.USER_ROUTES),
       },
