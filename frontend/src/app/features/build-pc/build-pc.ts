@@ -34,7 +34,12 @@ export class BuildPc {
   currentStepId = signal<StepId>('cpu');
 
   readonly steps: BuildStep[] = [
-    { id: 'cpu', label: 'build.step_cpu', icon: 'memory', slugCandidates: ['cpu', 'processor', 'processors'] },
+    {
+      id: 'cpu',
+      label: 'build.step_cpu',
+      icon: 'memory',
+      slugCandidates: ['cpu', 'processor', 'processors'],
+    },
     {
       id: 'mb',
       label: 'build.step_mb',
@@ -42,10 +47,30 @@ export class BuildPc {
       slugCandidates: ['mainboard', 'motherboard', 'motherboards', 'mb'],
     },
     { id: 'ram', label: 'build.step_ram', icon: 'memory_alt', slugCandidates: ['ram', 'memory'] },
-    { id: 'gpu', label: 'build.step_gpu', icon: 'videogame_asset', slugCandidates: ['gpu', 'graphics-card', 'vga'] },
-    { id: 'storage', label: 'build.step_storage', icon: 'database', slugCandidates: ['storage', 'ssd', 'hdd'] },
-    { id: 'psu', label: 'build.step_psu', icon: 'bolt', slugCandidates: ['psu', 'power-supply', 'power-supplies'] },
-    { id: 'case', label: 'build.step_case', icon: 'fan_indirect', slugCandidates: ['case', 'pc-case', 'chassis'] },
+    {
+      id: 'gpu',
+      label: 'build.step_gpu',
+      icon: 'videogame_asset',
+      slugCandidates: ['gpu', 'graphics-card', 'vga'],
+    },
+    {
+      id: 'storage',
+      label: 'build.step_storage',
+      icon: 'database',
+      slugCandidates: ['storage', 'ssd', 'hdd'],
+    },
+    {
+      id: 'psu',
+      label: 'build.step_psu',
+      icon: 'bolt',
+      slugCandidates: ['psu', 'power-supply', 'power-supplies'],
+    },
+    {
+      id: 'case',
+      label: 'build.step_case',
+      icon: 'fan_indirect',
+      slugCandidates: ['case', 'pc-case', 'chassis'],
+    },
   ];
 
   selectedComponents = signal<Record<StepId, ProductCard | null>>({
@@ -58,14 +83,31 @@ export class BuildPc {
     case: null,
   });
 
+  stepQuantities = signal<Record<StepId, number>>({
+    cpu: 1,
+    mb: 1,
+    ram: 1,
+    gpu: 1,
+    storage: 1,
+    psu: 1,
+    case: 1,
+  });
+
   availableProducts = signal<ProductCard[]>([]);
   productSpecsByProductId = signal<Record<string, Record<string, string>>>({});
   isLoadingProducts = signal(false);
   hasLoadingError = signal(false);
   isSaving = signal(false);
+  isModalOpen = signal(false);
 
   totalPrice = computed(() => {
-    return Object.values(this.selectedComponents()).reduce((acc, p) => acc + (p?.price ?? 0), 0);
+    const selected = this.selectedComponents();
+    const quantities = this.stepQuantities();
+    return Object.entries(selected).reduce((acc, [stepId, p]) => {
+      if (!p) return acc;
+      const qty = quantities[stepId as StepId] || 1;
+      return acc + p.price * qty;
+    }, 0);
   });
 
   progress = computed(() => {
@@ -73,7 +115,9 @@ export class BuildPc {
     return Math.round((selected / this.steps.length) * 100);
   });
 
-  selectedCount = computed(() => Object.values(this.selectedComponents()).filter((p) => p !== null).length);
+  selectedCount = computed(
+    () => Object.values(this.selectedComponents()).filter((p) => p !== null).length,
+  );
 
   compatibilityIssues = computed(() => {
     const selected = this.selectedComponents();
@@ -106,7 +150,9 @@ export class BuildPc {
     if (psu) {
       const cpuTdp = this.parseWatts(this.getSpecValue(cpu?.id, ['tdp', 'power_draw', 'power']));
       const gpuTdp = this.parseWatts(this.getSpecValue(gpu?.id, ['tdp', 'power_draw', 'power']));
-      const psuWatt = this.parseWatts(this.getSpecValue(psu.id, ['wattage', 'power', 'capacity_watt']));
+      const psuWatt = this.parseWatts(
+        this.getSpecValue(psu.id, ['wattage', 'power', 'capacity_watt']),
+      );
 
       const estimatedLoad = cpuTdp + gpuTdp + 120;
       const required = Math.round(estimatedLoad * 1.2);
@@ -119,9 +165,7 @@ export class BuildPc {
     return issues;
   });
 
-  canAddToCart = computed(
-    () => this.selectedCount() === this.steps.length && this.compatibilityIssues().length === 0,
-  );
+  canAddToCart = computed(() => this.selectedCount() > 0);
 
   constructor() {
     this.restoreState();
@@ -142,6 +186,25 @@ export class BuildPc {
     void this.loadProductsForStep(stepId);
   }
 
+  openModal(id: string) {
+    const stepId = id as StepId;
+    this.currentStepId.set(stepId);
+    this.isModalOpen.set(true);
+    void this.loadProductsForStep(stepId);
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+  }
+
+  updateQuantity(stepId: string, delta: number) {
+    const id = stepId as StepId;
+    const current = this.stepQuantities()[id] || 1;
+    const next = Math.max(1, current + delta);
+    this.stepQuantities.update((prev) => ({ ...prev, [id]: next }));
+    this.persistState();
+  }
+
   async retryLoadProducts() {
     await this.loadProductsForStep(this.currentStepId());
   }
@@ -156,12 +219,7 @@ export class BuildPc {
     void this.loadProductSpecs(product.id);
     this.persistState();
 
-    // Auto advance to next step
-    const currentIndex = this.steps.findIndex((s) => s.id === this.currentStepId());
-    if (currentIndex < this.steps.length - 1) {
-      this.currentStepId.set(this.steps[currentIndex + 1].id);
-      void this.loadProductsForStep(this.currentStepId());
-    }
+    this.closeModal();
   }
 
   clearStepSelection(stepId: string) {
@@ -188,6 +246,15 @@ export class BuildPc {
       psu: null,
       case: null,
     });
+    this.stepQuantities.set({
+      cpu: 1,
+      mb: 1,
+      ram: 1,
+      gpu: 1,
+      storage: 1,
+      psu: 1,
+      case: 1,
+    });
     this.currentStepId.set('cpu');
     this.persistState();
     void this.loadProductsForStep('cpu');
@@ -202,12 +269,16 @@ export class BuildPc {
   addBuildToCart() {
     if (!this.canAddToCart()) return;
 
-    const selected = Object.values(this.selectedComponents()).filter(
-      (item): item is ProductCard => item !== null,
-    );
+    const selectedEntries = Object.entries(this.selectedComponents());
+    const quantities = this.stepQuantities();
 
-    for (const item of selected) {
-      this.cartService.addToCart(item);
+    for (const [stepId, item] of selectedEntries) {
+      if (item) {
+        const qty = quantities[stepId as StepId] || 1;
+        for (let i = 0; i < qty; i++) {
+          this.cartService.addToCart(item);
+        }
+      }
     }
 
     void this.router.navigateByUrl('/cart');
@@ -257,8 +328,9 @@ export class BuildPc {
       this.hasLoadingError.set(true);
       this.availableProducts.set([]);
     } finally {
-      if (requestId !== this.requestId) return;
-      this.isLoadingProducts.set(false);
+      if (requestId === this.requestId) {
+        this.isLoadingProducts.set(false);
+      }
     }
   }
 
@@ -327,8 +399,10 @@ export class BuildPc {
   }
 
   private isSameSpec(a: string, b: string): boolean {
-    return this.normalizeSpecKey(a).includes(this.normalizeSpecKey(b)) ||
-      this.normalizeSpecKey(b).includes(this.normalizeSpecKey(a));
+    return (
+      this.normalizeSpecKey(a).includes(this.normalizeSpecKey(b)) ||
+      this.normalizeSpecKey(b).includes(this.normalizeSpecKey(a))
+    );
   }
 
   private parseWatts(input: string): number {
@@ -343,6 +417,7 @@ export class BuildPc {
     const payload = {
       currentStepId: this.currentStepId(),
       selectedComponents: this.selectedComponents(),
+      stepQuantities: this.stepQuantities(),
     };
     localStorage.setItem(this.stateKey, JSON.stringify(payload));
   }
@@ -357,6 +432,7 @@ export class BuildPc {
       const parsed = JSON.parse(raw) as {
         currentStepId?: StepId;
         selectedComponents?: Partial<Record<StepId, ProductCard | null>>;
+        stepQuantities?: Partial<Record<StepId, number>>;
       };
 
       if (parsed.currentStepId && this.steps.some((s) => s.id === parsed.currentStepId)) {
@@ -372,6 +448,18 @@ export class BuildPc {
           storage: parsed.selectedComponents.storage ?? null,
           psu: parsed.selectedComponents.psu ?? null,
           case: parsed.selectedComponents.case ?? null,
+        });
+      }
+
+      if (parsed.stepQuantities) {
+        this.stepQuantities.set({
+          cpu: parsed.stepQuantities.cpu ?? 1,
+          mb: parsed.stepQuantities.mb ?? 1,
+          ram: parsed.stepQuantities.ram ?? 1,
+          gpu: parsed.stepQuantities.gpu ?? 1,
+          storage: parsed.stepQuantities.storage ?? 1,
+          psu: parsed.stepQuantities.psu ?? 1,
+          case: parsed.stepQuantities.case ?? 1,
         });
       }
     } catch {
