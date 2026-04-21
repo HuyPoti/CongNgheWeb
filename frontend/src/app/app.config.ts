@@ -30,7 +30,9 @@ export const appConfig: ApplicationConfig = {
         providers: [
           {
             id: GoogleLoginProvider.PROVIDER_ID,
-            provider: new GoogleLoginProvider(environment.googleClientId),
+            provider: new GoogleLoginProvider(environment.googleClientId, {
+              prompt: 'select_account',
+            }),
           },
         ],
         onError: (err: unknown) => console.error(err),

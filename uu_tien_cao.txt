@@ -1,0 +1,990 @@
+================================================================================
+  HƯỚNG DẪN CODE CHI TIẾT - PHẦN ƯU TIÊN CAO (AUTH)
+  Tương ứng với 3 mục ưu tiên cao trong auth_project.txt
+================================================================================
+
+MỤC LỤC:
+  1. Thống nhất Hash Password (Fix ngay trước, ảnh hưởng tới mọi thứ khác)
+  2. Quên mật khẩu / Đặt lại mật khẩu (Forgot/Reset Password)
+  3. Refresh Token
+
+================================================================================
+== 1. THỐNG NHẤT HASH PASSWORD ==
+================================================================================
+
+VẤN ĐỀ:
+  - AuthService.cs dùng BCrypt.Net.BCrypt.HashPassword() và BCrypt.Net.BCrypt.Verify()
+  - UserService.cs dùng PasswordHasher<User> của ASP.NET Identity
+  => Nếu Admin tạo User từ UserService, User đó sẽ KHÔNG THỂ đăng nhập từ AuthService
+     vì 2 thuật toán hash khác nhau hoàn toàn.
+
+GIẢI PHÁP: Chuyển UserService sang dùng BCrypt (giống AuthService).
+
+--- FILE: backend/Services/UserService.cs ---
+
+// BỎ dòng import này:
+- using Microsoft.AspNetCore.Identity;
+
+// SỬA hàm HashPassword ở cuối file:
+// TỪ:
+    private static string HashPassword(string password)
+    {
+        var passwordHasher = new PasswordHasher<User>();
+        return passwordHasher.HashPassword(null!, password); 
+    }
+
+// THÀNH:
+    private static string HashPassword(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password);
+    }
+
+--- HẾT PHẦN 1 ---
+(Chỉ sửa 1 file, ~3 dòng. Nhớ test lại: tạo User từ Admin → đăng nhập từ Login.)
+
+
+================================================================================
+== 2. QUÊN MẬT KHẨU / ĐẶT LẠI MẬT KHẨU (FORGOT/RESET PASSWORD) ==
+================================================================================
+
+FLOW TỔNG QUAN:
+  1. User nhập email → Gọi API forgot-password
+  2. Backend tạo mã OTP 6 số, lưu vào DB, gửi email cho User
+  3. User nhập OTP + mật khẩu mới → Gọi API reset-password
+  4. Backend xác minh OTP, đổi mật khẩu, xóa OTP
+
+CẦN LÀM:
+  [Backend]  Tạo Model PasswordResetToken
+  [Backend]  Thêm DbSet và Migration
+  [Backend]  Tạo DTOs cho forgot/reset
+  [Backend]  Thêm hàm vào IAuthService + AuthService
+  [Backend]  Thêm 2 endpoint vào AuthController
+  [Backend]  Cấu hình gửi Email (SMTP)
+  [Frontend] Thêm DTOs mới vào auth.models.ts
+  [Frontend] Thêm 2 hàm vào AuthService
+  [Frontend] Code logic cho trang forgot-password
+
+----------------------------------------------------------------------
+BƯỚC 2.1: TẠO MODEL PasswordResetToken
+----------------------------------------------------------------------
+
+--- TẠO FILE MỚI: backend/Models/PasswordResetToken.cs ---
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace backend.Models;
+
+[Table("password_reset_tokens")]
+public class PasswordResetToken
+{
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
+
+    [Required]
+    [Column("user_id")]
+    public Guid UserId { get; set; }
+
+    [Required]
+    [MaxLength(6)]
+    [Column("otp_code")]
+    public string OtpCode { get; set; } = string.Empty;
+
+    [Column("expires_at")]
+    public DateTime ExpiresAt { get; set; }
+
+    [Column("is_used")]
+    public bool IsUsed { get; set; } = false;
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    [ForeignKey("UserId")]
+    public User User { get; set; } = null!;
+}
+
+----------------------------------------------------------------------
+BƯỚC 2.2: THÊM DbSet VÀ CẤU HÌNH TRONG AppDbContext
+----------------------------------------------------------------------
+
+--- FILE: backend/Data/AppDbContext.cs ---
+
+// Thêm DbSet (cùng chỗ với các DbSet khác, dòng ~25):
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
+// Thêm cấu hình entity trong OnModelCreating (cuối hàm, trước dấu } đóng):
+        // Password Reset Tokens
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.ToTable("password_reset_tokens");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+----------------------------------------------------------------------
+BƯỚC 2.3: CHẠY MIGRATION
+----------------------------------------------------------------------
+
+// Mở terminal tại thư mục backend/, chạy:
+dotnet ef migrations add AddPasswordResetToken
+dotnet ef database update
+
+----------------------------------------------------------------------
+BƯỚC 2.4: TẠO DTOs
+----------------------------------------------------------------------
+
+--- FILE: backend/DTOs/AuthDTOs.cs (THÊM vào cuối file) ---
+
+public class ForgotPasswordDto
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordDto
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(6)]
+    public string OtpCode { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(6)]
+    public string NewPassword { get; set; } = string.Empty;
+}
+
+----------------------------------------------------------------------
+BƯỚC 2.5: TẠO EMAIL SERVICE (GỬI MAIL)
+----------------------------------------------------------------------
+
+--- TẠO FILE MỚI: backend/Services/IEmailService.cs ---
+
+namespace backend.Services;
+
+public interface IEmailService
+{
+    Task SendEmailAsync(string toEmail, string subject, string body);
+}
+
+--- TẠO FILE MỚI: backend/Services/EmailService.cs ---
+
+using System.Net;
+using System.Net.Mail;
+
+namespace backend.Services;
+
+public class EmailService(IConfiguration config) : IEmailService
+{
+    public async Task SendEmailAsync(string toEmail, string subject, string body)
+    {
+        var smtpHost = config["Email:SmtpHost"]!;       // vd: smtp.gmail.com
+        var smtpPort = int.Parse(config["Email:SmtpPort"]!); // vd: 587
+        var senderEmail = config["Email:SenderEmail"]!;  // vd: your-email@gmail.com
+        var senderPassword = config["Email:SenderPassword"]!; // App Password (16 ký tự)
+        var senderName = config["Email:SenderName"] ?? "TechShop";
+
+        var client = new SmtpClient(smtpHost, smtpPort)
+        {
+            Credentials = new NetworkCredential(senderEmail, senderPassword),
+            EnableSsl = true
+        };
+
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress(senderEmail, senderName),
+            Subject = subject,
+            Body = body,
+            IsBodyHtml = true
+        };
+        mailMessage.To.Add(toEmail);
+
+        await client.SendMailAsync(mailMessage);
+    }
+}
+
+----------------------------------------------------------------------
+BƯỚC 2.6: CẤU HÌNH EMAIL TRONG appsettings.json
+----------------------------------------------------------------------
+
+--- FILE: backend/appsettings.json (THÊM section mới) ---
+
+  "Email": {
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": "587",
+    "SenderEmail": "your-email@gmail.com",
+    "SenderPassword": "xxxx xxxx xxxx xxxx",
+    "SenderName": "TechShop"
+  }
+
+// LƯU Ý QUAN TRỌNG VỀ GMAIL:
+// 1. Bật 2FA cho Gmail: https://myaccount.google.com/signinoptions/two-step-verification
+// 2. Tạo App Password: https://myaccount.google.com/apppasswords
+//    → Chọn tên app tùy ý → Copy mã 16 ký tự → Dán vào SenderPassword
+// 3. KHÔNG dùng mật khẩu Gmail thật, phải dùng App Password
+
+----------------------------------------------------------------------
+BƯỚC 2.7: THÊM LOGIC VÀO IAuthService + AuthService
+----------------------------------------------------------------------
+
+--- FILE: backend/Services/IAuthService.cs ---
+// THÊM 2 dòng khai báo mới vào interface:
+
+    Task ForgotPasswordAsync(ForgotPasswordDto dto, CancellationToken ct);
+    Task ResetPasswordAsync(ResetPasswordDto dto, CancellationToken ct);
+
+--- FILE: backend/Services/AuthService.cs ---
+// SỬA constructor để thêm IEmailService:
+
+// TỪ:
+public class AuthService(AppDbContext context, IConfiguration config, IMapper mapper) : IAuthService
+
+// THÀNH:
+public class AuthService(AppDbContext context, IConfiguration config, IMapper mapper, IEmailService emailService) : IAuthService
+
+// THÊM 2 hàm mới (đặt trước hàm GenerateJwtToken):
+
+    public async Task ForgotPasswordAsync(ForgotPasswordDto dto, CancellationToken ct)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, ct);
+        if (user == null)
+            throw new Exception("Email không tồn tại trong hệ thống.");
+
+        if (!user.IsActive)
+            throw new Exception("Tài khoản đã bị khóa.");
+
+        // Vô hiệu hóa tất cả OTP cũ của user này
+        var oldTokens = await context.PasswordResetTokens
+            .Where(t => t.UserId == user.UserId && !t.IsUsed)
+            .ToListAsync(ct);
+        foreach (var t in oldTokens) t.IsUsed = true;
+
+        // Tạo OTP 6 số ngẫu nhiên
+        var otpCode = Random.Shared.Next(100000, 999999).ToString();
+
+        var resetToken = new PasswordResetToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.UserId,
+            OtpCode = otpCode,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10), // OTP có hiệu lực 10 phút
+            IsUsed = false
+        };
+
+        context.PasswordResetTokens.Add(resetToken);
+        await context.SaveChangesAsync(ct);
+
+        // Gửi email
+        var emailBody = $@"
+            <h2>Đặt lại mật khẩu</h2>
+            <p>Xin chào <strong>{user.FullName}</strong>,</p>
+            <p>Mã OTP của bạn là:</p>
+            <h1 style='color: #0066ff; letter-spacing: 8px; font-size: 36px;'>{otpCode}</h1>
+            <p>Mã có hiệu lực trong <strong>10 phút</strong>.</p>
+            <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
+        ";
+
+        await emailService.SendEmailAsync(user.Email, "Mã OTP đặt lại mật khẩu - TechShop", emailBody);
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordDto dto, CancellationToken ct)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, ct);
+        if (user == null)
+            throw new Exception("Email không tồn tại.");
+
+        // Tìm OTP hợp lệ (chưa dùng, chưa hết hạn)
+        var token = await context.PasswordResetTokens
+            .Where(t => t.UserId == user.UserId
+                     && t.OtpCode == dto.OtpCode
+                     && !t.IsUsed
+                     && t.ExpiresAt > DateTime.UtcNow)
+            .FirstOrDefaultAsync(ct);
+
+        if (token == null)
+            throw new Exception("Mã OTP không hợp lệ hoặc đã hết hạn.");
+
+        // Đổi mật khẩu
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+
+        // Đánh dấu OTP đã sử dụng
+        token.IsUsed = true;
+
+        await context.SaveChangesAsync(ct);
+    }
+
+----------------------------------------------------------------------
+BƯỚC 2.8: THÊM ENDPOINT VÀO AuthController
+----------------------------------------------------------------------
+
+--- FILE: backend/Controllers/AuthController.cs ---
+// THÊM 2 endpoint mới (đặt sau endpoint google-login):
+
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, CancellationToken ct)
+    {
+        try
+        {
+            await _authServices.ForgotPasswordAsync(dto, ct);
+            return Ok(new { message = "Mã OTP đã được gửi đến email của bạn." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto, CancellationToken ct)
+    {
+        try
+        {
+            await _authServices.ResetPasswordAsync(dto, ct);
+            return Ok(new { message = "Đặt lại mật khẩu thành công." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+----------------------------------------------------------------------
+BƯỚC 2.9: ĐĂNG KÝ EmailService TRONG Program.cs
+----------------------------------------------------------------------
+
+--- FILE: backend/Program.cs ---
+// Thêm dòng này cùng chỗ với các AddScoped khác (~dòng 27):
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+----------------------------------------------------------------------
+BƯỚC 2.10: FRONTEND - THÊM DTOs
+----------------------------------------------------------------------
+
+--- FILE: frontend/src/app/core/models/auth.models.ts ---
+// THÊM cuối file:
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  email: string;
+  otpCode: string;
+  newPassword: string;
+}
+
+----------------------------------------------------------------------
+BƯỚC 2.11: FRONTEND - THÊM HÀM VÀO AuthService
+----------------------------------------------------------------------
+
+--- FILE: frontend/src/app/core/services/auth.service.ts ---
+// THÊM 2 hàm mới vào class AuthService (sau hàm googleLogin):
+
+import { ForgotPasswordDto, ResetPasswordDto } from '../models/auth.models';
+// (Thêm import trên vào dòng import đã có sẵn)
+
+  // Quên mật khẩu - gửi OTP
+  forgotPassword(data: ForgotPasswordDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, data);
+  }
+
+  // Đặt lại mật khẩu bằng OTP
+  resetPassword(data: ResetPasswordDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, data);
+  }
+
+----------------------------------------------------------------------
+BƯỚC 2.12: FRONTEND - CODE LOGIC CHO TRANG FORGOT PASSWORD
+----------------------------------------------------------------------
+
+Trang forgot-password hiện tại chỉ có HTML tĩnh, chưa có logic gì.
+Cần sửa thành form 2 bước:
+  Bước 1: Nhập email → gửi OTP
+  Bước 2: Nhập OTP + mật khẩu mới → reset
+
+--- FILE: frontend/src/app/features/auth/forgot-password/forgot-password.ts ---
+
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink, Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+
+@Component({
+  selector: 'app-forgot-password',
+  standalone: true,
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  templateUrl: './forgot-password.html',
+  styleUrl: './forgot-password.css',
+})
+export class ForgotPassword {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private toastService = inject(ToastService);
+
+  // Bước hiện tại: 1 = nhập email, 2 = nhập OTP + mật khẩu mới
+  currentStep = 1;
+  isLoading = false;
+  email = '';
+
+  emailForm: FormGroup;
+  resetForm: FormGroup;
+
+  constructor() {
+    this.emailForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+    });
+
+    this.resetForm = this.fb.group({
+      otpCode: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],
+    });
+  }
+
+  // Bước 1: Gửi email lấy OTP
+  onSendOtp(): void {
+    if (this.emailForm.invalid) {
+      this.toastService.warning('Vui lòng nhập email hợp lệ.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.email = this.emailForm.value.email;
+
+    this.authService.forgotPassword({ email: this.email }).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.toastService.success(res.message);
+        this.currentStep = 2; // Chuyển sang bước 2
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.toastService.error(err.error?.message || 'Đã xảy ra lỗi.');
+      },
+    });
+  }
+
+  // Bước 2: Gửi OTP + mật khẩu mới
+  onResetPassword(): void {
+    if (this.resetForm.invalid) {
+      this.toastService.warning('Vui lòng điền đầy đủ thông tin.');
+      return;
+    }
+
+    const { otpCode, newPassword, confirmPassword } = this.resetForm.value;
+
+    if (newPassword !== confirmPassword) {
+      this.toastService.warning('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.authService.resetPassword({ email: this.email, otpCode, newPassword }).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.toastService.success(res.message);
+        this.router.navigate(['/auth/login']); // Chuyển về trang đăng nhập
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.toastService.error(err.error?.message || 'Mã OTP không hợp lệ.');
+      },
+    });
+  }
+
+  // Quay lại bước 1
+  goBackToStep1(): void {
+    this.currentStep = 1;
+    this.resetForm.reset();
+  }
+}
+
+--- FILE: frontend/src/app/features/auth/forgot-password/forgot-password.html ---
+(Sửa lại phần form trong HTML hiện tại, giữ nguyên layout 2 cột bên trái)
+
+// Thay thế toàn bộ nội dung trong thẻ <form> hiện tại bằng:
+
+            <!-- BƯỚC 1: Nhập Email -->
+            @if (currentStep === 1) {
+            <form class="space-y-8" (ngSubmit)="onSendOtp()">
+                <div class="space-y-3">
+                    <label for="email" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">Email</label>
+                    <div class="relative group">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">alternate_email</span>
+                        <input id="email" [formControl]="emailForm.controls['email']"
+                               class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 pl-14 pr-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold shadow-inner"
+                               placeholder="your-email@example.com" type="email"/>
+                    </div>
+                </div>
+
+                <button class="w-full bg-primary text-white font-black h-16 rounded-2xl shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 group uppercase tracking-[0.2em] text-xs"
+                        type="submit" [disabled]="isLoading">
+                    @if (isLoading) {
+                        <span class="animate-spin material-symbols-outlined">progress_activity</span>
+                        Đang gửi...
+                    } @else {
+                        Gửi mã OTP
+                        <span class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">send</span>
+                    }
+                </button>
+            </form>
+            }
+
+            <!-- BƯỚC 2: Nhập OTP + Mật khẩu mới -->
+            @if (currentStep === 2) {
+            <form class="space-y-6" (ngSubmit)="onResetPassword()">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    Mã OTP đã được gửi đến <strong class="text-primary">{{ email }}</strong>
+                </p>
+
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">Mã OTP</label>
+                    <div class="relative group">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">pin</span>
+                        <input [formControl]="resetForm.controls['otpCode']"
+                               class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 pl-14 pr-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold shadow-inner tracking-[0.5em] text-center text-2xl"
+                               placeholder="000000" maxlength="6"/>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">Mật khẩu mới</label>
+                    <div class="relative group">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">lock</span>
+                        <input [formControl]="resetForm.controls['newPassword']"
+                               class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 pl-14 pr-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold shadow-inner"
+                               placeholder="Tối thiểu 6 ký tự" type="password"/>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1">Xác nhận mật khẩu</label>
+                    <div class="relative group">
+                        <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">lock_reset</span>
+                        <input [formControl]="resetForm.controls['confirmPassword']"
+                               class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 pl-14 pr-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold shadow-inner"
+                               placeholder="Nhập lại mật khẩu" type="password"/>
+                    </div>
+                </div>
+
+                <button class="w-full bg-primary text-white font-black h-16 rounded-2xl shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4 group uppercase tracking-[0.2em] text-xs"
+                        type="submit" [disabled]="isLoading">
+                    @if (isLoading) {
+                        <span class="animate-spin material-symbols-outlined">progress_activity</span>
+                        Đang xử lý...
+                    } @else {
+                        Đặt lại mật khẩu
+                        <span class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">lock_reset</span>
+                    }
+                </button>
+
+                <button type="button" (click)="goBackToStep1()"
+                        class="w-full text-slate-500 hover:text-primary text-xs font-bold uppercase tracking-[0.2em] transition-colors mt-2">
+                    ← Quay lại nhập email
+                </button>
+            </form>
+            }
+
+
+================================================================================
+== 3. REFRESH TOKEN ==
+================================================================================
+
+FLOW TỔNG QUAN:
+  1. Khi Login thành công → Backend trả về {accessToken, refreshToken}
+  2. accessToken ngắn hạn (15-30 phút), refreshToken dài hạn (7 ngày)
+  3. Khi accessToken hết hạn → Frontend tự động gọi API refresh để lấy token mới
+  4. Nếu refreshToken cũng hết hạn → Bắt User đăng nhập lại
+
+CẦN LÀM:
+  [Backend]  Tạo Model RefreshToken
+  [Backend]  Thêm DbSet và Migration
+  [Backend]  Sửa AuthResponseDto (thêm refreshToken)
+  [Backend]  Sửa AuthService (thêm logic sinh/lưu/refresh token)
+  [Backend]  Thêm endpoint refresh-token, logout
+  [Frontend] Sửa AuthResponse model
+  [Frontend] Sửa AuthService (lưu refreshToken)
+  [Frontend] Sửa JwtInterceptor (tự động refresh khi 401)
+
+----------------------------------------------------------------------
+BƯỚC 3.1: TẠO MODEL RefreshToken
+----------------------------------------------------------------------
+
+--- TẠO FILE MỚI: backend/Models/RefreshToken.cs ---
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace backend.Models;
+
+[Table("refresh_tokens")]
+public class RefreshToken
+{
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
+
+    [Required]
+    [Column("user_id")]
+    public Guid UserId { get; set; }
+
+    [Required]
+    [Column("token")]
+    public string Token { get; set; } = string.Empty;
+
+    [Column("expires_at")]
+    public DateTime ExpiresAt { get; set; }
+
+    [Column("is_revoked")]
+    public bool IsRevoked { get; set; } = false;
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    [ForeignKey("UserId")]
+    public User User { get; set; } = null!;
+}
+
+----------------------------------------------------------------------
+BƯỚC 3.2: THÊM DbSet VÀ CẤU HÌNH TRONG AppDbContext
+----------------------------------------------------------------------
+
+--- FILE: backend/Data/AppDbContext.cs ---
+
+// Thêm DbSet:
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+// Thêm cấu hình entity trong OnModelCreating:
+        // Refresh Tokens
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("refresh_tokens");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+----------------------------------------------------------------------
+BƯỚC 3.3: CHẠY MIGRATION
+----------------------------------------------------------------------
+
+dotnet ef migrations add AddRefreshToken
+dotnet ef database update
+
+----------------------------------------------------------------------
+BƯỚC 3.4: SỬA AuthResponseDto
+----------------------------------------------------------------------
+
+--- FILE: backend/DTOs/AuthDTOs.cs ---
+
+// SỬA class AuthResponseDto:
+// TỪ:
+public class AuthResponseDto
+{
+    public string Token {get; set; } = string.Empty;
+    public UserDto User {get; set; } = null!;
+}
+
+// THÀNH:
+public class AuthResponseDto
+{
+    public string Token { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;  // ← THÊM
+    public UserDto User { get; set; } = null!;
+}
+
+// THÊM class mới:
+public class RefreshTokenDto
+{
+    [Required]
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+----------------------------------------------------------------------
+BƯỚC 3.5: SỬA AuthService
+----------------------------------------------------------------------
+
+--- FILE: backend/Services/IAuthService.cs ---
+// THÊM 2 dòng mới:
+
+    Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken, CancellationToken ct);
+    Task LogoutAsync(string refreshToken, CancellationToken ct);
+
+--- FILE: backend/Services/AuthService.cs ---
+
+// THÊM using:
+using System.Security.Cryptography;
+
+// THÊM hàm GenerateRefreshToken (private, cạnh hàm GenerateJwtToken):
+
+    private async Task<string> GenerateRefreshTokenAsync(User user, CancellationToken ct)
+    {
+        // Tạo token ngẫu nhiên
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        var tokenStr = Convert.ToBase64String(randomBytes);
+
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.UserId,
+            Token = tokenStr,
+            ExpiresAt = DateTime.UtcNow.AddDays(7), // Refresh token sống 7 ngày
+            IsRevoked = false
+        };
+
+        context.RefreshTokens.Add(refreshToken);
+        await context.SaveChangesAsync(ct);
+
+        return tokenStr;
+    }
+
+// SỬA 3 hàm LoginAsync, RegisterAsync, GoogleLoginAsync:
+// Thay mọi chỗ trả về AuthResponseDto thêm RefreshToken.
+// Ví dụ cho LoginAsync:
+
+// TỪ:
+    return new AuthResponseDto { Token = GenerateJwtToken(user), User = mapper.Map<UserDto>(user)};
+
+// THÀNH:
+    return new AuthResponseDto
+    {
+        Token = GenerateJwtToken(user),
+        RefreshToken = await GenerateRefreshTokenAsync(user, cancellationToken),
+        User = mapper.Map<UserDto>(user)
+    };
+
+// (Làm tương tự cho RegisterAsync và GoogleLoginAsync)
+
+// THÊM hàm RefreshTokenAsync:
+
+    public async Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken, CancellationToken ct)
+    {
+        var storedToken = await context.RefreshTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Token == refreshToken && !t.IsRevoked, ct);
+
+        if (storedToken == null)
+            throw new Exception("Refresh token không hợp lệ.");
+
+        if (storedToken.ExpiresAt < DateTime.UtcNow)
+        {
+            storedToken.IsRevoked = true;
+            await context.SaveChangesAsync(ct);
+            throw new Exception("Refresh token đã hết hạn. Vui lòng đăng nhập lại.");
+        }
+
+        var user = storedToken.User;
+        if (!user.IsActive)
+            throw new Exception("Tài khoản đã bị khóa.");
+
+        // Thu hồi token cũ
+        storedToken.IsRevoked = true;
+
+        // Cấp bộ token mới (rotation)
+        var newRefreshToken = await GenerateRefreshTokenAsync(user, ct);
+
+        return new AuthResponseDto
+        {
+            Token = GenerateJwtToken(user),
+            RefreshToken = newRefreshToken,
+            User = mapper.Map<UserDto>(user)
+        };
+    }
+
+// THÊM hàm LogoutAsync:
+
+    public async Task LogoutAsync(string refreshToken, CancellationToken ct)
+    {
+        var storedToken = await context.RefreshTokens
+            .FirstOrDefaultAsync(t => t.Token == refreshToken, ct);
+
+        if (storedToken != null)
+        {
+            storedToken.IsRevoked = true;
+            await context.SaveChangesAsync(ct);
+        }
+    }
+
+----------------------------------------------------------------------
+BƯỚC 3.6: THÊM ENDPOINT VÀO AuthController
+----------------------------------------------------------------------
+
+--- FILE: backend/Controllers/AuthController.cs ---
+
+    [HttpPost("refresh-token")]
+    public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenDto dto, CancellationToken ct)
+    {
+        try { return Ok(await _authServices.RefreshTokenAsync(dto.RefreshToken, ct)); }
+        catch (Exception ex) { return Unauthorized(new { message = ex.Message }); }
+    }
+
+    [HttpPost("logout")]
+    public async Task<ActionResult> Logout([FromBody] RefreshTokenDto dto, CancellationToken ct)
+    {
+        await _authServices.LogoutAsync(dto.RefreshToken, ct);
+        return Ok(new { message = "Đã đăng xuất." });
+    }
+
+----------------------------------------------------------------------
+BƯỚC 3.7: FRONTEND - SỬA MODEL AuthResponse
+----------------------------------------------------------------------
+
+--- FILE: frontend/src/app/core/models/auth.models.ts ---
+
+// SỬA interface AuthResponse:
+export interface AuthResponse {
+  token: string;
+  refreshToken: string;  // ← THÊM
+  user: UserDto;
+}
+
+----------------------------------------------------------------------
+BƯỚC 3.8: FRONTEND - SỬA AuthService
+----------------------------------------------------------------------
+
+--- FILE: frontend/src/app/core/services/auth.service.ts ---
+
+// SỬA hàm setSession (lưu thêm refreshToken):
+  private setSession(authResult: AuthResponse) {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('token', authResult.token);
+      localStorage.setItem('refreshToken', authResult.refreshToken);  // ← THÊM
+      localStorage.setItem('user', JSON.stringify(authResult.user));
+    }
+    this.currentUserSubject.next(authResult.user);
+  }
+
+// SỬA hàm logout (xóa thêm refreshToken + gọi API):
+  logout() {
+    const refreshToken = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('refreshToken') : null;
+
+    // Gọi API thu hồi refresh token phía server
+    if (refreshToken) {
+      this.http.post(`${this.apiUrl}/logout`, { refreshToken }).subscribe();
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');  // ← THÊM
+      localStorage.removeItem('user');
+    }
+    this.currentUserSubject.next(null);
+  }
+
+// THÊM hàm mới:
+  getRefreshToken(): string | null {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+  }
+
+  refreshAccessToken(): Observable<AuthResponse> {
+    const refreshToken = this.getRefreshToken();
+    return this.http
+      .post<AuthResponse>(`${this.apiUrl}/refresh-token`, { refreshToken })
+      .pipe(tap((res) => this.setSession(res)));
+  }
+
+----------------------------------------------------------------------
+BƯỚC 3.9: FRONTEND - SỬA JwtInterceptor (TỰ ĐỘNG REFRESH)
+----------------------------------------------------------------------
+
+--- FILE: frontend/src/app/core/interceptors/jwt.interceptor.ts ---
+// THAY THẾ TOÀN BỘ NỘI DUNG:
+
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
+
+let isRefreshing = false;
+
+export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  // Gắn token vào header
+  if (token) {
+    req = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // Nếu lỗi 401 (token hết hạn) VÀ không phải đang refresh
+      if (error.status === 401 && !req.url.includes('/auth/refresh-token') && !isRefreshing) {
+        isRefreshing = true;
+
+        return authService.refreshAccessToken().pipe(
+          switchMap((res) => {
+            isRefreshing = false;
+            // Gửi lại request ban đầu với token mới
+            const newReq = req.clone({
+              setHeaders: { Authorization: `Bearer ${res.token}` },
+            });
+            return next(newReq);
+          }),
+          catchError((refreshError) => {
+            isRefreshing = false;
+            // Refresh cũng lỗi → đăng xuất
+            authService.logout();
+            router.navigate(['/auth/login']);
+            return throwError(() => refreshError);
+          })
+        );
+      }
+
+      return throwError(() => error);
+    })
+  );
+};
+
+
+================================================================================
+== TỔNG KẾT THỨ TỰ THỰC HIỆN ==
+================================================================================
+
+BƯỚC 1: Fix Hash Password (5 phút)
+  → Sửa 1 file: UserService.cs
+
+BƯỚC 2: Forgot/Reset Password (1-2 giờ)
+  → Tạo 3 file mới: PasswordResetToken.cs, IEmailService.cs, EmailService.cs
+  → Sửa 7 file: AppDbContext.cs, AuthDTOs.cs, IAuthService.cs, AuthService.cs,
+                  AuthController.cs, Program.cs, appsettings.json
+  → Sửa 3 file frontend: auth.models.ts, auth.service.ts, forgot-password.ts + .html
+  → Chạy migration
+
+BƯỚC 3: Refresh Token (1-2 giờ)
+  → Tạo 1 file mới: RefreshToken.cs
+  → Sửa 5 file backend: AppDbContext.cs, AuthDTOs.cs, IAuthService.cs,
+                          AuthService.cs, AuthController.cs
+  → Sửa 3 file frontend: auth.models.ts, auth.service.ts, jwt.interceptor.ts
+  → Chạy migration
+
+LƯU Ý QUAN TRỌNG:
+  - Luôn làm theo THỨ TỰ: Bước 1 → 2 → 3
+  - Mỗi bước xong nên test kỹ trước khi làm bước tiếp
+  - Nếu dùng 2 migration riêng cho bước 2 và 3, có thể gộp thành 1 migration
+    bằng cách tạo cả 2 Model trước rồi chạy migration 1 lần

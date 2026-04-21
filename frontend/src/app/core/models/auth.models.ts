@@ -10,6 +10,7 @@ export interface UserDto {
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;  // ← THÊM
   user: UserDto;
 }
 
@@ -23,4 +24,14 @@ export interface RegisterDto {
   password: string;
   fullName: string;
   phone?: string;
+}
+
+export interface ForgotPasswordDto{
+  email: string;
+}
+
+export interface ResetPasswordDto{
+  email: string;
+  otpCode: string;
+  newPassword: string;
 }

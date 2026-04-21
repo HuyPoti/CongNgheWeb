@@ -65,8 +65,6 @@ public class UserService(IUnitOfWork uow, IMapper mapper) : IUserService
 
     private static string HashPassword(string password)
     {
-        //dùng ASP.NET Identity.
-        var passwordHasher = new PasswordHasher<User>();
-        return passwordHasher.HashPassword(null!, password); 
+        return BCrypt.Net.BCrypt.HashPassword(password);
     }
 }

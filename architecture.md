@@ -33,6 +33,10 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
   - **Images**: `AddImageAsync`, `DeleteImageAsync`, `GetImagesByReviewIdAsync`.
   - **Votes**: `ToggleVoteAsync`, `GetVoteCountAsync`, `HasUserVotedAsync`.
 
+- `AuthService`: Xử lý xác thực và quản lý tài khoản.
+  - **Auth**: `LoginAsync`, `RegisterAsync`, `GoogleLoginAsync`.
+  - **Password Recovery**: `ForgotPasswordAsync`, `ResetPasswordAsync`.
+
 ### ⚙️ Quy trình xử lý (Data Flow)
 
 `Request` -> `Controller` -> `Service` -> `UnitOfWork` -> `Repository` -> `Database`
@@ -66,6 +70,10 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
   - **Images**: `addImage`, `deleteImage`, `getImages`.
   - **Votes**: `toggleVote`, `getVoteCount`, `checkUserVoted`.
 
+- `AuthService`: Liên kết với backend để xử lý đăng nhập, đăng ký và khôi phục mật khẩu.
+  - **Auth**: `login`, `register`, `googleLogin`.
+  - **Password Recovery**: `forgotPassword`, `resetPassword`.
+
 ---
 
 ## 4. Cơ sở dữ liệu (Database)
@@ -81,6 +89,7 @@ Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 - `Reviews`: Đánh giá và bình luận sản phẩm.
 - `ReviewImages`: Hình ảnh đính kèm trong đánh giá.
 - `ReviewReplies`: Phản hồi từ quản trị viên đối với đánh giá.
+- `PasswordResetTokens`: Lưu trữ mã OTP khôi phục mật khẩu.
 
 ---
 

@@ -1,0 +1,74 @@
+# BÁO CÁO HỆ THỐNG AUTHENTICATION (XÁC THỰC)
+
+Dưới đây là tổng hợp những gì đã được triển khai và các gợi ý tính năng còn thiếu cho hệ thống Auth của dự án.
+
+## 1. Những gì đã hoàn thành (Already Done)
+
+### ✅ Backend (ASP.NET Core)
+- **Cấu trúc Auth**: Đã có `AuthController`, `AuthService`, `IAuthService`.
+- **Đăng ký (Register)**:
+  - Lưu thông tin User mới vào DB.
+  - Mã hóa mật khẩu bằng BCrypt.
+  - Gán role mặc định là `customer`.
+- **Đăng nhập (Login)**:
+  - Xác thực Email và mật khẩu.
+  - Kiểm tra trạng thái tài khoản (`IsActive`).
+  - Trả về JWT Token và thông tin User.
+- **Google Login**:
+  - Tích hợp `Google.Apis.Auth` để xác thực ID Token từ Google.
+  - Tự động tạo tài khoản nếu email Google chưa tồn tại trong hệ thống.
+- **JWT (JSON Web Token)**:
+  - Đã cấu hình sinh Token với các Claims: `UserId`, `Email`, `Role`, `FullName`.
+  - Cấu hình Issuer, Audience và thời gian hết hạn trong `appsettings.json`.
+
+### ✅ Frontend (Angular)
+- **AuthService**:
+  - Quản lý trạng thái đăng nhập qua `BehaviorSubject` (`currentUser$`).
+  - Các hàm API: `login`, `register`, `googleLogin`, `logout`.
+  - Lưu trữ Token và User vào `localStorage`.
+- **Giao diện**:
+  - Màn hình Đăng nhập (Login) - Đã có logic xử lý Form và Google Sign-In.
+  - Màn hình Đăng ký (Register) - Đã có logic validation và gọi API.
+- **Bảo mật**:
+  - `AuthGuard`: Bảo vệ các route yêu cầu đăng nhập.
+  - `AdminGuard`: Bảo vệ các route dành riêng cho Admin.
+  - `JwtInterceptor`: Tự động gắn Token vào header `Authorization` cho mọi request.
+
+---
+
+## 2. Những gì còn thiếu & Gợi ý (Suggestions & Backlog)
+
+### 🚀 Ưu tiên Cao (Cần làm ngay)
+1. **Quên mật khẩu / Đặt lại mật khẩu (Forgot/Reset Password)**:
+   - *Hiện tại*: Frontend chỉ có giao diện trống, Backend chưa có logic.
+   - *Cần làm*: API gửi mail mã OTP/Link reset, trang đổi mật khẩu mới.
+2. **Refresh Token**:
+   - *Vấn đề*: Hiện tại chỉ có JWT ngắn hạn. Khi hết hạn User bị văng ra ngoài.
+   - *Cần làm*: Triển khai Refresh Token lưu vào Database để tự động gia hạn phiên đăng nhập.
+3. **Thống nhất phương thức Hash Password**:
+   - *Vấn đề*: `AuthService` dùng BCrypt, nhưng `UserService` lại đang dùng `PasswordHasher` của Identity.
+   - *Cần làm*: Chuyển tất cả về dùng BCrypt hoặc cùng 1 chuẩn để tránh lỗi không đăng nhập được khi tạo User từ Admin.
+
+### 🛠️ Ưu tiên Trung bình (Hoàn thiện UX/Security)
+4. **Xác nhận Email (Email Verification)**:
+   - Gửi mail kích hoạt tài khoản sau khi đăng ký thành công.
+5. **Đổi mật khẩu (Change Password)**:
+   - Cho phép User đổi mật khẩu trong phần quản lý tài khoản (khi đang đăng nhập).
+6. **Quản lý Profile**:
+   - Cập nhật thông tin cá nhân (FullName, Phone, Address, Avatar).
+7. **Xử lý Logout phía Server**:
+   - Thu hồi Refresh Token khi user đăng xuất để đảm bảo an toàn.
+
+### 🌟 Ưu tiên Thấp (Mở rộng)
+8. **MFA / 2FA**: Xác thực 2 lớp qua Email hoặc Google Authenticator.
+9. **Social Login mở rộng**: Thêm Facebook, GitHub login.
+10. **Lịch sử đăng nhập (Audit Logs)**: Ghi lại thời gian, IP và thiết bị đăng nhập của User.
+
+---
+
+## 3. Checklist cho Dev
+- [ ] Hoàn thiện logic backend cho `forgot-password`.
+- [ ] Viết API `change-password`.
+- [ ] Fix lỗi không đồng nhất mã hóa mật khẩu giữa `AuthService` và `UserService`.
+- [ ] Triển khai Refresh Token Flow.
+- [ ] Làm trang Profile để user cập nhật thông tin cá nhân.

@@ -1,4 +1,5 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { ThemeService } from '../../../core/services/theme';
 import { CommonModule } from '@angular/common';
@@ -11,6 +12,7 @@ import { Category } from '../../../core/models/category.model';
 import { MegaMenu } from '../mega-menu/mega-menu';
 import { catchError, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -25,22 +27,29 @@ export class Navbar {
   langService = inject(LanguageService);
   cartService = inject(CartService);
   categoryService = inject(CategoryService);
+  authService = inject(AuthService);
   isSearchOpen = signal(false);
   isMegaMenuOpen = signal(false);
   categories = signal<Category[]>([]);
 
   // Wrappers for template
-  get currentTheme() { return this.themeService.theme(); }
-  get isThemeForced() { return this.themeService.isForced(); }
-  
+  get currentTheme() {
+    return this.themeService.theme();
+  }
+  get isThemeForced() {
+    return this.themeService.isForced();
+  }
+
   cartCount = this.cartService.totalItems;
+  currentUser = toSignal(this.authService.currentUser$);
+  isLoggedIn = computed(() => !!this.currentUser());
 
   constructor() {
     this.loadCategories();
   }
 
   toggleSearch() {
-    this.isSearchOpen.update(v => !v);
+    this.isSearchOpen.update((v) => !v);
   }
 
   toggleTheme() {
