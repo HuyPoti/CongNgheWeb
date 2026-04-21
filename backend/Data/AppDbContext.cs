@@ -23,6 +23,9 @@ public class AppDbContext : DbContext
     public DbSet<ReviewImage> ReviewImages { get; set; }
     public DbSet<ReviewReply> ReviewReplies { get; set; }
     public DbSet<ReviewHelpfulVote> ReviewHelpfulVotes { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens {get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -183,6 +186,28 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId);
+        });
+
+        modelBuilder.Entity<PasswordResetToken>(entity => 
+        {
+            entity.ToTable("password_reset_tokens");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Refresh Tokens
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("refresh_tokens");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

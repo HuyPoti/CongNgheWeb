@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -21,6 +21,7 @@ export class Login implements OnInit {
   private route = inject(ActivatedRoute);
   private socialAuthService = inject(SocialAuthService);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   loginForm: FormGroup;
   returnUrl = '/';
@@ -40,14 +41,17 @@ export class Login implements OnInit {
       if (socialUser && socialUser.idToken) {
         setTimeout(() => {
           this.isLoading = true;
+          this.cdr.detectChanges();
           this.authService.googleLogin(socialUser.idToken as string).subscribe({
             next: () => {
               this.isLoading = false;
+              this.cdr.detectChanges();
               this.toastService.success('Đăng nhập thành công với Google');
               this.router.navigateByUrl(this.returnUrl || '/');
             },
             error: (err) => {
               this.isLoading = false;
+              this.cdr.detectChanges();
               const msg = err.error?.message || 'Lỗi xác thực Google';
               this.toastService.error(msg);
             },
@@ -64,14 +68,17 @@ export class Login implements OnInit {
     }
 
     this.isLoading = true;
+    this.cdr.detectChanges();
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.isLoading = false;
+        this.cdr.detectChanges();
         this.toastService.success('Đăng nhập thành công!');
         this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
         this.isLoading = false;
+        this.cdr.detectChanges();
         console.log(err);
         const msg = err.error?.message || 'Đã có lỗi xảy ra trong quá trình đăng nhập';
         this.toastService.error(msg);

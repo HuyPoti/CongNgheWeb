@@ -77,12 +77,14 @@
       >
         <span class="material-symbols-outlined">account_circle</span>
       </button>
-      <button
-        class="flex min-w-[80px] lg:min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 lg:px-5 bg-primary text-white text-sm font-bold transition-all hover:brightness-110 neon-glow"
-        routerLink="/auth/login"
-      >
-        {{ 'nav.login' | translate }}
-      </button>
+      @if (!isLoggedIn()) {
+        <button
+          class="flex min-w-[80px] lg:min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 lg:px-5 bg-primary text-white text-sm font-bold transition-all hover:brightness-110 neon-glow"
+          routerLink="/auth/login"
+        >
+          {{ 'nav.login' | translate }}
+        </button>
+      }
     </div>
   </div>
 </header>
