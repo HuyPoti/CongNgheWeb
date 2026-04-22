@@ -330,4 +330,24 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
         ";
         await emailService.SendEmailAsync(user.Email, "Mã xác nhận mới - TechShop", emailBody);
     }
+
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordDto dto, CancellationToken cancellationToken)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
+        if (user == null)
+            throw new Exception("Không tìm thấy người dùng.");
+
+        if (string.IsNullOrEmpty(user.PasswordHash))
+            throw new Exception("Tài khoản Google không hỗ trợ đổi mật khẩu.");
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
+            throw new Exception("Mật khẩu hiện tại không chính xác.");
+
+        if (BCrypt.Net.BCrypt.Verify(dto.NewPassword, user.PasswordHash))
+            throw new Exception("Mật khẩu mới không được trùng với mật khẩu cũ.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(cancellationToken);
+    }
 }

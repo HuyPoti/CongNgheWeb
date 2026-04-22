@@ -13,4 +13,5 @@ public interface IAuthService
     Task LogoutAsync(string refreshToken, CancellationToken ct);
     Task VerifyEmailAsync(VerifyEmailDto dto, CancellationToken cancellationToken);
     Task ResendVerificationAsync(ResendVerificationDto dto, CancellationToken cancellationToken);
+    Task ChangePasswordAsync(Guid userId, ChangePasswordDto dto, CancellationToken cancellationToken);
 }
