@@ -83,7 +83,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.Slug).IsUnique();
             entity.HasIndex(e => e.Sku).IsUnique();
 
-            entity.Property(e => e.Specifications).HasColumnType("jsonb");
+            entity.Property(e => e.Specifications).HasColumnName("specifications").HasColumnType("jsonb");
             entity.Property(e => e.Status).HasDefaultValue(1);
 
             entity.HasOne(p => p.Category)

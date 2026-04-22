@@ -14,10 +14,11 @@
           {{ 'build.reset' | translate }}
         </button>
         <button
-          class="px-4 py-2 border rounded-md bg-white hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700 font-medium transition-colors cursor-pointer dark:bg-surface-dark dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+          (click)="exportToPdf()"
+          class="px-4 py-2 border rounded-md bg-white hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700 font-medium transition-all shadow-sm cursor-pointer dark:bg-surface-dark dark:border-white/10 dark:text-white dark:hover:bg-white/5 active:scale-95"
         >
-          <span class="material-symbols-outlined text-[18px]">download</span>
-          {{ 'build.download_img' | translate }}
+          <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+          {{ 'build.download_pdf' | translate }}
         </button>
       </div>
     </div>

@@ -90,6 +90,7 @@ Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 - `ReviewImages`: Hình ảnh đính kèm trong đánh giá.
 - `ReviewReplies`: Phản hồi từ quản trị viên đối với đánh giá.
 - `PasswordResetTokens`: Lưu trữ mã OTP khôi phục mật khẩu.
+- `RefreshTokens`: Quản lý phiên đăng nhập và làm mới token.
 
 ---
 

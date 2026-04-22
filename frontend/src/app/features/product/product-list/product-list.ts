@@ -13,7 +13,7 @@ import {
   merge,
 } from 'rxjs';
 
-import { ComparisonService, CompareProduct } from '../../../core/services/comparison';
+import { ComparisonService } from '../../../core/services/comparison';
 import { ProductCard, ProductListItemDto } from '../../../core/models/product.model';
 import { ProductService } from '../../../core/services/product.service';
 import { BrandService } from '../../../core/services/brand.service';
@@ -285,16 +285,12 @@ export class ProductList implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
-    const cp: CompareProduct = {
-      id: p.id,
+    this.comparisonService.toggleProductWithFetch(p.id, {
       name: p.name,
       price: p.price,
       image: p.image,
       category: p.category,
-      specs: p.specs,
-    };
-
-    this.comparisonService.toggleProduct(cp);
+    });
   }
 
   goToCompare(): void {

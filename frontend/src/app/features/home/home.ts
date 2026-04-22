@@ -7,7 +7,7 @@ import { BannerService } from '../../core/services/banner.service';
 import { Banner } from '../../core/models/banner.model';
 import { ProductService } from '../../core/services/product.service';
 import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
-import { ComparisonService, CompareProduct } from '../../core/services/comparison';
+import { ComparisonService } from '../../core/services/comparison';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { CategoryService } from '../../core/services/category.service';
 import { Category } from '../../core/models/category.model';
@@ -204,15 +204,12 @@ export class HomeComponent implements OnInit {
   // ── Comparison ────────────────────────────────────────────────────
   toggleCompare(event: Event, p: ProductCard): void {
     event.stopPropagation();
-    const cp: CompareProduct = {
-      id: p.id,
+    this.comparisonService.toggleProductWithFetch(p.id, {
       name: p.name,
       price: p.price,
       image: p.image,
       category: p.category,
-      specs: p.specs,
-    };
-    this.comparisonService.toggleProduct(cp);
+    });
   }
 
   isProductSelected(id: string): boolean {
