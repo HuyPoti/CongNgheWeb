@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
 using backend.Services;
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace backend.Controllers;
 
@@ -85,18 +88,18 @@ public class AuthController(IAuthService authServices) : ControllerBase
     }
 
     [HttpPost("verify-email")]
-public async Task<ActionResult> VerifyEmail([FromBody] VerifyEmailDto dto, CancellationToken cancellationToken)
-{
-    try
+    public async Task<ActionResult> VerifyEmail([FromBody] VerifyEmailDto dto, CancellationToken cancellationToken)
     {
-        await authServices.VerifyEmailAsync(dto, cancellationToken);
-        return Ok(new { message = "Email đã được xác nhận thành công!" });
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(new { message = ex.Message });
-    }
-}
+        try
+        {
+            await authServices.VerifyEmailAsync(dto, cancellationToken);
+            return Ok(new { message = "Email đã được xác nhận thành công!" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }                                                       
 
     [HttpPost("resend-verification")]
     public async Task<ActionResult> ResendVerification([FromBody] ResendVerificationDto dto, CancellationToken cancellationToken)
@@ -111,4 +114,27 @@ public async Task<ActionResult> VerifyEmail([FromBody] VerifyEmailDto dto, Cance
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+            {
+                return Unauthorized(new { message = "Token không hợp lệ." });
+            }
+
+            await authServices.ChangePasswordAsync(userId, dto, cancellationToken);
+            return Ok(new { message = "Mật khẩu đã được thay đổi thành công." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
 }

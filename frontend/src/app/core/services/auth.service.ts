@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, UserDto, LoginDto, RegisterDto, VerifyEmailDto, ResendVerificationDto } from '../models/auth.models';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { ForgotPasswordDto, ResetPasswordDto } from '../models/auth.models';
+import { ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from '../models/auth.models';
 import { SocialAuthService } from '@abacritt/angularx-social-login';
 
 @Injectable({
@@ -114,5 +114,9 @@ export class AuthService {
 
   resendVerification(data: ResendVerificationDto): Observable<{message: string}> {
     return this.http.post<{message: string}>(`${this.apiUrl}/resend-verification`, data);
+  }
+
+  changePassword(data: ChangePasswordDto): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/change-password`, data);
   }
 }
