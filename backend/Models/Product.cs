@@ -49,7 +49,7 @@ public class Product
     [Column("description")]
     public string? Description { get; set; }
 
-    [Column(TypeName = "jsonb")]
+    [Column("specifications", TypeName = "jsonb")]
     public string? Specifications { get; set; }
 
 

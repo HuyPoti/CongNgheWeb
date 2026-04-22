@@ -1,7 +1,8 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, LOCALE_ID } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 // --- PHẦN THÊM MỚI TỪ AUTH.TXT ---
 import {
   GoogleLoginProvider,
@@ -19,6 +20,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })),
+    { provide: LOCALE_ID, useValue: 'vi' },
+    CurrencyPipe,
+    DatePipe,
 
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([jwtInterceptor])),

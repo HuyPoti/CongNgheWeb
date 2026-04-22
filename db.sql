@@ -12,6 +12,9 @@ CREATE TABLE users (
     phone VARCHAR(20),
     role INT DEFAULT 3,
     is_active BOOLEAN DEFAULT TRUE,
+    is_email_verified BOOLEAN DEFAULT FALSE,
+    email_verification_otp VARCHAR(6),
+    otp_expires_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -43,7 +46,7 @@ CREATE TABLE brands (
 );
 
 -- 4. Bảng products
--- status: 1=draft, 2=published
+-- status: 1=draft, 2=published, 3=deleted
 CREATE TABLE products (
     product_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     category_id UUID NOT NULL,
@@ -173,6 +176,7 @@ CREATE TABLE news (
     excerpt TEXT,
     author_id UUID NOT NULL,
     image_url VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
     is_published BOOLEAN DEFAULT FALSE,
     published_at TIMESTAMP WITH TIME ZONE NULL,
     views INT DEFAULT 0,
@@ -248,83 +252,48 @@ CREATE TABLE review_replies (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- 19. Bảng refresh_tokens
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    token VARCHAR(500) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_revoked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 20. Bảng password_reset_tokens
+CREATE TABLE password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    otp_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 
 -- ===========================================
--- SEED DATA (Dựa trên CreateDtos)
+-- SEED DATA
 -- ===========================================
 
--- 1. Users (Email, PasswordHash, FullName, Phone, Role)
+-- 1. Users
 INSERT INTO users (user_id, email, password_hash, full_name, phone, role, is_active, created_at, updated_at) VALUES 
 ('11111111-1111-1111-1111-111111111111', 'admin@gearvn.id.vn', '$2a$11$qRbnM8T8UqjK9qgQcE7Ue.N4FfM3oX5tO1J/j.CgE7n8m7uK/uD8m', 'Huy Poti Admin', '0123456789', 1, TRUE, NOW(), NOW()),
 ('22222222-2222-2222-2222-222222222222', 'customer@example.com', '$2a$11$qRbnM8T8UqjK9qgQcE7Ue.N4FfM3oX5tO1J/j.CgE7n8m7uK/uD8m', 'Khách hàng Demo', '0987654321', 3, TRUE, NOW(), NOW());
 
--- 2. Categories (Name, Slug, Description, ParentId, ImageUrl, IsActive)
-INSERT INTO categories (category_id, name, slug, description, is_active, created_at, updated_at) VALUES 
-('c0000000-0000-0000-0000-000000000001', 'Linh kiện PC', 'linh-kien-pc', 'CPU, RAM, VGA, Mainboard...', TRUE, NOW(), NOW()),
-('c0000000-0000-0000-0000-000000000002', 'Laptop Gaming', 'laptop-gaming', 'Laptop cấu hình cao chơi game', TRUE, NOW(), NOW());
-
--- 3. Brands (Name, Slug, LogoUrl, Description, IsActive)
+-- 2. Brands
 INSERT INTO brands (brand_id, name, slug, is_active, created_at, updated_at) VALUES 
 ('b0000000-0000-0000-0000-000000000001', 'ASUS', 'asus', TRUE, NOW(), NOW()),
-('b0000000-0000-0000-0000-000000000002', 'MSI', 'msi', TRUE, NOW(), NOW());
+('b0000000-0000-0000-0000-000000000002', 'MSI', 'msi', TRUE, NOW(), NOW()),
+('b0000000-0000-0000-0000-000000000003', 'Gigabyte', 'gigabyte', TRUE, NOW(), NOW()),
+('b0000000-0000-0000-0000-000000000004', 'NVIDIA', 'nvidia', TRUE, NOW(), NOW()),
+('b0000000-0000-0000-0000-000000000005', 'AMD', 'amd', TRUE, NOW(), NOW());
 
--- 4. Products (CategoryId, BrandId, Name, Slug, Sku, RegularPrice, SalePrice, StockQuantity, WarrantyMonths, Description, Specifications, Status)
-INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, status, created_at, updated_at) VALUES 
-('d0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'VGA ASUS ROG Strix RTX 4090', 'vga-asus-rog-strix-rtx-4090', 'RTX4090-ROG', 55000000, 52900000, 10, 36, 2, NOW(), NOW()),
-('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'Laptop MSI Katana 15', 'laptop-msi-katana-15', 'MSI-K15', 25000000, 23500000, 5, 24, 2, NOW(), NOW());
-
--- 5. Product Images (ImageId, ProductId, ImageUrl, IsPrimary, SortOrder, CreatedAt)
-INSERT INTO product_images (image_id, product_id, image_url, is_primary, sort_order, created_at) VALUES 
-('f0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'https://ttgshop.vn/media/product/250_1072100124_dsc09857_copy.jpg', TRUE, 0, NOW()),
-('f0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 'https://ttgshop.vn/media/product/250_11116.jpg', TRUE, 0, NOW());
-
--- 6. Product Specs (SpecId, ProductId, SpecKey, SpecValue, CreatedAt)
-INSERT INTO product_specs (spec_id, product_id, spec_key, spec_value, created_at) VALUES 
-('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Dung lượng VRAM', '24GB GDDR6X', NOW()),
-('a0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 'CPU', 'Intel Core i7-13620H', NOW());
-
--- 7. Banners (BannerId, Title, Subtitle, ImageUrl, LinkUrl, Position, SortOrder, IsActive)
-INSERT INTO banners (banner_id, title, subtitle, image_url, link_url, position, sort_order, is_active) VALUES 
-('e0000000-0000-0000-0000-000000000001', 'Siêu Phẩm RTX 40 Series', 'Sức mạnh đồ họa đỉnh cao', 'https://gearvn.com/cdn/shop/files/pc_gaming_slider_600x480.jpg', '/product/list', 1, 0, TRUE),
-('e0000000-0000-0000-0000-000000000002', 'Laptop Gaming Giá Rẻ', 'Ưu đãi cực khủng mùa tựu trường', 'https://phongvu.vn/media/banner/06_Jun607548773950fb28fc586ecc495f5ac2.png', '/product/list', 2, 0, TRUE),
-('e0000000-0000-0000-0000-000000000003', 'Màn Hình Đồ Họa', 'Độ chuẩn màu 100% sRGB', 'https://phongvu.vn/media/banner/06_Jun73248386e8ca779430c77431e7f09805.png', '/product/list', 2, 1, TRUE),
-('e0000000-0000-0000-0000-000000000004', 'Promo Đặc Biệt', 'Dành riêng cho game thủ', 'https://gearvn.com/cdn/shop/files/Bannaer_Mid_Dashboard.jpg', '/product/list', 2, 2, TRUE);
-
--- 8. Reviews (ReviewId, ProductId, UserId, Rating, Comment, IsActive, IsVerifiedPurchase)
-INSERT INTO reviews (review_id, product_id, user_id, rating, comment, is_active, is_verified_purchase) VALUES 
-('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 2, TRUE);
-
--- 9. Address
-INSERT INTO addresses (address_id, user_id, recipient_name, phone, address_line, province, district, ward, is_default, created_at)
-VALUES 
-('00000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'Nguyễn Văn A', '0912345678', '123 Nguyễn Huệ', 'TP.HCM', 'Quận 1', 'Phường Bến Nghé', TRUE, NOW());
-
--- 10. Order
-INSERT INTO orders (order_id, user_id, order_code, total_amount, status, payment_method, payment_status, shipping_address_id, notes, created_at, updated_at)
-VALUES 
-('00000000-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'ORD-20260414-001', 52900000, 1, 'COD', 1, '00000000-0000-0000-0000-000000000001', 'Giao buổi sáng', NOW(), NOW());
-
--- 11. Order Items
-INSERT INTO order_items (order_item_id, order_id, product_id, quantity, unit_price)
-VALUES 
-('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 1, 52900000),
-('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 1, 23500000);
-INSERT INTO categories (category_id, name, slug, description, parent_id, is_active) VALUES 
-('c0000001-1111-1111-1111-000000000001', 'CPU (Bộ vi xử lý)', 'cpu-bo-vi-xu-ly', 'Chip xử lý trung tâm', 'c0000000-0000-0000-0000-000000000001', TRUE),
-('c0000001-1111-1111-1111-000000000002', 'Mainboard (Bo mạch chủ)', 'mainboard-bo-mach-chu', 'Bo mạch chủ máy tính', 'c0000000-0000-0000-0000-000000000001', TRUE),
-('c0000001-1111-1111-1111-000000000003', 'RAM', 'ram-bo-nho-trong', 'Bộ nhớ RAM', 'c0000000-0000-0000-0000-000000000001', TRUE),
-('c0000001-1111-1111-1111-000000000004', 'GPU (Card đồ họa)', 'gpu-card-do-hoa', 'Card xử lý đồ họa', 'c0000000-0000-0000-0000-000000000001', TRUE),
-('c0000001-1111-1111-1111-000000000005', 'SSD', 'ssd-o-cung-the-ran', 'Ổ cứng SSD tốc độ cao', 'c0000000-0000-0000-0000-000000000001', TRUE),
-('c0000001-1111-1111-1111-000000000006', 'HDD', 'hdd-o-cung-co', 'Ổ lưu trữ dung lượng lớn', 'c0000000-0000-0000-0000-000000000001', TRUE),
-('c0000001-1111-1111-1111-000000000007', 'PSU (Nguồn máy tính)', 'psu-nguon-may-tinh', 'Bộ nguồn máy tính', 'c0000000-0000-0000-0000-000000000001', TRUE);
--- ==========================================================
--- 2. CHÈN DANH MỤC CON (SUB-CATEGORIES)
--- ==========================================================
--- Nhóm CPU
--- ==========================================================
--- ==========================================================
--- 1. CHÈN DANH MỤC CẤP CAO NHẤT (PARENTS)
--- ==========================================================
+-- 3. Categories
+-- Parent Categories
 INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
 ('c0000001-0000-0000-0000-000000000001', 'CPU', 'cpu', NULL, TRUE, NOW()),
 ('c0000001-0000-0000-0000-000000000002', 'Mainboard', 'mainboard', NULL, TRUE, NOW()),
@@ -332,55 +301,67 @@ INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_a
 ('c0000001-0000-0000-0000-000000000004', 'GPU (Card đồ họa)', 'gpu', NULL, TRUE, NOW()),
 ('c0000001-0000-0000-0000-000000000005', 'SSD', 'ssd', NULL, TRUE, NOW()),
 ('c0000001-0000-0000-0000-000000000006', 'HDD', 'hdd', NULL, TRUE, NOW()),
-('c0000001-0000-0000-0000-000000000007', 'PSU (Nguồn)', 'psu', NULL, TRUE, NOW());
+('c0000001-0000-0000-0000-000000000007', 'PSU (Nguồn)', 'psu', NULL, TRUE, NOW()),
+('c0000001-0000-0000-0000-000000000008', 'Laptop Gaming', 'laptop-gaming', NULL, TRUE, NOW());
 
--- ==========================================================
--- 2. CHÈN DANH MỤC CẤP CON (CHILDREN)
--- ==========================================================
-
--- Nhóm CPU
+-- Child Categories
 INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
 ('c0000002-0000-0000-0000-000000000001', 'Intel', 'cpu-intel', 'c0000001-0000-0000-0000-000000000001', TRUE, NOW()),
-('c0000002-0000-0000-0000-000000000002', 'AMD', 'cpu-amd', 'c0000001-0000-0000-0000-000000000001', TRUE, NOW());
-
--- Nhóm Mainboard
-INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
-('c0000002-0000-0000-0000-000000000003', 'Intel', 'mainboard-intel', 'c0000001-0000-0000-0000-000000000002', TRUE, NOW()),
-('c0000002-0000-0000-0000-000000000004', 'AMD', 'mainboard-amd', 'c0000001-0000-0000-0000-000000000002', TRUE, NOW());
-
--- Nhóm RAM
-INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
-('c0000002-0000-0000-0000-000000000005', 'DDR4', 'ram-ddr4', 'c0000001-0000-0000-0000-000000000003', TRUE, NOW()),
-('c0000002-0000-0000-0000-000000000006', 'DDR5', 'ram-ddr5', 'c0000001-0000-0000-0000-000000000003', TRUE, NOW());
-
--- Nhóm GPU
-INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
+('c0000002-0000-0000-0000-000000000002', 'AMD', 'cpu-amd', 'c0000001-0000-0000-0000-000000000001', TRUE, NOW()),
 ('c0000002-0000-0000-0000-000000000007', 'NVIDIA', 'gpu-nvidia', 'c0000001-0000-0000-0000-000000000004', TRUE, NOW()),
 ('c0000002-0000-0000-0000-000000000008', 'AMD', 'gpu-amd', 'c0000001-0000-0000-0000-000000000004', TRUE, NOW());
 
--- Nhóm SSD
-INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
-('c0000002-0000-0000-0000-000000000009', 'SSD SATA', 'ssd-sata', 'c0000001-0000-0000-0000-000000000005', TRUE, NOW()),
-('c0000002-0000-0000-0000-000000000010', 'SSD NVMe', 'ssd-nvme', 'c0000001-0000-0000-0000-000000000005', TRUE, NOW());
+-- 4. Products (Dành cho Compare Page)
+-- Sản phẩm 1: RTX 4090
+INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'ASUS ROG Strix RTX 4090 OC', 'vga-asus-rog-strix-rtx-4090-oc', 'RTX4090-ROG-STRIX', 58000000, 55900000, 10, 36, '{"chipset": "RTX 4090", "vram": "24GB GDDR6X", "bus": "384-bit", "core_clock": "2610 MHz", "power": "450W", "slots": "3.5 slot"}', 2, NOW(), NOW());
 
--- Nhóm HDD
-INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
-('c0000002-0000-0000-0000-000000000011', 'HDD 2.5 inch', 'hdd-2-5-inch', 'c0000001-0000-0000-0000-000000000006', TRUE, NOW()),
-('c0000002-0000-0000-0000-000000000012', 'HDD 3.5 inch', 'hdd-3-5-inch', 'c0000001-0000-0000-0000-000000000006', TRUE, NOW());
+-- Sản phẩm 2: RTX 4080 Super
+INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
+('d0000000-0000-0000-0000-000000000002', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', 'MSI Suprim X RTX 4080 Super', 'vga-msi-suprim-x-rtx-4080-super', 'RTX4080S-MSI-SUPRIM', 35000000, 33500000, 15, 36, '{"chipset": "RTX 4080 Super", "vram": "16GB GDDR6X", "bus": "256-bit", "core_clock": "2640 MHz", "power": "320W", "slots": "3.3 slot"}', 2, NOW(), NOW());
 
--- Nhóm PSU
-INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_at) VALUES 
-('c0000002-0000-0000-0000-000000000013', '500W–650W', 'psu-500w-650w', 'c0000001-0000-0000-0000-000000000007', TRUE, NOW()),
-('c0000002-0000-0000-0000-000000000014', '650W–850W', 'psu-650w-850w', 'c0000001-0000-0000-0000-000000000007', TRUE, NOW());
+-- Sản phẩm 3: RTX 4070 Ti Super
+INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
+('d0000000-0000-0000-0000-000000000003', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000003', 'Gigabyte AORUS Master RTX 4070 Ti Super', 'vga-gigabyte-aorus-master-rtx-4070-ti-super', 'RTX4070TIS-AORUS', 26000000, 24900000, 20, 36, '{"chipset": "RTX 4070 Ti Super", "vram": "16GB GDDR6X", "bus": "256-bit", "core_clock": "2670 MHz", "power": "285W", "slots": "3.0 slot"}', 2, NOW(), NOW());
 
-INSERT INTO review_replies (reply_id, review_id, user_id, content, is_active) VALUES
-('bb000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Cảm ơn bạn đã đánh giá! Rất vui vì bạn hài lòng với sản phẩm.', 1);
+-- Sản phẩm 4: RX 7900 XTX
+INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
+('d0000000-0000-0000-0000-000000000004', 'c0000002-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', 'ASUS TUF Gaming RX 7900 XTX OC', 'vga-asus-tuf-rx-7900-xtx-oc', 'RX7900XTX-ASUS-TUF', 32000000, 29900000, 8, 36, '{"chipset": "RX 7900 XTX", "vram": "24GB GDDR6", "bus": "384-bit", "core_clock": "2615 MHz", "power": "355W", "slots": "3.6 slot"}', 2, NOW(), NOW());
 
--- Seed data cho review_images
-INSERT INTO review_images (image_id, review_id, image_url) VALUES
-('cc000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review1/400/300'),
-('cc000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review2/400/300');
+-- 5. Product Specs (Chi tiết để so sánh)
+INSERT INTO product_specs (spec_id, product_id, spec_key, spec_value) VALUES 
+-- RTX 4090
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Nhân CUDA', '16384'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Xung nhịp tối đa', '2610 MHz'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Bộ nhớ', '24GB GDDR6X'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Tiêu thụ điện', '450W'),
+-- RTX 4080 Super
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Nhân CUDA', '10240'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Xung nhịp tối đa', '2640 MHz'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Bộ nhớ', '16GB GDDR6X'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Tiêu thụ điện', '320W'),
+-- RTX 4070 Ti Super
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Nhân CUDA', '8448'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Xung nhịp tối đa', '2670 MHz'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Bộ nhớ', '16GB GDDR6X'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Tiêu thụ điện', '285W'),
+-- RX 7900 XTX
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Nhân Stream', '6144'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Xung nhịp tối đa', '2615 MHz'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Bộ nhớ', '24GB GDDR6'),
+(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Tiêu thụ điện', '355W');
 
--- Seed data cho review_helpful_votes
-INSERT INTO review_helpful_votes (vote_id, review_id, user_id) VALUES
-('dd000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111');
+-- 6. Product Images
+INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'https://dlcdnwebimgs.asus.com/gain/392DE691-8AF2-4FD0-8914-996489370894', TRUE, 0),
+('d0000000-0000-0000-0000-000000000002', 'https://vga.msi.com/cdn/shop/files/suprim-x-4080-super.png', TRUE, 0),
+('d0000000-0000-0000-0000-000000000003', 'https://static.gigabyte.com/StaticFile/Image/Global/e3124888be6ec9f9e1e1a8a2d1d2d2d2/Product/37841', TRUE, 0),
+('d0000000-0000-0000-0000-000000000004', 'https://dlcdnwebimgs.asus.com/gain/452DE691-8AF2-4FD0-8914-996489370894', TRUE, 0);
+
+-- 7. Reviews
+INSERT INTO reviews (review_id, product_id, user_id, rating, comment, is_active, is_verified_purchase) VALUES 
+('a0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 5, 'Card quá mạnh, render video 4K nhanh như gió!', 1, TRUE);
+
+-- 8. Banner
+INSERT INTO banners (banner_id, title, subtitle, image_url, link_url, position, sort_order, is_active) VALUES 
+('e0000000-0000-0000-0000-000000000001', 'Siêu Phẩm RTX 40 Series', 'Sức mạnh đồ họa đỉnh cao', 'https://gearvn.com/cdn/shop/files/pc_gaming_slider_600x480.jpg', '/product/list', 1, 0, TRUE);

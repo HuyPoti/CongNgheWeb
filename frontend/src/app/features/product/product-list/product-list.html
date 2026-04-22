@@ -82,7 +82,8 @@
                     (click)="selectCategory(parent.slug)"
                     class="w-full px-3 py-2 rounded-xl text-left text-sm font-bold transition-colors"
                     [class]="
-                      activeCategory?.categoryId === parent.categoryId || isParentCategoryActive(parent)
+                      activeCategory?.categoryId === parent.categoryId ||
+                      isParentCategoryActive(parent)
                         ? 'bg-primary/10 text-primary'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary'
                     "
@@ -98,7 +99,10 @@
                 >
                   @if (getChildren(hoveredParent.categoryId).length > 0) {
                     <div class="grid grid-cols-2 gap-2">
-                      @for (child of getChildren(hoveredParent.categoryId); track child.categoryId) {
+                      @for (
+                        child of getChildren(hoveredParent.categoryId);
+                        track child.categoryId
+                      ) {
                         <button
                           type="button"
                           (click)="selectCategory(child.slug)"
@@ -330,7 +334,7 @@
                     <img
                       [src]="p.image"
                       [alt]="p.name"
-                      class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                      class="w-full h-full group-hover:scale-110 transition-transform duration-500"
                       #pImg
                       (error)="pImg.style.display = 'none'; pFallback.style.display = 'flex'"
                     />
@@ -356,12 +360,6 @@
                       class="absolute top-3 left-3 bg-red-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg"
                     >
                       -{{ savingPercent(p) }}%
-                    </div>
-                  } @else {
-                    <div
-                      class="absolute top-3 left-3 bg-primary text-white text-[8px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest"
-                    >
-                      {{ 'common.new' | translate }}
                     </div>
                   }
 
@@ -498,7 +496,7 @@
           {{ 'product.compare_status' | translate }}
         </p>
         <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-          {{ comparisonService.selectedCount() }} / 2
+          {{ comparisonService.selectedCount() }} / 4
         </p>
       </div>
     </div>
