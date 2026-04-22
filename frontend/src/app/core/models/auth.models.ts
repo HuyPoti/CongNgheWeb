@@ -44,3 +44,8 @@ export interface VerifyEmailDto {
 export interface ResendVerificationDto {
   email: string;
 }
+
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+}
