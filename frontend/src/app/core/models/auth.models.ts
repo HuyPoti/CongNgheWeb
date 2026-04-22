@@ -35,3 +35,12 @@ export interface ResetPasswordDto{
   otpCode: string;
   newPassword: string;
 }
+
+export interface VerifyEmailDto {
+  email: string;
+  otpCode: string;
+}
+
+export interface ResendVerificationDto {
+  email: string;
+}
