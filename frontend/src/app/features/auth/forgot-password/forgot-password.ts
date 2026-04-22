@@ -12,7 +12,7 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
-export class ForgotPasswordComponent {
+export class ForgotPassword {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);

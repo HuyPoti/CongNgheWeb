@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, UserDto, LoginDto, RegisterDto } from '../models/auth.models';
+import { AuthResponse, UserDto, LoginDto, RegisterDto, VerifyEmailDto, ResendVerificationDto } from '../models/auth.models';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ForgotPasswordDto, ResetPasswordDto } from '../models/auth.models';
 import { SocialAuthService } from '@abacritt/angularx-social-login';
@@ -106,5 +106,13 @@ export class AuthService {
     return this.http
       .post<AuthResponse>(`${this.apiUrl}/refresh-token`, { refreshToken })
       .pipe(tap((res) => this.setSession(res)));
+  }
+
+  verifyEmail(data: VerifyEmailDto): Observable<{ message: string }> {
+    return this.http.post<{message: string }>(`${this.apiUrl}/verify-email`, data);
+  }
+
+  resendVerification(data: ResendVerificationDto): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/resend-verification`, data);
   }
 }

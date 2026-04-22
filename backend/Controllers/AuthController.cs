@@ -83,4 +83,32 @@ public class AuthController(IAuthService authServices) : ControllerBase
         await authServices.LogoutAsync(dto.RefreshToken, ct);
         return Ok(new { message = "Đã đăng xuất." });
     }
+
+    [HttpPost("verify-email")]
+public async Task<ActionResult> VerifyEmail([FromBody] VerifyEmailDto dto, CancellationToken cancellationToken)
+{
+    try
+    {
+        await authServices.VerifyEmailAsync(dto, cancellationToken);
+        return Ok(new { message = "Email đã được xác nhận thành công!" });
+    }
+    catch (Exception ex)
+    {
+        return BadRequest(new { message = ex.Message });
+    }
+}
+
+    [HttpPost("resend-verification")]
+    public async Task<ActionResult> ResendVerification([FromBody] ResendVerificationDto dto, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await authServices.ResendVerificationAsync(dto, cancellationToken);
+            return Ok(new { message = "Mã OTP mới đã được gửi." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

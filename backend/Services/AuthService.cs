@@ -28,6 +28,11 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
         
         if (!user.IsActive) throw new Exception("Tài khoản đã bị khóa.");
 
+        if (!user.IsEmailVerified)
+        {
+            throw new Exception("Tài khoản chưa xác thực email. Vui lòng kiểm tra email để lấy mã OTP.");
+        }
+
         return new AuthResponseDto
         {
             Token = GenerateJwtToken(user),
@@ -41,6 +46,8 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
         if (await context.Users.AnyAsync(u => u.Email == dto.Email, cancellationToken))
             throw new Exception("Email đã tồn tại.");
 
+        var otpCode = Random.Shared.Next(100000, 999999).ToString();
+
         var user = new User
         {
             UserId = Guid.NewGuid(),
@@ -50,12 +57,25 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
             Phone = dto.Phone,
             Role = UserRole.customer,
             IsActive = true,
+            IsEmailVerified = false,
+            EmailVerificationOtp = otpCode,
+            OtpExpiresAt = DateTime.UtcNow.AddMinutes(10),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         context.Users.Add(user);
         await context.SaveChangesAsync(cancellationToken);
+
+        var emailBody = $@"
+            <h2>Xác nhận tài khoản</h2>
+            <p>Xin chào <strong>{user.FullName}</strong>,</p>
+            <p>Mã OTP xác nhận email của bạn:</p>
+            <h1 style='color: #0066ff; letter-spacing: 8px; font-size: 36px;'>{otpCode}</h1>
+            <p>Mã có hiệu lực trong <strong>10 phút</strong>.</p>
+        ";
+
+        await emailService.SendEmailAsync(user.Email, "Xác nhận tài khoản - TechShop", emailBody);
 
         return new AuthResponseDto
         {
@@ -86,6 +106,7 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
                     PasswordHash = "",
                     Role = UserRole.customer,
                     IsActive = true,
+                    IsEmailVerified = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -265,5 +286,48 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
             storedToken.IsRevoked = true;
             await context.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    public async Task VerifyEmailAsync(VerifyEmailDto dto, CancellationToken cancellationToken)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken);
+        if (user == null)
+            throw new Exception("Email không tồn tại.");
+
+        if (user.IsEmailVerified)
+            throw new Exception("Email đã được xác nhận trước đó.");
+
+        if (user.EmailVerificationOtp != dto.OtpCode)
+            throw new Exception("Mã OTP không chính xác.");
+
+        if (user.OtpExpiresAt < DateTime.UtcNow)
+            throw new Exception("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.");
+
+        user.IsEmailVerified = true;
+        user.EmailVerificationOtp = null;  // Xóa OTP sau khi dùng
+        user.OtpExpiresAt = null;
+        user.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task ResendVerificationAsync(ResendVerificationDto dto, CancellationToken cancellationToken)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken);
+        if (user == null) throw new Exception("Email không tồn tại.");
+        if (user.IsEmailVerified) throw new Exception("Email đã được xác nhận.");
+
+        var otpCode = Random.Shared.Next(100000, 999999).ToString();
+        user.EmailVerificationOtp = otpCode;
+        user.OtpExpiresAt = DateTime.UtcNow.AddMinutes(10);
+        await context.SaveChangesAsync(cancellationToken);
+
+        var emailBody = $@"
+            <h2>Mã xác nhận mới</h2>
+            <p>Xin chào <strong>{user.FullName}</strong>,</p>
+            <p>Mã OTP mới của bạn:</p>
+            <h1 style='color: #0066ff; letter-spacing: 8px;'>{otpCode}</h1>
+            <p>Mã có hiệu lực trong <strong>10 phút</strong>.</p>
+        ";
+        await emailService.SendEmailAsync(user.Email, "Mã xác nhận mới - TechShop", emailBody);
     }
 }

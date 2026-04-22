@@ -67,3 +67,21 @@ public class RefreshTokenDto
     [Required]
     public string RefreshToken { get; set; } = string.Empty;
 }
+
+public class VerifyEmailDto
+{
+    [Required]
+    [EmailAddress]
+    public string Email {get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(6)]
+    public string OtpCode {get; set; } = string.Empty;
+}
+
+public class ResendVerificationDto
+{
+    [Required]
+    [EmailAddress]
+    public string Email {get; set; } = string.Empty;
+}
