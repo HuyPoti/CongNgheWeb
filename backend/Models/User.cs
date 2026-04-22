@@ -39,6 +39,16 @@ public class User
     [Column("is_active")]
     public bool IsActive { get; set; } = true;
 
+    [Column("is_email_verified")]
+    public bool IsEmailVerified {get; set;} = false;
+
+    [Column("email_verification_otp")]
+    [MaxLength(6)]
+    public string? EmailVerificationOtp {get; set; }
+
+    [Column("otp_expires_at")]
+    public DateTime? OtpExpiresAt {get; set;}
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
