@@ -223,7 +223,7 @@
               } @else {
                 <img
                   [src]="item.image"
-                  class="w-full h-full object-contain p-4 transition-transform group-hover:scale-110"
+                  class="w-full h-full transition-transform group-hover:scale-110"
                   alt="{{ item.name }}"
                   #fsImg
                   (error)="fsImg.style.display = 'none'; fsFallback.classList.remove('hidden')"
@@ -338,7 +338,7 @@
                 } @else {
                   <img
                     [src]="prod.image"
-                    class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                    class="w-full h-full group-hover:scale-110 transition-transform duration-500"
                     [alt]="prod.name"
                     #pImg
                     (error)="pImg.style.display = 'none'; pFallback.classList.remove('hidden')"

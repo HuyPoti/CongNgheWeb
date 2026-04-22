@@ -1,11 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
+import { ToastService } from '../../core/services/toast.service';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 type StepId = 'cpu' | 'mb' | 'ram' | 'gpu' | 'storage' | 'psu' | 'case';
 
@@ -26,7 +29,10 @@ interface BuildStep {
 export class BuildPc {
   private readonly productService = inject(ProductService);
   private readonly cartService = inject(CartService);
+  private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly currencyPipe = inject(CurrencyPipe);
+  private readonly datePipe = inject(DatePipe);
 
   private readonly stateKey = 'build_pc_state_v1';
   private requestId = 0;
@@ -201,6 +207,13 @@ export class BuildPc {
     const id = stepId as StepId;
     const current = this.stepQuantities()[id] || 1;
     const next = Math.max(1, current + delta);
+
+    const product = this.selectedComponents()[id];
+    if (product && next > product.stockQuantity) {
+      this.toastService.warning(`Số lượng tối đa cho phép là ${product.stockQuantity}`);
+      return;
+    }
+
     this.stepQuantities.update((prev) => ({ ...prev, [id]: next }));
     this.persistState();
   }
@@ -218,12 +231,14 @@ export class BuildPc {
     }));
     void this.loadProductSpecs(product.id);
     this.persistState();
+    this.toastService.success(`Đã thêm ${product.name} vào cấu hình`);
 
     this.closeModal();
   }
 
   clearStepSelection(stepId: string) {
     const id = stepId as StepId;
+    const product = this.selectedComponents()[id];
     this.selectedComponents.update((prev) => ({
       ...prev,
       [id]: null,
@@ -231,6 +246,9 @@ export class BuildPc {
     this.currentStepId.set(id);
     this.persistState();
     void this.loadProductsForStep(id);
+    if (product) {
+      this.toastService.info(`Đã gỡ bỏ ${product.name}`);
+    }
   }
 
   resetBuild() {
@@ -258,12 +276,16 @@ export class BuildPc {
     this.currentStepId.set('cpu');
     this.persistState();
     void this.loadProductsForStep('cpu');
+    this.toastService.info('Đã xóa toàn bộ cấu hình');
   }
 
   async saveBuild() {
     this.isSaving.set(true);
     this.persistState();
-    setTimeout(() => this.isSaving.set(false), 500);
+    setTimeout(() => {
+      this.isSaving.set(false);
+      this.toastService.success('Đã lưu cấu hình hiện tại');
+    }, 500);
   }
 
   addBuildToCart() {
@@ -281,7 +303,174 @@ export class BuildPc {
       }
     }
 
+    this.toastService.success('Đã thêm toàn bộ linh kiện vào giỏ hàng');
     void this.router.navigateByUrl('/cart');
+  }
+
+  async exportToPdf() {
+    if (this.selectedCount() === 0) {
+      this.toastService.warning('Please select components before exporting');
+      return;
+    }
+
+    this.toastService.info('Generating PDF with images...');
+
+    try {
+      const doc = new jsPDF();
+      const primaryColor: [number, number, number] = [37, 99, 235]; // blue-600
+
+      // Header
+      doc.setFontSize(22);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text('ZX Computer - PC Builder', 105, 20, { align: 'center' });
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(
+        `Created at: ${this.datePipe.transform(new Date(), 'MMMM dd, yyyy HH:mm', '+0700', 'en-US')}`,
+        105,
+        28,
+        {
+          align: 'center',
+        },
+      );
+
+      // Helper: format number as "1,234,567 VND" (ASCII-safe, no Unicode symbol)
+      const formatVnd = (value: number): string => {
+        return value.toLocaleString('en-US') + ' VND';
+      };
+
+      // Fetch all product images as base64
+      const selectedSteps = this.steps.filter((step) => this.selectedComponents()[step.id]);
+      const imageMap = new Map<string, string>();
+
+      await Promise.all(
+        selectedSteps.map(async (step) => {
+          const p = this.selectedComponents()[step.id]!;
+          if (p.image) {
+            try {
+              const base64 = await this.loadImageAsBase64(p.image);
+              imageMap.set(step.id, base64);
+            } catch {
+              // Skip image if loading fails
+            }
+          }
+        }),
+      );
+
+      // Table Data – 6 columns: No | Image | Product Name | Qty | Unit Price | Total
+      const tableData = selectedSteps.map((step, index) => {
+        const p = this.selectedComponents()[step.id]!;
+        const qty = this.stepQuantities()[step.id] || 1;
+        const label = this.translateLabel(step.label);
+        return [
+          index + 1,
+          '', // Image placeholder – drawn via didDrawCell
+          `[${label}] ${p.name}`,
+          qty,
+          formatVnd(p.price),
+          formatVnd(p.price * qty),
+        ];
+      });
+
+      // Store step IDs for image lookup in didDrawCell
+      const stepIds = selectedSteps.map((s) => s.id);
+
+      autoTable(doc, {
+        startY: 35,
+        head: [['No', 'Image', 'Product Name', 'Qty', 'Unit Price', 'Total']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+          fillColor: primaryColor,
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+        },
+        columnStyles: {
+          0: { cellWidth: 12, halign: 'center', valign: 'middle' },
+          1: { cellWidth: 22, halign: 'center', valign: 'middle' },
+          2: { cellWidth: 'auto', valign: 'middle' },
+          3: { cellWidth: 15, halign: 'center', valign: 'middle' },
+          4: { cellWidth: 32, halign: 'right', valign: 'middle' },
+          5: { cellWidth: 32, halign: 'right', valign: 'middle' },
+        },
+        styles: { fontSize: 9, cellPadding: 4, minCellHeight: 20 },
+        margin: { left: 14, right: 14 },
+        didDrawCell: (data) => {
+          // Draw image in column index 1 (Image column), only for body rows
+          if (data.section === 'body' && data.column.index === 1) {
+            const stepId = stepIds[data.row.index];
+            const base64 = imageMap.get(stepId);
+            if (base64) {
+              const imgSize = 16;
+              const x = data.cell.x + (data.cell.width - imgSize) / 2;
+              const y = data.cell.y + (data.cell.height - imgSize) / 2;
+              doc.addImage(base64, 'JPEG', x, y, imgSize, imgSize);
+            }
+          }
+        },
+      });
+
+      // Total
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const finalY = (doc as any).lastAutoTable.finalY || 40;
+      doc.setFontSize(13);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(`TOTAL: ${formatVnd(this.totalPrice())}`, 196, finalY + 12, { align: 'right' });
+
+      doc.setFontSize(9);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Thank you for choosing ZX Computer Build Service!', 105, finalY + 24, {
+        align: 'center',
+      });
+
+      doc.save(`zx-computer-build-${new Date().getTime()}.pdf`);
+      this.toastService.success('PDF configuration exported successfully');
+    } catch (error) {
+      console.error('PDF Error:', error);
+      this.toastService.error('Error occurred while generating PDF');
+    }
+  }
+
+  private loadImageAsBase64(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+        // White background (for transparent PNGs)
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = url;
+    });
+  }
+
+  private translateLabel(key: string): string {
+    // Simple translation fallback if needed, but here we just return descriptive names
+    const mapping: Record<string, string> = {
+      'build.step_cpu': 'CPU',
+      'build.step_mb': 'Mainboard',
+      'build.step_ram': 'RAM',
+      'build.step_gpu': 'Graphics Card',
+      'build.step_storage': 'Storage',
+      'build.step_psu': 'Power Supply',
+      'build.step_case': 'Chassis',
+    };
+    return mapping[key] || key;
   }
 
   getStepStatus(id: string) {
