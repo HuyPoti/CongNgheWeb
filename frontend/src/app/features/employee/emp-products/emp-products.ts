@@ -45,6 +45,7 @@ export class EmpProducts implements OnInit {
   // Detail view
   showDetail = signal<ProductFullDto | null>(null);
   isLoadingDetail = signal(false);
+  detailSpecs = signal<{ key: string; value: string }[]>([]);
 
   // Stock status helpers
   stockThreshold = 5;
@@ -105,6 +106,23 @@ export class EmpProducts implements OnInit {
     this.productService.getFullById(product.productId).subscribe({
       next: (full) => {
         this.showDetail.set(full);
+        
+        // Parse specs from JSON specifications field
+        const parsedSpecs: { key: string; value: string }[] = [];
+        if (full.product.specifications) {
+          try {
+            const parsed = JSON.parse(full.product.specifications);
+            if (typeof parsed === 'object' && parsed !== null) {
+              Object.entries(parsed).forEach(([key, value]) => {
+                parsedSpecs.push({ key, value: String(value) });
+              });
+            }
+          } catch (e) {
+            console.warn('Failed to parse specifications JSON in Employee view', e);
+          }
+        }
+        this.detailSpecs.set(parsedSpecs);
+        
         this.isLoadingDetail.set(false);
       },
       error: () => {

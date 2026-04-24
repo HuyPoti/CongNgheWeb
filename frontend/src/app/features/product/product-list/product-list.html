@@ -325,7 +325,7 @@
             @for (p of products(); track p.id) {
               <div
                 class="bg-white dark:bg-surface-dark rounded-3xl p-5 border border-slate-100 dark:border-white/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 group flex flex-col cursor-pointer"
-                [routerLink]="['/product', p.id]"
+                [routerLink]="['/product', p.slug]"
               >
                 <div
                   class="aspect-square bg-slate-50 dark:bg-white/5 rounded-2xl mb-4 overflow-hidden relative"

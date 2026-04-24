@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -21,10 +21,11 @@ export class Register implements OnInit {
   private route = inject(ActivatedRoute);
   private socialAuthService = inject(SocialAuthService);
   private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   registerForm: FormGroup;
   returnUrl = '/';
-  isLoading = false;
+  isLoading = signal(false);
   submitted = false;
 
   constructor() {
@@ -41,19 +42,17 @@ export class Register implements OnInit {
   ngOnInit(): void {
     this.socialAuthService.authState.subscribe((socialUser) => {
       if (socialUser && socialUser.idToken) {
-        setTimeout(() => {
-          this.isLoading = true;
-          this.authService.googleLogin(socialUser.idToken as string).subscribe({
-            next: () => {
-              this.isLoading = false;
-              this.toastService.success('Đăng nhập thành công với Google');
-              this.router.navigateByUrl(this.returnUrl || '/');
-            },
-            error: (err) => {
-              this.isLoading = false;
-              this.toastService.error(err.error?.message || 'Lỗi kết nối Google');
-            },
-          });
+        this.isLoading.set(true);
+        this.authService.googleLogin(socialUser.idToken as string).subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            this.toastService.success('Đăng nhập thành công với Google');
+            this.router.navigateByUrl(this.returnUrl || '/');
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            this.toastService.error(err.error?.message || 'Lỗi kết nối Google');
+          },
         });
       }
     });
@@ -98,18 +97,18 @@ export class Register implements OnInit {
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     const registerData = { ...this.registerForm.value };
     delete registerData.terms;
 
     this.authService.register(registerData).subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         this.toastService.success('Tạo tài khoản thành công!');
         this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         this.toastService.error(err.error?.message || 'Lỗi tạo tài khoản');
       },
     });

@@ -11,7 +11,6 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
-    public DbSet<ProductSpec> ProductSpecs { get; set; }
     public DbSet<Banner> Banners { get; set; }
     public DbSet<Brand> Brands { get; set; }
     public DbSet<News> News { get; set; }
@@ -105,15 +104,7 @@ public class AppDbContext : DbContext
                 .HasForeignKey(e => e.ProductId);
         });
 
-        // Product Specs (Key-Value)
-        modelBuilder.Entity<ProductSpec>(entity =>
-        {
-            entity.ToTable("product_specs");
-            entity.HasKey(e => e.SpecId);
-            entity.HasOne(e => e.Product)
-                .WithMany(p => p.Specs)
-                .HasForeignKey(e => e.ProductId);
-        });
+
 
         // Users
         modelBuilder.Entity<User>(entity =>

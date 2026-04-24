@@ -1,27 +1,49 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ShopStateService } from '../../../core/services/shop-state.service';
+import { ProductService } from '../../../core/services/product.service';
 
 @Component({
   selector: 'app-search-overlay',
-  imports: [FormsModule, RouterLink, CommonModule],
+  standalone: true,
+  imports: [FormsModule, CommonModule],
   templateUrl: './search-overlay.html',
   styles: ``,
 })
-export class SearchOverlay {
+export class SearchOverlay implements OnInit {
   @Output() closeOverlay = new EventEmitter<void>();
+  private router = inject(Router);
+  private shopStateService = inject(ShopStateService);
+  private productService = inject(ProductService);
 
   searchQuery = '';
-  selectedCategory = 'All';
-  categories = ['All', 'GPUs', 'CPUs', 'Motherboards', 'RAM', 'Storage', 'Monitors', 'Peripherals'];
+  trendingProducts: string[] = [];
+
+  ngOnInit() {
+    this.productService.fetchClientProducts({ page: 1, pageSize: 5 }).subscribe({
+      next: (res) => {
+        this.trendingProducts = res.items.map(p => p.name);
+      },
+      error: () => {
+        this.trendingProducts = [];
+      }
+    });
+  }
 
   searchFor(term: string) {
     this.searchQuery = term;
+    this.onSearch();
   }
 
   onSearch() {
-    // Placeholder: will integrate with a real search service later
-    console.log('Searching for:', this.searchQuery, 'Category:', this.selectedCategory);
+    if (this.searchQuery.trim()) {
+      this.shopStateService.setSearchKeyword(this.searchQuery.trim());
+      this.shopStateService.setCurrentPage(1);
+      void this.router.navigate(['/product/list']);
+      this.closeOverlay.emit();
+    }
   }
 }
+

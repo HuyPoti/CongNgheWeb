@@ -11,9 +11,7 @@ import {
   CreateProductDto,
   UpdateProductDto,
   ProductImageDto,
-  ProductSpecDto,
   CreateProductImageDto,
-  CreateProductSpecDto,
 } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
@@ -71,6 +69,10 @@ export class ProductService {
     return this.http.get<ProductDto>(`${this.baseUrl}/slug/${slug}`);
   }
 
+  getFullBySlug(slug: string): Observable<ProductFullDto> {
+    return this.http.get<ProductFullDto>(`${this.baseUrl}/slug/${slug}/full`);
+  }
+
   create(dto: CreateProductDto): Observable<ProductDto> {
     return this.http.post<ProductDto>(this.baseUrl, dto);
   }
@@ -95,27 +97,5 @@ export class ProductService {
 
   deleteImage(productId: string, imageId: string): Observable<void> {
     return this.http.delete<void>(`${this.productsUrl}/${productId}/images/${imageId}`);
-  }
-
-  // ── Product Specs ──────────────────────────────────────────────
-
-  getSpecs(productId: string): Observable<ProductSpecDto[]> {
-    return this.http.get<ProductSpecDto[]>(`${this.productsUrl}/${productId}/specs`);
-  }
-
-  addSpec(productId: string, dto: CreateProductSpecDto): Observable<ProductSpecDto> {
-    return this.http.post<ProductSpecDto>(`${this.productsUrl}/${productId}/specs`, dto);
-  }
-
-  updateSpec(
-    productId: string,
-    specId: string,
-    dto: CreateProductSpecDto,
-  ): Observable<ProductSpecDto> {
-    return this.http.put<ProductSpecDto>(`${this.productsUrl}/${productId}/specs/${specId}`, dto);
-  }
-
-  deleteSpec(productId: string, specId: string): Observable<void> {
-    return this.http.delete<void>(`${this.productsUrl}/${productId}/specs/${specId}`);
   }
 }

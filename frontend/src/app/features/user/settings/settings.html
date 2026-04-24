@@ -1,236 +1,448 @@
 <div class="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-            <h2 class="text-4xl font-orbitron font-bold text-slate-900 dark:text-white uppercase tracking-tight">{{ 'settings.title' | translate }}</h2>
-            <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">{{ 'settings.subtitle' | translate }}</p>
-        </div>
-        <div class="flex items-center gap-3">
-             <button class="px-6 py-2 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">{{ 'settings.discard' | translate }}</button>
-             <button class="px-8 py-2 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/30 hover:scale-105 transition-all">{{ 'settings.save_all' | translate }}</button>
-        </div>
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div>
+      <h2
+        class="text-4xl font-orbitron font-bold text-slate-900 dark:text-white uppercase tracking-tight"
+      >
+        {{ 'settings.title' | translate }}
+      </h2>
+      <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">
+        {{ 'settings.subtitle' | translate }}
+      </p>
     </div>
+  </div>
 
-    <!-- Tabs Navigation (Premium Style) -->
-    <div class="flex gap-4 p-2 bg-white/50 dark:bg-white/5 backdrop-blur-xl rounded-3xl border border-slate-100 dark:border-white/5 overflow-x-auto scrollbar-hide shadow-sm shadow-slate-200/50">
-        @for (tab of tabs; track tab.id) {
-            <button 
-                (click)="updateTab(tab.id)"
-                class="flex items-center gap-3 px-8 py-4 rounded-2xl text-[11px] font-bold transition-all duration-300 cursor-pointer whitespace-nowrap uppercase tracking-widest group"
-                [class]="activeTab() === tab.id 
-                    ? 'bg-primary text-white shadow-xl shadow-primary/40 scale-105' 
-                    : 'text-slate-500 dark:text-slate-400 hover:text-primary' "
+  <!-- Tabs Navigation (Premium Style) -->
+  <div
+    class="flex gap-4 p-2 bg-white/50 dark:bg-white/5 backdrop-blur-xl rounded-3xl border border-slate-100 dark:border-white/5 overflow-x-auto scrollbar-hide shadow-sm shadow-slate-200/50"
+  >
+    @for (tab of tabs; track tab.id) {
+      <button
+        (click)="updateTab(tab.id)"
+        class="flex items-center gap-3 px-8 py-4 rounded-2xl text-[11px] font-bold transition-all duration-300 cursor-pointer whitespace-nowrap uppercase tracking-widest group"
+        [class]="
+          activeTab() === tab.id
+            ? 'bg-primary text-white shadow-xl shadow-primary/40 scale-105'
+            : 'text-slate-500 dark:text-slate-400 hover:text-primary'
+        "
+      >
+        <span
+          class="material-symbols-outlined text-lg opacity-80 group-hover:scale-110 transition-transform"
+          >{{ tab.icon }}</span
+        >
+        {{ tab.label | translate }}
+      </button>
+    }
+  </div>
+
+  <!-- Active Tab Content -->
+  <div
+    class="bg-white dark:bg-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-slate-50 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]"
+  >
+    @switch (activeTab()) {
+      @case ('account') {
+        <div class="space-y-12 animate-in fade-in duration-500">
+          <div>
+            <div
+              class="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-white/5 pb-6"
             >
-                <span class="material-symbols-outlined text-lg opacity-80 group-hover:scale-110 transition-transform">{{ tab.icon }}</span>
-                {{ tab.label | translate }}
-            </button>
-        }
-    </div>
+              <span class="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-2xl"
+                >person_edit</span
+              >
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  {{ 'settings.profile_title' | translate }}
+                </h3>
+                <p class="text-sm text-slate-400">{{ 'settings.profile_desc' | translate }}</p>
+              </div>
+            </div>
 
-    <!-- Active Tab Content -->
-    <div class="bg-white dark:bg-surface-dark rounded-[2.5rem] p-8 md:p-12 border border-slate-50 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]">
-        @switch (activeTab()) {
-            @case ('account') {
-                <div class="space-y-12 animate-in fade-in duration-500">
-                    <div>
-                        <div class="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-white/5 pb-6">
-                            <span class="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-2xl">person_edit</span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ 'settings.profile_title' | translate }}</h3>
-                                <p class="text-sm text-slate-400">{{ 'settings.profile_desc' | translate }}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div class="space-y-3 group">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{{ 'settings.username' | translate }}</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 opacity-40 text-sm">@</span>
-                                    <input type="text" value="minhnguyen_zx" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 pl-10 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold" />
-                                </div>
-                            </div>
-                            <div class="space-y-3">
-                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{{ 'settings.display_name' | translate }}</label>
-                                <input type="text" value="Minh Nguyen" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="pt-10 border-t border-slate-50 dark:border-white/5">
-                        <div class="flex items-center gap-4 mb-10">
-                            <span class="material-symbols-outlined text-emerald-500 p-3 bg-emerald-500/5 rounded-2xl">mail</span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ 'settings.email_title' | translate }}</h3>
-                                <p class="text-sm text-slate-400">{{ 'settings.email_desc' | translate }}</p>
-                            </div>
-                        </div>
-                        <input type="email" value="minh.nguyen@example.com" class="w-full md:w-1/2 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold" />
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div class="space-y-3 group">
+                <label
+                  class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1"
+                  >{{ 'settings.username' | translate }}</label
+                >
+                <div class="relative">
+                  <span
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 opacity-40 text-sm"
+                    >@</span
+                  >
+                  <input
+                    type="text"
+                    value="minhnguyen_zx"
+                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 pl-10 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold"
+                  />
                 </div>
-            }
-            @case ('security') {
-                <div class="space-y-12 animate-in fade-in duration-500">
-                      <div class="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-white/5 pb-6">
-                         <span class="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-2xl">shield</span>
-                         <div>
-                             <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ 'settings.privacy_title' | translate }}</h3>
-                             <p class="text-sm text-slate-400">{{ 'settings.privacy_desc' | translate }}</p>
-                         </div>
-                     </div>
+              </div>
+              <div class="space-y-3">
+                <label
+                  class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1"
+                  >{{ 'settings.display_name' | translate }}</label
+                >
+                <input
+                  type="text"
+                  value="Minh Nguyen"
+                  class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold"
+                />
+              </div>
+            </div>
+          </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                         <div class="p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex flex-col items-center text-center gap-5 hover:border-primary/50 transition-all group">
-                              <div class="p-5 bg-white dark:bg-white/10 rounded-2xl shadow-xl group-hover:scale-110 transition-transform">
-                                 <span class="material-symbols-outlined text-4xl text-primary">key</span>
-                              </div>
-                              <div>
-                                 <p class="font-bold text-slate-900 dark:text-white text-lg">{{ 'settings.password_title' | translate }}</p>
-                                 <p class="text-sm text-slate-400 mt-2">{{ 'settings.password_desc' | translate }}</p>
-                              </div>
-                              <button class="mt-4 px-8 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest hover:border-primary transition-all">{{ 'settings.change_password' | translate }}</button>
-                         </div>
-                         <div class="p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex flex-col items-center text-center gap-5 hover:border-emerald-500/50 transition-all group">
-                              <div class="p-5 bg-white dark:bg-white/10 rounded-2xl shadow-xl group-hover:scale-110 transition-transform">
-                                 <span class="material-symbols-outlined text-4xl text-emerald-500">security</span>
-                              </div>
-                              <div>
-                                 <p class="font-bold text-slate-900 dark:text-white text-lg">{{ 'settings.two_factor' | translate }}</p>
-                                 <p class="text-sm text-slate-400 mt-2">{{ 'settings.two_factor_desc' | translate }}</p>
-                              </div>
-                              <button class="mt-4 px-8 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest hover:border-emerald-500 transition-all">{{ 'settings.enable_2fa' | translate }}</button>
-                         </div>
-                    </div>
-                </div>
-            }
-            @case ('notifications') {
-                <div class="space-y-10 animate-in fade-in duration-500">
-                    <div class="flex items-center gap-4 mb-2">
-                        <span class="material-symbols-outlined text-amber-500 p-3 bg-amber-500/5 rounded-2xl">notifications_active</span>
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ 'settings.notif_title' | translate }}</h3>
-                            <p class="text-sm text-slate-400">{{ 'settings.notif_desc' | translate }}</p>
-                        </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        @for (item of [
-                            {title: 'settings.notif_dm', desc: 'settings.notif_dm_desc'},
-                            {title: 'settings.notif_price', desc: 'settings.notif_price_desc'},
-                            {title: 'settings.notif_news', desc: 'settings.notif_news_desc'},
-                            {title: 'settings.notif_security', desc: 'settings.notif_security_desc'}
-                        ]; track item.title) {
-                            <div class="flex items-center justify-between p-8 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 hover:shadow-xl transition-all group">
-                                <div class="max-w-[70%]">
-                                    <p class="font-bold text-slate-900 dark:text-white text-lg group-hover:text-primary transition-colors">{{ item.title | translate }}</p>
-                                    <p class="text-sm text-slate-400 mt-1">{{ item.desc | translate }}</p>
-                                </div>
-                                <div class="w-14 h-7 bg-slate-200 dark:bg-white/10 rounded-full relative cursor-pointer border border-transparent transition-all overflow-hidden" [class.bg-primary]="item.title.includes('Security')">
-                                    <div class="absolute w-5 h-5 bg-white rounded-full shadow-lg transition-all top-1" [class.left-8]="item.title.includes('Security')" [class.left-1]="!item.title.includes('Security')"></div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-            @case ('preferences') {
-                <div class="space-y-12 animate-in fade-in duration-500">
-                    <!-- Appearance Section -->
-                    <div>
-                        <div class="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-white/5 pb-6">
-                            <span class="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-2xl">palette</span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ 'settings.appearance_title' | translate }}</h3>
-                                <p class="text-sm text-slate-400">{{ 'settings.appearance_desc' | translate }}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <button (click)="setTheme('light')" 
-                                class="p-8 rounded-[2rem] border-2 transition-all group text-left relative overflow-hidden"
-                                [class.border-primary]="themeService.theme() === 'light'"
-                                [class.bg-primary/5]="themeService.theme() === 'light'"
-                                [class.border-slate-100]="themeService.theme() !== 'light'"
-                                [class.dark:border-white/5]="themeService.theme() !== 'light'"
-                                [class.bg-slate-50]="themeService.theme() !== 'light'"
-                                [class.dark:bg-white/2]="themeService.theme() !== 'light'"
-                            >
-                                <div class="flex items-center justify-between mb-6">
-                                    <span class="material-symbols-outlined text-4xl" [class.text-primary]="themeService.theme() === 'light'" [class.text-slate-400]="themeService.theme() !== 'light'">light_mode</span>
-                                    @if (themeService.theme() === 'light') {
-                                        <span class="material-symbols-outlined text-primary">check_circle</span>
-                                    }
-                                </div>
-                                <p class="font-bold text-slate-900 dark:text-white text-lg">{{ 'settings.light_protocol' | translate }}</p>
-                                <p class="text-xs text-slate-400 mt-2 uppercase tracking-widest font-bold">{{ 'settings.light_desc' | translate }}</p>
-                            </button>
-
-                            <button (click)="setTheme('dark')" 
-                                class="p-8 rounded-[2rem] border-2 transition-all group text-left relative overflow-hidden"
-                                [class.border-primary]="themeService.theme() === 'dark'"
-                                [class.bg-primary/5]="themeService.theme() === 'dark'"
-                                [class.border-slate-100]="themeService.theme() !== 'dark'"
-                                [class.dark:border-white/5]="themeService.theme() !== 'dark'"
-                                [class.bg-slate-50]="themeService.theme() !== 'dark'"
-                                [class.dark:bg-white/2]="themeService.theme() !== 'dark'"
-                            >
-                                <div class="flex items-center justify-between mb-6">
-                                    <span class="material-symbols-outlined text-4xl" [class.text-primary]="themeService.theme() === 'dark'" [class.text-slate-400]="themeService.theme() !== 'dark'">dark_mode</span>
-                                    @if (themeService.theme() === 'dark') {
-                                        <span class="material-symbols-outlined text-primary">check_circle</span>
-                                    }
-                                </div>
-                                <p class="font-bold text-slate-900 dark:text-white text-lg">{{ 'settings.dark_protocol' | translate }}</p>
-                                <p class="text-xs text-slate-400 mt-2 uppercase tracking-widest font-bold">{{ 'settings.dark_desc' | translate }}</p>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Localization Section -->
-                    <div class="pt-10 border-t border-slate-50 dark:border-white/5">
-                        <div class="flex items-center gap-4 mb-10">
-                            <span class="material-symbols-outlined text-emerald-500 p-3 bg-emerald-500/5 rounded-2xl">language</span>
-                            <div>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ 'settings.localization_title' | translate }}</h3>
-                                <p class="text-sm text-slate-400">{{ 'settings.localization_desc' | translate }}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            <button (click)="setLanguage('vi')" 
-                                class="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all"
-                                [class.border-primary]="langService.lang() === 'vi'"
-                                [class.bg-primary/5]="langService.lang() === 'vi'"
-                                [class.border-slate-100]="langService.lang() !== 'vi'"
-                                [class.dark:border-white/5]="langService.lang() !== 'vi'"
-                            >
-                                <span class="text-2xl">🇻🇳</span>
-                                <span class="text-[10px] font-black uppercase tracking-widest" [class.text-primary]="langService.lang() === 'vi'" [class.text-slate-500]="langService.lang() !== 'vi'">{{ 'settings.lang_vi' | translate }}</span>
-                            </button>
-
-                            <button (click)="setLanguage('en')" 
-                                class="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all"
-                                [class.border-primary]="langService.lang() === 'en'"
-                                [class.bg-primary/5]="langService.lang() === 'en'"
-                                [class.border-slate-100]="langService.lang() !== 'en'"
-                                [class.dark:border-white/5]="langService.lang() !== 'en'"
-                            >
-                                <span class="text-2xl">🇺🇸</span>
-                                <span class="text-[10px] font-black uppercase tracking-widest" [class.text-primary]="langService.lang() === 'en'" [class.text-slate-500]="langService.lang() !== 'en'">{{ 'settings.lang_en' | translate }}</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            }
-        }
-
-        <div class="flex justify-between items-center mt-20 pt-10 border-t border-slate-50 dark:border-white/5">
-             <div class="flex items-center gap-2 text-slate-400 italic text-xs">
-                <span class="material-symbols-outlined text-sm">schedule</span>
-                {{ 'settings.last_saved' | translate }}
-             </div>
-             <button class="px-12 py-4 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/30 hover:shadow-primary/50 hover:scale-105 transition-all text-sm uppercase tracking-widest flex items-center gap-3">
-                <span class="material-symbols-outlined text-lg">save</span>
-                {{ 'settings.save_changes' | translate }}
-            </button>
+          <div class="pt-10 border-t border-slate-50 dark:border-white/5">
+            <div class="flex items-center gap-4 mb-10">
+              <span
+                class="material-symbols-outlined text-emerald-500 p-3 bg-emerald-500/5 rounded-2xl"
+                >mail</span
+              >
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  {{ 'settings.email_title' | translate }}
+                </h3>
+                <p class="text-sm text-slate-400">{{ 'settings.email_desc' | translate }}</p>
+              </div>
+            </div>
+            <input
+              type="email"
+              value="minh.nguyen@example.com"
+              class="w-full md:w-1/2 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-bold"
+            />
+          </div>
         </div>
-    </div>
+      }
+      @case ('security') {
+        <div class="space-y-12 animate-in fade-in duration-500">
+          @if (securityView() === 'overview') {
+            <div
+              class="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-white/5 pb-6"
+            >
+              <span class="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-2xl"
+                >shield</span
+              >
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  {{ 'settings.privacy_title' | translate }}
+                </h3>
+                <p class="text-sm text-slate-400">{{ 'settings.privacy_desc' | translate }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              @if (authService.currentUserValue?.hasPassword) {
+                <div
+                  class="p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex flex-col items-center text-center gap-5 hover:border-primary/50 transition-all group"
+                >
+                  <div
+                    class="p-5 bg-white dark:bg-white/10 rounded-2xl shadow-xl group-hover:scale-110 transition-transform"
+                  >
+                    <span class="material-symbols-outlined text-4xl text-primary">key</span>
+                  </div>
+                  <div>
+                    <p class="font-bold text-slate-900 dark:text-white text-lg">
+                      {{ 'settings.password_title' | translate }}
+                    </p>
+                    <p class="text-sm text-slate-400 mt-2">
+                      {{ 'settings.password_desc' | translate }}
+                    </p>
+                  </div>
+                  <button
+                    (click)="securityView.set('change-password')"
+                    class="mt-4 px-8 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest hover:border-primary transition-all"
+                  >
+                    {{ 'settings.change_password' | translate }}
+                  </button>
+                </div>
+              }
+              <div
+                class="p-8 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex flex-col items-center text-center gap-5 hover:border-emerald-500/50 transition-all group"
+              >
+                <div
+                  class="p-5 bg-white dark:bg-white/10 rounded-2xl shadow-xl group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined text-4xl text-emerald-500">security</span>
+                </div>
+                <div>
+                  <p class="font-bold text-slate-900 dark:text-white text-lg">
+                    {{ 'settings.two_factor' | translate }}
+                  </p>
+                  <p class="text-sm text-slate-400 mt-2">
+                    {{ 'settings.two_factor_desc' | translate }}
+                  </p>
+                </div>
+                <button
+                  class="mt-4 px-8 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest hover:border-emerald-500 transition-all"
+                >
+                  {{ 'settings.enable_2fa' | translate }}
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="space-y-12 animate-in slide-in-from-left duration-500">
+              <div
+                class="flex items-center justify-between border-b border-slate-50 dark:border-white/5 pb-6"
+              >
+                <div class="flex items-center gap-4">
+                  <button
+                    (click)="securityView.set('overview')"
+                    class="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all"
+                  >
+                    <span class="material-symbols-outlined">arrow_back</span>
+                  </button>
+                  <div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                      {{ 'settings.change_password' | translate }}
+                    </h3>
+                    <p class="text-sm text-slate-400">{{ 'settings.password_desc' | translate }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="space-y-3">
+                  <label
+                    for="currentPwd"
+                    class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1"
+                    >{{ 'user.profile_current_pwd' | translate }}</label
+                  >
+                  <input
+                    id="currentPwd"
+                    type="password"
+                    [(ngModel)]="currentPassword"
+                    placeholder="••••••••"
+                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                  />
+                </div>
+                <div class="space-y-3">
+                  <label
+                    for="newPwd"
+                    class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1"
+                    >{{ 'user.profile_new_pwd' | translate }}</label
+                  >
+                  <input
+                    id="newPwd"
+                    type="password"
+                    [(ngModel)]="newPassword"
+                    placeholder="••••••••"
+                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                  />
+                </div>
+                <div class="space-y-3">
+                  <label
+                    for="confirmPwd"
+                    class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1"
+                    >{{ 'user.profile_confirm_pwd' | translate }}</label
+                  >
+                  <input
+                    id="confirmPwd"
+                    type="password"
+                    [(ngModel)]="confirmPassword"
+                    placeholder="••••••••"
+                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                  />
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-4 pt-10">
+                <button
+                  (click)="securityView.set('overview')"
+                  class="px-8 py-3 border-2 border-slate-100 dark:border-white/5 text-slate-500 font-bold rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  {{ 'settings.discard' | translate }}
+                </button>
+                <button
+                  (click)="changePassword()"
+                  class="px-10 py-4 bg-primary text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 flex items-center gap-3"
+                >
+                  <span class="material-symbols-outlined text-lg">save</span>
+                  {{ 'settings.save_changes' | translate }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+      @case ('notifications') {
+        <div class="space-y-10 animate-in fade-in duration-500">
+          <div class="flex items-center gap-4 mb-2">
+            <span class="material-symbols-outlined text-amber-500 p-3 bg-amber-500/5 rounded-2xl"
+              >notifications_active</span
+            >
+            <div>
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                {{ 'settings.notif_title' | translate }}
+              </h3>
+              <p class="text-sm text-slate-400">{{ 'settings.notif_desc' | translate }}</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            @for (
+              item of [
+                { title: 'settings.notif_dm', desc: 'settings.notif_dm_desc' },
+                { title: 'settings.notif_price', desc: 'settings.notif_price_desc' },
+                { title: 'settings.notif_news', desc: 'settings.notif_news_desc' },
+                { title: 'settings.notif_security', desc: 'settings.notif_security_desc' },
+              ];
+              track item.title
+            ) {
+              <div
+                class="flex items-center justify-between p-8 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:bg-white dark:hover:bg-white/10 hover:shadow-xl transition-all group"
+              >
+                <div class="max-w-[70%]">
+                  <p
+                    class="font-bold text-slate-900 dark:text-white text-lg group-hover:text-primary transition-colors"
+                  >
+                    {{ item.title | translate }}
+                  </p>
+                  <p class="text-sm text-slate-400 mt-1">{{ item.desc | translate }}</p>
+                </div>
+                <div
+                  class="w-14 h-7 bg-slate-200 dark:bg-white/10 rounded-full relative cursor-pointer border border-transparent transition-all overflow-hidden"
+                  [class.bg-primary]="item.title.includes('Security')"
+                >
+                  <div
+                    class="absolute w-5 h-5 bg-white rounded-full shadow-lg transition-all top-1"
+                    [class.left-8]="item.title.includes('Security')"
+                    [class.left-1]="!item.title.includes('Security')"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @case ('preferences') {
+        <div class="space-y-12 animate-in fade-in duration-500">
+          <!-- Appearance Section -->
+          <div>
+            <div
+              class="flex items-center gap-4 mb-10 border-b border-slate-50 dark:border-white/5 pb-6"
+            >
+              <span class="material-symbols-outlined text-primary p-3 bg-primary/5 rounded-2xl"
+                >palette</span
+              >
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  {{ 'settings.appearance_title' | translate }}
+                </h3>
+                <p class="text-sm text-slate-400">{{ 'settings.appearance_desc' | translate }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <button
+                (click)="setTheme('light')"
+                class="p-8 rounded-[2rem] border-2 transition-all group text-left relative overflow-hidden"
+                [class.border-primary]="themeService.theme() === 'light'"
+                [class.bg-primary/5]="themeService.theme() === 'light'"
+                [class.border-slate-100]="themeService.theme() !== 'light'"
+                [class.dark:border-white/5]="themeService.theme() !== 'light'"
+                [class.bg-slate-50]="themeService.theme() !== 'light'"
+                [class.dark:bg-white/2]="themeService.theme() !== 'light'"
+              >
+                <div class="flex items-center justify-between mb-6">
+                  <span
+                    class="material-symbols-outlined text-4xl"
+                    [class.text-primary]="themeService.theme() === 'light'"
+                    [class.text-slate-400]="themeService.theme() !== 'light'"
+                    >light_mode</span
+                  >
+                  @if (themeService.theme() === 'light') {
+                    <span class="material-symbols-outlined text-primary">check_circle</span>
+                  }
+                </div>
+                <p class="font-bold text-slate-900 dark:text-white text-lg">
+                  {{ 'settings.light_protocol' | translate }}
+                </p>
+                <p class="text-xs text-slate-400 mt-2 uppercase tracking-widest font-bold">
+                  {{ 'settings.light_desc' | translate }}
+                </p>
+              </button>
+
+              <button
+                (click)="setTheme('dark')"
+                class="p-8 rounded-[2rem] border-2 transition-all group text-left relative overflow-hidden"
+                [class.border-primary]="themeService.theme() === 'dark'"
+                [class.bg-primary/5]="themeService.theme() === 'dark'"
+                [class.border-slate-100]="themeService.theme() !== 'dark'"
+                [class.dark:border-white/5]="themeService.theme() !== 'dark'"
+                [class.bg-slate-50]="themeService.theme() !== 'dark'"
+                [class.dark:bg-white/2]="themeService.theme() !== 'dark'"
+              >
+                <div class="flex items-center justify-between mb-6">
+                  <span
+                    class="material-symbols-outlined text-4xl"
+                    [class.text-primary]="themeService.theme() === 'dark'"
+                    [class.text-slate-400]="themeService.theme() !== 'dark'"
+                    >dark_mode</span
+                  >
+                  @if (themeService.theme() === 'dark') {
+                    <span class="material-symbols-outlined text-primary">check_circle</span>
+                  }
+                </div>
+                <p class="font-bold text-slate-900 dark:text-white text-lg">
+                  {{ 'settings.dark_protocol' | translate }}
+                </p>
+                <p class="text-xs text-slate-400 mt-2 uppercase tracking-widest font-bold">
+                  {{ 'settings.dark_desc' | translate }}
+                </p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Localization Section -->
+          <div class="pt-10 border-t border-slate-50 dark:border-white/5">
+            <div class="flex items-center gap-4 mb-10">
+              <span
+                class="material-symbols-outlined text-emerald-500 p-3 bg-emerald-500/5 rounded-2xl"
+                >language</span
+              >
+              <div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                  {{ 'settings.localization_title' | translate }}
+                </h3>
+                <p class="text-sm text-slate-400">{{ 'settings.localization_desc' | translate }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <button
+                (click)="setLanguage('vi')"
+                class="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all"
+                [class.border-primary]="langService.lang() === 'vi'"
+                [class.bg-primary/5]="langService.lang() === 'vi'"
+                [class.border-slate-100]="langService.lang() !== 'vi'"
+                [class.dark:border-white/5]="langService.lang() !== 'vi'"
+              >
+                <span class="text-2xl">🇻🇳</span>
+                <span
+                  class="text-[10px] font-black uppercase tracking-widest"
+                  [class.text-primary]="langService.lang() === 'vi'"
+                  [class.text-slate-500]="langService.lang() !== 'vi'"
+                  >{{ 'settings.lang_vi' | translate }}</span
+                >
+              </button>
+
+              <button
+                (click)="setLanguage('en')"
+                class="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 transition-all"
+                [class.border-primary]="langService.lang() === 'en'"
+                [class.bg-primary/5]="langService.lang() === 'en'"
+                [class.border-slate-100]="langService.lang() !== 'en'"
+                [class.dark:border-white/5]="langService.lang() !== 'en'"
+              >
+                <span class="text-2xl">🇺🇸</span>
+                <span
+                  class="text-[10px] font-black uppercase tracking-widest"
+                  [class.text-primary]="langService.lang() === 'en'"
+                  [class.text-slate-500]="langService.lang() !== 'en'"
+                  >{{ 'settings.lang_en' | translate }}</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
 </div>

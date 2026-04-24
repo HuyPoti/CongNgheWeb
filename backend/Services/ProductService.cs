@@ -11,8 +11,7 @@ namespace backend.Services;
 public class ProductService(
     IUnitOfWork uow,
     IMapper mapper,
-    IProductImageService imageService,
-    IProductSpecService specService) : IProductService
+    IProductImageService imageService) : IProductService
 {
     // ── Admin: danh sach co filter ─────────────────────────────────
     public async Task<PagedResult<ProductDto>> GetAllAsync(
@@ -72,13 +71,23 @@ public class ProductService(
     {
         var product = await GetByIdAsync(id, cancellationToken);
         var images = await imageService.GetByProductIdAsync(id, cancellationToken);
-        var specs = await specService.GetByProductIdAsync(id, cancellationToken);
 
         return new ProductFullDto
         {
             Product = product!,
-            Images = images,
-            Specs = specs
+            Images = images
+        };
+    }
+
+    public async Task<ProductFullDto> GetFullBySlugAsync(string slug, CancellationToken cancellationToken)
+    {
+        var product = await GetBySlugAsync(slug, cancellationToken);
+        var images = await imageService.GetByProductIdAsync(product!.ProductId, cancellationToken);
+
+        return new ProductFullDto
+        {
+            Product = product,
+            Images = images
         };
     }
 
@@ -266,6 +275,7 @@ public class ProductService(
             {
                 Id = p.ProductId,
                 Name = p.Name,
+                Slug = p.Slug,
                 Price = p.SalePrice ?? p.RegularPrice,
                 RegularPrice = p.RegularPrice,
                 SalePrice = p.SalePrice,

@@ -1,92 +1,158 @@
-<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark transition-colors duration-500">
-    <div class="layout-container flex h-full grow flex-col items-center">
-        <main class="layout-content-container flex flex-col max-w-[540px] w-full flex-1 py-12 px-6">
-            <!-- Breadcrumbs -->
-            <nav class="flex items-center gap-3 text-[10px] text-slate-400 mb-12 font-bold uppercase tracking-[0.2em] relative z-10">
-                <a class="hover:text-primary transition-colors" routerLink="/">Terminal</a>
-                <span class="material-symbols-outlined text-[10px] opacity-40">chevron_right</span>
-                <span class="text-slate-900 dark:text-white">Secure Payment</span>
-            </nav>
+<div class="min-h-screen bg-slate-50 dark:bg-background-dark py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8 font-medium">
+            <a routerLink="/cart" class="hover:text-primary transition-colors">Giỏ hàng</a>
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+            <a routerLink="/cart/checkout" class="hover:text-primary transition-colors">Thông tin giao hàng</a>
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+            <span class="text-slate-900 dark:text-white font-semibold">Thanh toán</span>
+        </nav>
 
-            <div class="relative group mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div class="absolute -inset-0.5 bg-gradient-to-r from-accent-cyan to-primary rounded-[2rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-                <div class="relative aspect-[1.586/1] w-full rounded-[2rem] bg-slate-950 border border-white/10 p-10 flex flex-col justify-between overflow-hidden shadow-2xl">
-                    <!-- Glassmorphism Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
-                    <div class="absolute -top-24 -right-24 size-64 bg-primary/20 rounded-full blur-[80px]"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Left Column: Payment Methods -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                <!-- Shipping Address Summary -->
+                <div class="bg-white dark:bg-surface-dark p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 relative">
+                    <a routerLink="/cart/checkout" class="absolute top-6 right-6 text-primary text-sm font-medium hover:underline flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">edit</span> Thay đổi
+                    </a>
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                        Địa chỉ nhận hàng
+                    </h2>
+                    <div class="text-slate-700 dark:text-slate-300">
+                        <p class="font-semibold text-slate-900 dark:text-white mb-1">{{ shippingAddress?.recipientName }} | {{ shippingAddress?.phone }}</p>
+                        <p class="text-sm">{{ shippingAddress?.addressLine }}</p>
+                    </div>
+                </div>
+
+                <!-- Payment Options -->
+                <div class="bg-white dark:bg-surface-dark p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">payments</span>
+                        Phương thức thanh toán
+                    </h2>
                     
-                    <div class="flex justify-between items-start relative z-10">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] tracking-[0.4em] text-accent-cyan font-black uppercase mb-2">Neural Network Pay</span>
-                            <div class="w-14 h-10 bg-gradient-to-br from-slate-400 to-slate-600 rounded-lg relative overflow-hidden border border-white/20 shadow-lg">
-                                <div class="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_white,_transparent)]"></div>
-                                <div class="grid grid-cols-4 grid-rows-3 h-full w-full opacity-20">
-                                    @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
-                                        <div class="border border-white/20"></div>
-                                    }
+                    <div class="space-y-4">
+                        <!-- COD -->
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+                            [class.border-primary]="paymentMethod === 'cod'"
+                            [class.bg-primary]="paymentMethod === 'cod'"
+                            [class.bg-opacity-5]="paymentMethod === 'cod'"
+                            [class.border-slate-200]="paymentMethod !== 'cod'"
+                            [class.dark:border-white]="paymentMethod !== 'cod'"
+                            style="--tw-border-opacity: 0.1;">
+                            <input type="radio" name="paymentMethod" value="cod" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
+                            <div class="ml-4 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-2xl text-slate-500">local_shipping</span>
+                                <div>
+                                    <p class="font-medium text-slate-900 dark:text-white">Thanh toán khi nhận hàng (COD)</p>
+                                    <p class="text-sm text-slate-500">Thanh toán bằng tiền mặt khi giao hàng.</p>
                                 </div>
                             </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-2xl font-orbitron font-black text-white tracking-widest">ZX <span class="text-primary italic">PRIME</span></span>
-                        </div>
+                        </label>
+
+                        <!-- Bank Transfer -->
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+                            [class.border-primary]="paymentMethod === 'bank_transfer'"
+                            [class.bg-primary]="paymentMethod === 'bank_transfer'"
+                            [class.bg-opacity-5]="paymentMethod === 'bank_transfer'"
+                            [class.border-slate-200]="paymentMethod !== 'bank_transfer'"
+                            [class.dark:border-white]="paymentMethod !== 'bank_transfer'"
+                            style="--tw-border-opacity: 0.1;">
+                            <input type="radio" name="paymentMethod" value="bank_transfer" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
+                            <div class="ml-4 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-2xl text-slate-500">account_balance</span>
+                                <div>
+                                    <p class="font-medium text-slate-900 dark:text-white">Chuyển khoản ngân hàng</p>
+                                    <p class="text-sm text-slate-500">Chuyển khoản trực tiếp tới tài khoản của chúng tôi.</p>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- Credit Card / VNPAY -->
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+                            [class.border-primary]="paymentMethod === 'vnpay'"
+                            [class.bg-primary]="paymentMethod === 'vnpay'"
+                            [class.bg-opacity-5]="paymentMethod === 'vnpay'"
+                            [class.border-slate-200]="paymentMethod !== 'vnpay'"
+                            [class.dark:border-white]="paymentMethod !== 'vnpay'"
+                            style="--tw-border-opacity: 0.1;">
+                            <input type="radio" name="paymentMethod" value="vnpay" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
+                            <div class="ml-4 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-2xl text-slate-500">credit_card</span>
+                                <div>
+                                    <p class="font-medium text-slate-900 dark:text-white">Thanh toán qua VNPAY / Thẻ Visa, Master</p>
+                                    <p class="text-sm text-slate-500">Chuyển hướng đến cổng thanh toán an toàn.</p>
+                                </div>
+                            </div>
+                        </label>
                     </div>
-                    
-                    <div class="relative z-10">
-                        <p class="text-2xl md:text-3xl font-bold tracking-[0.25em] text-white mb-8 font-mono drop-shadow-md">4532 •••• •••• 8892</p>
-                        <div class="flex justify-between items-end">
-                            <div class="flex flex-col">
-                                <span class="text-[9px] uppercase tracking-[0.3em] text-slate-400 mb-1 font-black">Operative ID</span>
-                                <span class="text-sm font-bold tracking-widest text-white uppercase">ALEX MORGAN</span>
-                            </div>
-                            <div class="flex flex-col items-end mr-6">
-                                <span class="text-[9px] uppercase tracking-[0.3em] text-slate-400 mb-1 font-black">VALID THRU</span>
-                                <span class="text-sm font-bold text-white tracking-widest">12 / 28</span>
-                            </div>
-                            <div class="size-12 opacity-90 drop-shadow-lg">
-                                <svg viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="7" cy="12" r="7" fill="#EB001B"></circle>
-                                    <circle cx="17" cy="12" r="7" fill="#F79E1B" fill-opacity="0.8"></circle>
-                                </svg>
-                            </div>
-                        </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-100 dark:border-white/10 hidden md:block">
+                        <button (click)="placeOrder()" [disabled]="isPlacingOrder"
+                            class="px-10 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
+                            @if (isPlacingOrder) {
+                                <span class="material-symbols-outlined animate-spin">sync</span> Đang xử lý...
+                            } @else {
+                                <span class="material-symbols-outlined">check_circle</span> Đặt Hàng Ngay
+                            }
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <form class="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                <div class="space-y-3">
-                    <label for="cardNumber" class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-1">Clearance Number</label>
-                    <div class="relative group">
-                        <input id="cardNumber" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-lg shadow-inner" placeholder="0000 0000 0000 0000" type="text"/>
-                        <span class="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">credit_card</span>
+            <!-- Right Column: Order Summary -->
+            <div class="lg:col-span-4 sticky top-24">
+                <div class="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 border-b border-slate-100 dark:border-white/10 pb-4">
+                        Thông tin đơn hàng
+                    </h3>
+                    
+                    <div class="space-y-4 mb-6 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                        @for (item of cartService.getCartItems(); track item.id) {
+                            <div class="flex gap-3">
+                                <div class="w-14 h-14 rounded-lg border border-slate-200 dark:border-white/10 p-1 flex-shrink-0 bg-white relative">
+                                    <img [src]="item.image" [alt]="item.name" class="w-full h-full object-contain">
+                                    <span class="absolute -top-2 -right-2 bg-slate-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">{{ item.quantity }}</span>
+                                </div>
+                                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                    <h4 class="text-xs font-medium text-slate-900 dark:text-white line-clamp-2 mb-1">{{ item.name }}</h4>
+                                    <span class="font-semibold text-primary text-sm">${{ item.price | number:'1.2-2' }}</span>
+                                </div>
+                            </div>
+                        }
                     </div>
-                </div>
 
-                <div class="space-y-3">
-                    <label for="cardName" class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-1">Cardholder Designation</label>
-                    <input id="cardName" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold uppercase tracking-widest shadow-inner" placeholder="ALEX MORGAN" type="text"/>
-                </div>
-
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="space-y-3">
-                        <label for="expiry" class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-1">Expiration</label>
-                        <input id="expiry" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-center shadow-inner" placeholder="MM / YY" type="text"/>
+                    <div class="space-y-3 pt-4 border-t border-slate-100 dark:border-white/10 text-sm">
+                        <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                            <span>Tạm tính</span>
+                            <span class="font-medium text-slate-900 dark:text-white">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                            <span>Phí vận chuyển</span>
+                            <span class="font-medium text-emerald-600">Miễn phí</span>
+                        </div>
                     </div>
-                    <div class="space-y-3">
-                        <label for="cvv" class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 px-1">CVV Shell</label>
-                        <input id="cvv" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl h-16 px-6 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-center tracking-[0.5em] shadow-inner" placeholder="***" type="password"/>
-                    </div>
-                </div>
 
-                <div class="pt-10">
-                    <button class="w-full bg-primary hover:bg-primary/90 text-white h-20 rounded-[1.5rem] font-black text-lg tracking-[0.3em] flex items-center justify-center gap-4 transition-all shadow-2xl shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-95 group" type="button">
-                        EXECUTE PAYMENT
-                        <span class="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform">verified_user</span>
+                    <div class="flex justify-between items-center pt-4 mt-4 border-t border-slate-100 dark:border-white/10">
+                        <span class="font-bold text-slate-900 dark:text-white text-base">Cần thanh toán</span>
+                        <span class="text-3xl font-bold text-red-500">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+                    </div>
+
+                    <button (click)="placeOrder()" [disabled]="isPlacingOrder"
+                        class="md:hidden w-full mt-6 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                        @if (isPlacingOrder) {
+                            <span class="material-symbols-outlined animate-spin">sync</span> Đang xử lý...
+                        } @else {
+                            ĐẶT HÀNG NGAY
+                        }
                     </button>
-                    <p class="text-center mt-6 text-[9px] text-slate-400 uppercase tracking-[0.4em] font-black opacity-40">256-BIT END-TO-END ENCRYPTION ACTIVE</p>
+
+                    <p class="text-xs text-slate-500 mt-4 text-center">Bằng việc đặt hàng, bạn đồng ý với Điều khoản sử dụng của chúng tôi.</p>
                 </div>
-            </form>
-        </main>
+            </div>
+        </div>
     </div>
-</div>
+</div>

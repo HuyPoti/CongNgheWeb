@@ -137,7 +137,10 @@ export class HomeComponent implements OnInit {
       )
       .subscribe({
         next: (res) => {
-          this.featuredProducts = res.featured.items.map((p: ProductListItemDto) => this.toCard(p));
+          this.featuredProducts = res.featured.items
+            .map((p: ProductListItemDto) => this.toCard(p))
+            .filter((p: ProductCard) => p.salePrice !== null && p.regularPrice - p.salePrice > 0)
+            .slice(0, 4);
           this.productSections.cpu = res.cpu.items.map((p: ProductListItemDto) => this.toCard(p));
           this.productSections.gpu = res.gpu.items.map((p: ProductListItemDto) => this.toCard(p));
           this.productSections.ram = res.ram.items.map((p: ProductListItemDto) => this.toCard(p));
@@ -151,6 +154,7 @@ export class HomeComponent implements OnInit {
   private toCard(p: ProductListItemDto): ProductCard {
     return {
       id: p.id,
+      slug: p.slug,
       name: p.name,
       price: p.price,
       regularPrice: p.regularPrice,
@@ -163,6 +167,15 @@ export class HomeComponent implements OnInit {
       warrantyMonths: p.warrantyMonths,
       specs: {},
     };
+  }
+
+  hasSalePrice(p: ProductCard): boolean {
+    return p.salePrice !== null && p.regularPrice > p.salePrice;
+  }
+
+  savingPercent(p: ProductCard): number {
+    if (!p.salePrice || p.regularPrice <= p.salePrice) return 0;
+    return Math.round(((p.regularPrice - p.salePrice) / p.regularPrice) * 100);
   }
 
   // ── Banner helpers ────────────────────────────────────────────────

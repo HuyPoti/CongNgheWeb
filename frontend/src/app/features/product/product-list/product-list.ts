@@ -254,6 +254,7 @@ export class ProductList implements OnInit, OnDestroy {
   private toCard(p: ProductListItemDto): ProductCard {
     return {
       id: p.id,
+      slug: p.slug,
       name: p.name,
       price: p.price,
       regularPrice: p.regularPrice,

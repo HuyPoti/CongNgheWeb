@@ -10,7 +10,6 @@ public interface IUnitOfWork
     IRepository<Banner> Banners { get; }
     IRepository<User> Users { get; }
     IRepository<ProductImage> ProductImages { get; }
-    IRepository<ProductSpec> ProductSpecs { get; }
     IRepository<News> News { get; }
     IRepository<NewsCategory> NewsCategories { get; }
     IRepository<Order> Orders { get; }

@@ -75,5 +75,4 @@ public class Product
     public Category Category { get; set; } = null!;
 
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
-    public ICollection<ProductSpec> Specs { get; set; } = new List<ProductSpec>();
 }

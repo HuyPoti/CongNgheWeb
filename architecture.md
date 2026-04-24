@@ -24,6 +24,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `Data/`: Chứa `AppDbContext` và cấu hình Seed Data.
 - `MapperProfiles/`: Cấu hình **AutoMapper** để chuyển đổi giữa Models và DTOs.
 - `Middleware/`: Chứa `ExceptionMiddleware` xử lý lỗi tập trung toàn hệ thống.
+- **Lưu ý về Specs**: Hệ thống sử dụng cột `specifications` (JSONB) trong bảng `Products` thay vì bảng riêng lẻ để tăng tính linh hoạt.
 
 #### 🛠️ Service Details (Review)
 
@@ -36,6 +37,9 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `AuthService`: Xử lý xác thực và quản lý tài khoản.
   - **Auth**: `LoginAsync`, `RegisterAsync`, `GoogleLoginAsync`.
   - **Password Recovery**: `ForgotPasswordAsync`, `ResetPasswordAsync`.
+
+- `ProfileService`: Quản lý thông tin cá nhân của người dùng.
+  - **Profile**: `GetProfileAsync`, `UpdateProfileAsync`.
 
 ### ⚙️ Quy trình xử lý (Data Flow)
 
@@ -53,7 +57,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
   - `admin/`: Quản lý Dashboard, Products, News, Banners.
   - `employee/`: Quản lý đơn hàng, kho sản phẩm, phản hồi đánh giá và tra cứu khách hàng (dành riêng cho role Staff).
   - `customer/`: Màn hình trang chủ, danh sách sản phẩm, tin tức cho khách hàng.
-  - `product/`: Chi tiết sản phẩm, thư viện hình ảnh, cấu hình kỹ thuật và đánh giá khách hàng.
+  - `product/`: Chi tiết sản phẩm, thư viện hình ảnh, cấu hình kỹ thuật (dùng JSONB) và đánh giá khách hàng.
   - `auth/`: Đăng nhập, đăng ký.
 - `src/app/layouts/`: Các bộ khung layout khác nhau (`AdminLayoutComponent`, `EmployeeLayoutComponent`, `MainLayoutComponent`).
 
@@ -81,7 +85,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 
 - `Users`: Quản trị viên và khách hàng.
-- `Products`: Thông tin sản phẩm.
+- `Products`: Thông tin sản phẩm (bao gồm cột `specifications` kiểu JSONB cho thông số kỹ thuật).
 - `Categories`: Danh mục sản phẩm.
 - `Brands`: Thương hiệu sản phẩm.
 - `News` & `NewsCategories`: Quản lý tin tức.
