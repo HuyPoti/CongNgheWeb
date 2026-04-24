@@ -1,123 +1,229 @@
-<!-- Orders Content (rendered inside UserLayout's router-outlet) -->
-<div class="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <section class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
-            <h2 class="text-4xl font-orbitron font-bold text-slate-900 dark:text-white uppercase tracking-tight">{{ 'orders.title' | translate }}</h2>
-            <p class="text-slate-500 dark:text-slate-400 font-medium mt-1">{{ 'orders.subtitle' | translate }}</p>
+            <h2 class="text-4xl font-orbitron font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                Theo dõi đơn hàng
+            </h2>
+            <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">
+                Gộp My Orders và Track Order trên một màn hình duy nhất.
+            </p>
         </div>
-        <div class="flex gap-2 p-1.5 bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-2xl shadow-sm">
-            <button class="px-6 py-2.5 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/30 transition-all">{{ 'orders.filter_current' | translate }}</button>
-            <button class="px-6 py-2.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-primary transition-all text-[10px] font-black uppercase tracking-widest">{{ 'orders.filter_completed' | translate }}</button>
-            <button class="px-6 py-2.5 rounded-xl text-slate-400 dark:text-slate-500 hover:text-primary transition-all text-[10px] font-black uppercase tracking-widest">{{ 'orders.filter_returns' | translate }}</button>
-        </div>
-    </div>
 
-    <div class="grid gap-10">
-        <!-- Order Card 1 (Active) -->
-        <div class="bg-white dark:bg-surface-dark rounded-[2.5rem] overflow-hidden border border-slate-50 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none hover:scale-[1.01] transition-all duration-500 group">
-            <div class="p-8 md:p-12">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-2">{{ 'orders.auth' | translate }}</span>
-                        <span class="font-orbitron font-bold text-slate-900 dark:text-white text-xl tracking-tight">#ZX-99201-ALPH</span>
-                    </div>
-                    <div class="flex flex-col md:text-center">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-2">{{ 'orders.timestamp' | translate }}</span>
-                        <span class="text-slate-900 dark:text-slate-200 font-bold text-sm">28 OCT 2023 · 14:42</span>
-                    </div>
-                    <div class="flex flex-col md:text-right">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-2">{{ 'orders.investment' | translate }}</span>
-                        <span class="text-primary font-total font-bold text-2xl tracking-tighter">$2,450.00</span>
-                    </div>
-                </div>
-
-                <!-- Progress (Modern Style) -->
-                <div class="relative py-10 mb-10 bg-slate-50/50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5 px-8">
-                    <div class="absolute top-[52px] left-[10%] right-[10%] h-[2px] bg-slate-200 dark:bg-white/10"></div>
-                    <div class="absolute top-[52px] left-[10%] w-[40%] h-[2px] bg-primary shadow-[0_0_10px_rgba(0,102,255,0.4)]"></div>
-                    
-                    <div class="relative flex justify-between items-center px-4">
-                        <div class="flex flex-col items-center gap-4">
-                            <div class="size-8 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/30">
-                                <span class="material-symbols-outlined text-sm font-bold">check</span>
-                            </div>
-                            <span class="text-[9px] font-black text-slate-900 dark:text-white uppercase tracking-widest text-center">{{ 'orders.status_placed' | translate }}</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-4">
-                            <div class="size-12 rounded-2xl bg-amber-400 text-white flex items-center justify-center shadow-xl shadow-amber-400/30 animate-pulse outline outline-8 outline-amber-400/10">
-                                <span class="material-symbols-outlined text-lg font-bold">sync</span>
-                            </div>
-                            <span class="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em] text-center">{{ 'orders.status_processing' | translate }}</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                            <div class="size-8 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-400 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-sm">local_shipping</span>
-                            </div>
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{{ 'orders.status_dispatched' | translate }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row items-center justify-between gap-6 border-t border-slate-50 dark:border-white/5 pt-10">
-                    <div class="flex items-center gap-6">
-                        <div class="size-16 rounded-2xl bg-white dark:bg-white/10 flex items-center justify-center border border-slate-100 dark:border-white/10 shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-                            <img class="w-12 h-12 object-contain" alt="GPU thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqbqGqndzzhE0gTtdNIFcvZ8jSmSHidBartoRF94RJRTAs83rN6wbl0-mcVqdHqAHmvA-lll1jjzHysi5CRwAUNLyBcs7g-dhKvvHbVUdxZyNyeUHFv3MA_4yEZX2GC5JMn5HQizwHR_xLBb4f7zyW9L963mVVuUiOuOmlMZftud6U2rPiffpuvDNcNG85FQTfYTNvEOASCQPWJMfB5NMZoLfuHmuOyDGT5VIXyEzCxee9xKWhrNLrSWZFlVhRnAnF_YRNMJ8ex1Fy"/>
-                        </div>
-                        <div>
-                            <p class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">ZX-Vanguard Pro GPU</p>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="size-1.5 bg-emerald-500 rounded-full"></span>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{{ 'orders.status_secure' | translate }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button class="px-6 py-2 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:text-primary transition-all border border-transparent hover:border-primary/20">{{ 'orders.manifest' | translate }}</button>
-                        <a class="flex items-center gap-3 px-8 py-3.5 bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-105 transition-all" routerLink="/user/order-tracking">
-                            {{ 'orders.live_track' | translate }}
-                            <span class="material-symbols-outlined text-sm">radar</span>
-                        </a>
-                    </div>
-                </div>
+        <div class="grid grid-cols-3 gap-3 w-full lg:w-auto">
+            <div class="rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-center">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">Tổng đơn</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ summary().total }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-center">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">Đang xử lý</p>
+                <p class="text-2xl font-bold text-amber-500">{{ summary().active }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-center">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">Hoàn tất</p>
+                <p class="text-2xl font-bold text-emerald-500">{{ summary().done }}</p>
             </div>
         </div>
+    </section>
 
-        <!-- Order Card 2 (Completed) -->
-        <div class="bg-white dark:bg-surface-dark rounded-[2.5rem] overflow-hidden border border-slate-50 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none hover:scale-[1.01] transition-all duration-500 group opacity-70 hover:opacity-100 transition-opacity">
-            <div class="p-8 md:p-12">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-2">{{ 'orders.order_id' | translate }}</span>
-                        <span class="font-orbitron font-bold text-slate-900 dark:text-white text-xl tracking-tight">#ZX-88219-BETA</span>
-                    </div>
-                    <div class="flex items-center gap-3 bg-emerald-500/10 px-6 py-2 rounded-2xl border border-emerald-500/20">
-                         <span class="material-symbols-outlined text-emerald-500 text-lg">verified</span>
-                         <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{{ 'orders.status_deployed' | translate }}</span>
-                    </div>
-                    <div class="flex flex-col md:text-right">
-                        <span class="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-black mb-2">{{ 'orders.investment' | translate }}</span>
-                        <span class="text-slate-900 dark:text-white font-total font-bold text-2xl tracking-tighter">$890.00</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-50 dark:border-white/5">
-                    <div class="flex items-center gap-6">
-                        <div class="size-16 rounded-2xl bg-white dark:bg-white/10 flex items-center justify-center border border-slate-100 dark:border-white/10 shadow-sm overflow-hidden">
-                            <img class="w-12 h-12 object-contain grayscale group-hover:grayscale-0 transition-all" alt="Keyboard thumbnail" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq0KXQTwkY8rbfue4Fa6ftg9Y3xo9RpQJvVuSgFqUJ0LD1t69wz4hJFUOl0oJjqBTLaFjPvMa5vsqBzfWiRyfTpMCc99pl42qGSBbPuoklhPLjNJu0hDw0xvombFq4tBL-fRwmBGJsY_Hc1fFgEXaSouELGlX0uShcvy5k88Zy7fi5EwzjuL-NGRVl4z_UAyaFEyfnIAY8nxtCro--p5_DA2oNfMzbXkvmnGu3mZpqEbbLehFMAiyOa6HR2WRBtZa4W00sE3y5Qo2Y"/>
-                        </div>
-                        <div>
-                            <p class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">ZX-Aura Mechanical Deck</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">{{ 'orders.closed_at' | translate }} 12 OCT 2023</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button class="px-8 py-3.5 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-900 dark:text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:border-primary/50 transition-all flex items-center gap-3">
-                             <span class="material-symbols-outlined text-lg">receipt_long</span>
-                             {{ 'orders.view_receipt' | translate }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="flex flex-wrap gap-2 p-1.5 bg-white/70 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl w-fit">
+        <button
+            (click)="setFilter('all')"
+            class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+            [class]="selectedFilter() === 'all' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-slate-500 dark:text-slate-400 hover:text-primary'"
+        >
+            Tất cả
+        </button>
+        <button
+            (click)="setFilter('active')"
+            class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+            [class]="selectedFilter() === 'active' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-slate-500 dark:text-slate-400 hover:text-primary'"
+        >
+            Đang xử lý
+        </button>
+        <button
+            (click)="setFilter('completed')"
+            class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+            [class]="selectedFilter() === 'completed' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-slate-500 dark:text-slate-400 hover:text-primary'"
+        >
+            Hoàn tất
+        </button>
+        <button
+            (click)="setFilter('cancelled')"
+            class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+            [class]="selectedFilter() === 'cancelled' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-slate-500 dark:text-slate-400 hover:text-primary'"
+        >
+            Đã hủy
+        </button>
     </div>
+
+    @if (isLoading()) {
+        <div class="rounded-[2rem] border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 p-10 text-center text-slate-500 dark:text-slate-400">
+            Đang tải đơn hàng...
+        </div>
+    } @else if (error()) {
+        <div class="rounded-[2rem] border border-red-100 bg-red-50 p-10 text-center text-red-600">
+            {{ error() }}
+        </div>
+    } @else {
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <aside class="xl:col-span-4 rounded-[2rem] border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 p-4">
+                @if (filteredOrders().length === 0) {
+                    <div class="p-8 text-center text-slate-500 dark:text-slate-400">
+                        Không có đơn hàng phù hợp bộ lọc.
+                    </div>
+                } @else {
+                    <div class="space-y-3 max-h-[670px] overflow-y-auto pr-1">
+                        @for (order of filteredOrders(); track trackByOrderId($index, order)) {
+                            <button
+                                (click)="selectOrder(order.orderId)"
+                                class="w-full text-left rounded-2xl border px-4 py-4 transition-all"
+                                [class]="selectedOrderId() === order.orderId
+                                    ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                                    : 'border-slate-100 dark:border-white/10 hover:border-primary/50 bg-white dark:bg-white/2'"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-black text-slate-900 dark:text-white tracking-wide">#{{ order.orderCode }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ formatDate(order.createdAt) }}</p>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full"
+                                        [class]="order.status === 'delivered'
+                                            ? 'bg-emerald-500/10 text-emerald-600'
+                                            : (order.status === 'cancelled'
+                                                ? 'bg-red-500/10 text-red-500'
+                                                : 'bg-amber-500/10 text-amber-500')"
+                                    >
+                                        {{ statusLabel(order.status) }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-3 flex items-center justify-between text-sm">
+                                    <span class="text-slate-500 dark:text-slate-400">{{ order.customerName }}</span>
+                                    <span class="font-bold text-slate-900 dark:text-white">{{ order.totalAmount | number:'1.0-0' }} đ</span>
+                                </div>
+
+                                <div class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                    {{ paymentLabel(order.paymentStatus) }} · {{ order.paymentMethod }}
+                                </div>
+                            </button>
+                        }
+                    </div>
+                }
+            </aside>
+
+            <section class="xl:col-span-8 rounded-[2rem] border border-slate-100 dark:border-white/10 bg-white dark:bg-white/5 p-6 md:p-8">
+                @if (!selectedOrderId()) {
+                    <div class="py-16 text-center text-slate-500 dark:text-slate-400">
+                        Chọn một đơn hàng để xem chi tiết.
+                    </div>
+                } @else if (detailLoading()) {
+                    <div class="py-16 text-center text-slate-500 dark:text-slate-400">
+                        Đang tải chi tiết đơn hàng...
+                    </div>
+                } @else {
+                    @if (selectedOrderDetail(); as detail) {
+                        <div class="space-y-8">
+                            <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-black">Mã đơn hàng</p>
+                                    <h3 class="text-2xl md:text-3xl font-orbitron font-bold text-slate-900 dark:text-white mt-1">
+                                        #{{ detail.orderCode }}
+                                    </h3>
+                                </div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400 md:text-right">
+                                    <p>{{ formatDate(detail.createdAt) }}</p>
+                                    <p class="font-bold text-slate-900 dark:text-white mt-1">{{ detail.totalAmount | number:'1.0-0' }} đ</p>
+                                </div>
+                            </header>
+
+                            @if (detail.status === 'cancelled') {
+                                <div class="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-red-600 font-semibold">
+                                    Đơn hàng này đã bị hủy.
+                                </div>
+                            } @else {
+                                <div class="rounded-3xl border border-slate-100 dark:border-white/10 bg-slate-50/70 dark:bg-white/2 px-4 py-8 md:px-8">
+                                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 relative">
+                                        @for (step of timelineSteps; track step.key) {
+                                            <div class="flex sm:flex-col items-center sm:items-start gap-3 sm:gap-4 relative">
+                                                <div
+                                                    class="size-10 rounded-xl flex items-center justify-center shrink-0"
+                                                    [class]="stepState(step.key, detail.status) === 'done'
+                                                        ? 'bg-emerald-500 text-white'
+                                                        : (stepState(step.key, detail.status) === 'active'
+                                                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500')"
+                                                >
+                                                    <span class="material-symbols-outlined text-lg">
+                                                        {{ stepState(step.key, detail.status) === 'done' ? 'check' : 'radio_button_checked' }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <p
+                                                        class="text-xs font-black uppercase tracking-[0.16em]"
+                                                        [class]="stepState(step.key, detail.status) === 'pending'
+                                                            ? 'text-slate-400'
+                                                            : 'text-slate-900 dark:text-white'"
+                                                    >
+                                                        {{ step.label }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="rounded-2xl border border-slate-100 dark:border-white/10 p-4">
+                                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">Người nhận</p>
+                                    <p class="mt-2 font-bold text-slate-900 dark:text-white">{{ detail.shippingAddress.recipientName }}</p>
+                                    <p class="text-slate-600 dark:text-slate-300 mt-1">{{ detail.shippingAddress.phone }}</p>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">{{ fullAddress(detail) }}</p>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 dark:border-white/10 p-4">
+                                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">Thanh toán</p>
+                                    <p class="mt-2 font-bold text-slate-900 dark:text-white">{{ detail.paymentMethod }}</p>
+                                    <p class="text-slate-600 dark:text-slate-300 mt-1">{{ paymentLabel(detail.paymentStatus) }}</p>
+                                    @if (detail.notes) {
+                                        <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">Ghi chú: {{ detail.notes }}</p>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl border border-slate-100 dark:border-white/10 overflow-hidden">
+                                <div class="px-4 py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10">
+                                    <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Sản phẩm trong đơn</p>
+                                </div>
+                                <div class="divide-y divide-slate-100 dark:divide-white/10">
+                                    @for (item of detail.items; track trackByItemId($index, item)) {
+                                        <div class="px-4 py-4 flex items-center gap-4">
+                                            <div class="size-14 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 overflow-hidden flex items-center justify-center">
+                                                @if (item.productImageUrl) {
+                                                    <img [src]="item.productImageUrl" [alt]="item.productName" class="w-full h-full object-cover" />
+                                                } @else {
+                                                    <span class="material-symbols-outlined text-slate-400">inventory_2</span>
+                                                }
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-semibold text-slate-900 dark:text-white truncate">{{ item.productName }}</p>
+                                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">SL: {{ item.quantity }}</p>
+                                            </div>
+                                            <p class="font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                                {{ item.unitPrice | number:'1.0-0' }} đ
+                                            </p>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    } @else {
+                        <div class="py-16 text-center text-slate-500 dark:text-slate-400">
+                            Không thể tải chi tiết đơn hàng.
+                        </div>
+                    }
+                }
+            </section>
+        </div>
+    }
 </div>
