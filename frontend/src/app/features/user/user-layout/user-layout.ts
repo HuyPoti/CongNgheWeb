@@ -19,35 +19,42 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
               class="bg-white dark:bg-surface-dark rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/40 dark:shadow-none overflow-hidden animate-in fade-in slide-in-from-left-4 duration-700"
             >
               <!-- User Profile Header -->
-              <div
-                class="p-10 text-center border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-white/2"
-              >
-                <div class="relative w-28 h-28 mx-auto mb-6 group">
-                  <div
-                    class="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"
-                  ></div>
-                  <div
-                    class="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary to-accent-cyan flex items-center justify-center text-white text-4xl font-black shadow-xl shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform duration-500"
-                  >
-                    M
-                  </div>
-                  <div
-                    class="absolute -bottom-1 -right-1 size-8 rounded-2xl bg-white dark:bg-surface-dark border-4 border-slate-50 dark:border-white/5 flex items-center justify-center shadow-lg"
-                  >
-                    <span class="material-symbols-outlined text-primary text-sm font-black"
-                      >verified</span
-                    >
-                  </div>
-                </div>
-                <h3 class="font-bold text-2xl text-slate-900 dark:text-white tracking-tight">
-                  Minh Nguyen
-                </h3>
-                <p
-                  class="text-slate-400 font-medium text-xs mt-1 uppercase tracking-widest px-4 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 inline-block mt-4"
+              @if (authService.currentUser$ | async; as user) {
+                <div
+                  class="p-10 text-center border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-white/2"
                 >
-                  Apex Commander
-                </p>
-              </div>
+                  <div class="relative w-28 h-28 mx-auto mb-6 group">
+                    <div
+                      class="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                    ></div>
+
+                    @if (user.avatarUrl) {
+                      <img
+                        [src]="user.avatarUrl"
+                        class="relative w-full h-full rounded-[2rem] object-cover shadow-xl rotate-3 group-hover:rotate-0 transition-all duration-500"
+                        [alt]="user.fullName"
+                      />
+                    } @else {
+                      <div
+                        class="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary to-accent-cyan flex items-center justify-center text-white text-4xl font-black shadow-xl shadow-primary/20 rotate-3 group-hover:rotate-0 transition-all duration-500"
+                      >
+                        {{ getInitials(user.fullName) }}
+                      </div>
+                    }
+
+                    <div
+                      class="absolute -bottom-1 -right-1 size-8 rounded-2xl bg-white dark:bg-surface-dark border-4 border-slate-50 dark:border-white/5 flex items-center justify-center shadow-lg"
+                    >
+                      <span class="material-symbols-outlined text-primary text-sm font-black"
+                        >verified</span
+                      >
+                    </div>
+                  </div>
+                  <h3 class="font-bold text-2xl text-slate-900 dark:text-white tracking-tight">
+                    {{ user.fullName }}
+                  </h3>
+                </div>
+              }
 
               <!-- Navigation Menu -->
               <nav class="p-6 space-y-3">
@@ -101,7 +108,7 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 })
 export class UserLayout {
   private router = inject(Router);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
 
   sidebarItems = [
     { id: 'profile', label: 'user.sidebar_overview', icon: 'person', route: '/user/profile' },
@@ -122,5 +129,16 @@ export class UserLayout {
   logout() {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
+  }
+
+  getInitials(name: string): string {
+    return name
+      ? name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2)
+      : 'U';
   }
 }

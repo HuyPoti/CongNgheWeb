@@ -5,6 +5,7 @@
 export interface ProductListItemDto {
   id: string;
   name: string;
+  slug: string;
   // price = SalePrice ?? RegularPrice (gia ban thuc te)
   price: number;
   regularPrice: number;
@@ -41,16 +42,11 @@ export interface ProductImageDto {
   sortOrder: number;
 }
 
-export interface ProductSpecDto {
-  specId: string;
-  specKey: string;
-  specValue: string;
-}
+
 
 export interface ProductFullDto {
   product: ProductDto;
   images: ProductImageDto[];
-  specs: ProductSpecDto[];
 }
 
 export interface PagedProductResponse {
@@ -107,10 +103,7 @@ export interface CreateProductImageDto {
   sortOrder: number;
 }
 
-export interface CreateProductSpecDto {
-  specKey: string;
-  specValue: string;
-}
+
 
 // ================================================================
 // Options object cho fetchClientProducts (thay the overload cu)
@@ -134,6 +127,7 @@ export interface ClientProductsQuery {
 export interface ProductCard {
   id: string;
   name: string;
+  slug: string;
   price: number;
   regularPrice: number;
   salePrice: number | null;

@@ -33,6 +33,10 @@ public class User
     [Column("phone")]
     public string? Phone { get; set; }   // ← Dấu ? nghĩa là nullable (cho phép null)
 
+    [MaxLength(500)]
+    [Column("avatar_url")]
+    public string? AvatarUrl { get; set; }   // ← Dấu ? nghĩa là nullable (cho phép null)
+
     [Column("role")]
     public UserRole Role { get; set; } = UserRole.customer;  // ← Giá trị mặc định
 

@@ -526,6 +526,7 @@ export class BuildPc {
   private toCard(p: ProductListItemDto): ProductCard {
     return {
       id: p.id,
+      slug: p.slug,
       name: p.name,
       price: p.price,
       regularPrice: p.regularPrice,
@@ -545,10 +546,20 @@ export class BuildPc {
     if (cached) return;
 
     try {
-      const specs = await firstValueFrom(this.productService.getSpecs(productId));
+      const product = await firstValueFrom(this.productService.getById(productId));
       const normalized: Record<string, string> = {};
-      for (const spec of specs) {
-        normalized[this.normalizeSpecKey(spec.specKey)] = spec.specValue;
+
+      if (product.specifications) {
+        try {
+          const parsed = JSON.parse(product.specifications);
+          if (typeof parsed === 'object' && parsed !== null) {
+            Object.entries(parsed).forEach(([key, value]) => {
+              normalized[this.normalizeSpecKey(key)] = String(value);
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to parse specifications JSON in BuildPC', e);
+        }
       }
 
       this.productSpecsByProductId.update((prev) => ({

@@ -1,5 +1,5 @@
 <div
-  class="relative flex h-auto w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark transition-colors duration-500"
+  class="relative flex h-auto w-full flex-col overflow-x-hidden bg-[#f8f9fa] dark:bg-background-dark transition-colors duration-500"
 >
   <!-- ── Loading ─────────────────────────────────────────────── -->
   @if (isLoading()) {
@@ -19,12 +19,16 @@
   @if (!isLoading() && errorMsg()) {
     <div class="flex items-center justify-center min-h-[60vh]">
       <div class="text-center">
-        <span class="material-symbols-outlined text-6xl text-red-400 mb-4 block">error</span>
-        <p class="text-red-400 font-bold mb-6">{{ errorMsg() }}</p>
+        <div class="size-20 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <span class="material-symbols-outlined text-4xl text-red-500">error</span>
+        </div>
+        <p class="text-slate-900 dark:text-white font-bold text-xl mb-2">{{ errorMsg() }}</p>
+        <p class="text-slate-500 dark:text-slate-400 mb-8">Vui lòng quay lại danh sách sản phẩm hoặc thử lại sau.</p>
         <a
           routerLink="/product/list"
-          class="px-8 py-3 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-widest"
+          class="inline-flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-bold text-sm transition-transform hover:scale-105"
         >
+          <span class="material-symbols-outlined text-sm">arrow_back</span>
           {{ 'product.home_link' | translate }}
         </a>
       </div>
@@ -33,589 +37,506 @@
 
   <!-- ── Main Content ─────────────────────────────────────────── -->
   @if (!isLoading() && !errorMsg()) {
-    <main class="max-w-7xl mx-auto px-6 py-12 md:py-16 w-full">
-      <!-- Breadcrumbs -->
-      <nav
-        class="flex items-center gap-3 text-[11px] text-slate-400 mb-12 font-bold uppercase tracking-widest"
-      >
-        <a class="hover:text-primary transition-colors" routerLink="/">{{
-          'common.home' | translate
-        }}</a>
-        <span class="material-symbols-outlined text-[10px] opacity-40">chevron_right</span>
-        <a class="hover:text-primary transition-colors" routerLink="/product/list">{{
-          'nav.shop' | translate
-        }}</a>
-        <span class="material-symbols-outlined text-[10px] opacity-40">chevron_right</span>
-        <span class="text-slate-900 dark:text-white truncate max-w-48">{{ product().name }}</span>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-10 w-full">
+      <!-- Breadcrumbs - Minimalist -->
+      <nav class="flex items-center gap-2 text-xs text-slate-500 mb-8 overflow-hidden whitespace-nowrap">
+        <a routerLink="/" class="hover:text-primary flex items-center gap-1 transition-colors">
+          <span class="material-symbols-outlined text-sm">home</span>
+          Trang chủ
+        </a>
+        <span class="material-symbols-outlined text-[12px] opacity-30">chevron_right</span>
+        <a routerLink="/product/list" class="hover:text-primary transition-colors">Sản phẩm</a>
+        <span class="material-symbols-outlined text-[12px] opacity-30">chevron_right</span>
+        <span class="text-slate-900 dark:text-white font-medium truncate">{{ product().name }}</span>
       </nav>
 
-      <!-- ── Product Grid ──────────────────────────────────────── -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-20">
-        <!-- Left: Images -->
-        <div class="lg:col-span-7 flex flex-col gap-6">
-          <!-- Main Image -->
-          <div
-            class="relative group aspect-square rounded-[3rem] bg-white dark:bg-surface-dark flex items-center justify-center overflow-hidden border border-slate-100 dark:border-white/5 shadow-2xl"
-          >
-            <div
-              class="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none"
-            ></div>
-            @if (mainImageUrl) {
-              <img
-                [src]="mainImageUrl"
-                [alt]="product().name"
-                class="w-[85%] h-[85%] object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-700"
-                #mainImg
-                (error)="mainImg.style.display = 'none'; mainFallback.classList.remove('hidden')"
-              />
-              <div #mainFallback class="absolute inset-0 hidden items-center justify-center">
-                <span class="material-symbols-outlined text-slate-400 text-6xl"
-                  >image_not_supported</span
-                >
-              </div>
-            } @else {
-              <span class="material-symbols-outlined text-slate-400 text-6xl"
-                >image_not_supported</span
-              >
-            }
+      <!-- ── Product Layout Grid ────────────────────────────────── -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Column 1: Image Gallery (7/12) -->
+        <div class="lg:col-span-6 space-y-6">
+          <div class="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden relative group">
+            <div 
+              class="flex items-center justify-center cursor-zoom-in min-h-[400px] md:min-h-[500px]"
+              tabindex="0"
+              (click)="isImageModalOpen.set(true)"
+              (keydown.enter)="isImageModalOpen.set(true)"
+            >
+              @if (mainImageUrl) {
+                <img
+                  [src]="mainImageUrl"
+                  [alt]="product().name"
+                  class="w-full h-auto max-h-[600px] object-contain transition-transform duration-500 group-hover:scale-105"
+                  #mainImg
+                  (error)="mainImg.style.display = 'none'; mainFallback.classList.remove('hidden')"
+                />
+                <div #mainFallback class="absolute inset-0 hidden items-center justify-center bg-slate-50 dark:bg-slate-900/50">
+                  <span class="material-symbols-outlined text-slate-300 text-6xl">image_not_supported</span>
+                </div>
+              } @else {
+                <span class="material-symbols-outlined text-slate-300 text-6xl">image_not_supported</span>
+              }
+            </div>
 
-            @if (warrantyMonths() > 0) {
-              <div
-                class="absolute top-6 right-6 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2"
-              >
-                <span class="material-symbols-outlined text-primary text-base">verified_user</span>
-                <span
-                  class="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white"
-                >
-                  {{ 'product.warranty' | translate }} {{ warrantyMonths() }}
-                  {{ 'product.months' | translate }}
-                </span>
+            <!-- Promotion Tag (Flash Sale style) -->
+            @if (salePrice() !== null && regularPrice() > (salePrice() ?? 0)) {
+              <div class="absolute top-5 left-10 bg-red-600 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest shadow-lg">
+                Giảm {{ ((regularPrice() - (salePrice() ?? 0)) / regularPrice() * 100) | number:'1.0-0' }}%
               </div>
             }
           </div>
 
-          <!-- Thumbnails -->
+          <!-- Thumbnails - Professional Grid -->
           @if (productImages().length > 1) {
-            <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
               @for (img of productImages(); track $index) {
                 <button
                   type="button"
-                  class="min-w-[100px] aspect-square rounded-2xl border-2 transition-all duration-300 bg-white dark:bg-surface-dark overflow-hidden group shadow-md hover:shadow-xl shrink-0"
-                  [class]="
-                    activeImageIndex() === $index
-                      ? 'border-primary'
-                      : 'border-slate-100 dark:border-white/5 opacity-60 hover:opacity-100'
-                  "
+                  class="size-20 min-w-[5rem] rounded-xl border-2 bg-white dark:bg-surface-dark p-2 transition-all overflow-hidden shrink-0"
+                  [class]="activeImageIndex() === $index ? 'border-primary' : 'border-transparent hover:border-slate-200 dark:hover:border-white/10'"
                   (click)="setActiveImage($index)"
                 >
-                  <img
-                    [src]="img"
-                    alt="Anh san pham {{ $index + 1 }}"
-                    class="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
-                    #thumbImg
-                    (error)="thumbImg.style.display = 'none'"
-                  />
+                  <img [src]="img" class="w-full h-full object-contain" alt="thumbnail" />
                 </button>
               }
             </div>
           }
+
+          <!-- Highlights / Key Features (Phong Vu style) -->
+          <!-- <div class="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-6 flex items-center gap-2">
+              <span class="size-1.5 bg-primary rounded-full"></span>
+              Đặc điểm nổi bật
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (spec of keySpecs(); track spec.specKey) {
+                <div class="flex items-start gap-3 text-sm">
+                  <span class="material-symbols-outlined text-primary text-lg mt-0.5">check_circle</span>
+                  <div>
+                    <span class="text-slate-500 dark:text-slate-400">{{ spec.specKey }}:</span>
+                    <span class="text-slate-900 dark:text-white font-semibold ml-1">{{ spec.specValue }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div> -->
         </div>
 
-        <!-- Right: Purchase Info -->
-        <div class="lg:col-span-5 flex flex-col gap-8">
-          <!-- Name & Price -->
-          <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-3 flex-wrap">
-              <span
-                class="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-emerald-500/20 tracking-[0.2em] uppercase"
-              >
-                <span class="material-symbols-outlined text-sm fill-1">star</span>
-                <span class="text-sm font-black">{{ averageRating() }}</span>
-                <span class="text-slate-400 text-[10px] ml-1 uppercase font-bold"
-                  >/ {{ totalReviews() }} Intel</span
-                >
+        <!-- Column 2: Purchase & Info (5/12) -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm">
+            <!-- Brand & Rating -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+                Thương hiệu: {{ product().brand || 'Chính hãng' }}
               </span>
+              <div class="flex items-center gap-1.5">
+                <div class="flex gap-0.5">
+                  @for (star of getStarArray(5); track $index) {
+                    <span class="material-symbols-outlined text-sm" [class]="star ? 'text-amber-500 fill-1' : 'text-slate-200'">star</span>
+                  }
+                </div>
+                <span class="text-xs text-slate-400 font-bold">({{ totalReviews() }} đánh giá)</span>
+              </div>
             </div>
 
-            <h1
-              class="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white leading-tight tracking-tight"
-            >
+            <h1 class="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-snug mb-6">
               {{ product().name }}
             </h1>
 
-            <!-- Price -->
-            <div class="flex items-end gap-4 mt-2">
-              <span class="text-4xl font-bold text-primary tracking-tighter">
-                {{ product().price | number: '1.0-0' }}d
-              </span>
-              @if (salePrice() !== null && regularPrice() > (salePrice() ?? 0)) {
-                <div class="flex flex-col pb-1">
-                  <span class="text-slate-400 line-through text-base font-bold">
-                    {{ regularPrice() | number: '1.0-0' }}d
+            <!-- Price Panel -->
+            <div class="bg-slate-50 dark:bg-white/5 rounded-2xl p-6 mb-6">
+              <div class="flex items-baseline gap-4 mb-1">
+                <span class="text-3xl font-bold text-red-600">
+                  {{ product().price | number:'1.0-0' }}đ
+                </span>
+                @if (salePrice() !== null && regularPrice() > (salePrice() ?? 0)) {
+                  <span class="text-slate-400 line-through text-sm font-medium">
+                    {{ regularPrice() | number:'1.0-0' }}đ
                   </span>
-                  <span class="text-emerald-500 text-[10px] font-black uppercase tracking-widest">
-                    {{ 'product.saving' | translate }}
-                    {{ regularPrice() - (salePrice() ?? 0) | number: '1.0-0' }}d
-                  </span>
-                </div>
-              }
+                }
+              </div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">info</span>
+                Giá đã bao gồm VAT
+              </div>
             </div>
-          </div>
 
-          <!-- Add to Cart Panel -->
-          <div
-            class="p-8 bg-slate-50/50 dark:bg-white/5 rounded-[2.5rem] border border-slate-100 dark:border-white/5"
-          >
-            <div class="flex flex-col gap-4">
+            <!-- Promotions Box (Phong Vu / GearVN Style) -->
+            <div class="border-2 border-primary/20 rounded-2xl overflow-hidden mb-8">
+              <div class="bg-primary/5 px-4 py-2.5 flex items-center gap-2 border-b border-primary/10">
+                <span class="material-symbols-outlined text-primary text-base">redeem</span>
+                <span class="text-xs font-black text-primary uppercase tracking-wider">Khuyến mãi & Ưu đãi</span>
+              </div>
+              <div class="p-4 space-y-3">
+                <div class="flex items-start gap-3 text-xs">
+                  <span class="size-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">1</span>
+                  <p class="text-slate-600 dark:text-slate-300">Miễn phí giao hàng cho đơn hàng từ 1.000.000đ.</p>
+                </div>
+                <div class="flex items-start gap-3 text-xs">
+                  <span class="size-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">2</span>
+                  <p class="text-slate-600 dark:text-slate-300">Tặng Voucher giảm giá 100k cho lần mua tiếp theo.</p>
+                </div>
+                <div class="flex items-start gap-3 text-xs">
+                  <span class="size-5 rounded-full bg-primary text-white flex items-center justify-center shrink-0 font-bold">3</span>
+                  <p class="text-slate-600 dark:text-slate-300">Giảm thêm 1% cho học sinh - sinh viên (khi mang thẻ trực tiếp).</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 type="button"
-                class="flex items-center justify-center gap-3 bg-primary text-white font-black py-5 rounded-2xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:scale-[1.02] transition-all uppercase tracking-[0.2em] text-sm cursor-pointer"
                 (click)="addToCart()"
+                class="bg-primary text-white font-bold py-4 rounded-xl transition-all hover:bg-primary/90 flex flex-col items-center justify-center gap-0.5 group active:scale-95"
               >
-                <span class="material-symbols-outlined">shopping_cart_checkout</span>
-                {{ 'product.add_to_cart' | translate }}
+                <span class="text-sm uppercase tracking-widest">Thêm vào giỏ</span>
+                <span class="text-[9px] font-normal opacity-80">Giao tận nơi hoặc nhận tại cửa hàng</span>
               </button>
-              <a
-                routerLink="/cart"
-                class="flex items-center justify-center gap-3 bg-white dark:bg-white/10 text-slate-900 dark:text-white font-black py-4 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-primary/50 transition-all uppercase tracking-[0.2em] text-[10px]"
+              <button
+                type="button"
+                class="bg-red-600 text-white font-bold py-4 rounded-xl transition-all hover:bg-red-700 flex flex-col items-center justify-center gap-0.5 group active:scale-95"
               >
-                <span class="material-symbols-outlined text-lg">bolt</span>
-                {{ 'product.buy_now' | translate }}
-              </a>
+                <span class="text-sm uppercase tracking-widest">Mua ngay</span>
+                <span class="text-[9px] font-normal opacity-80">Thanh toán nhanh chóng, an toàn</span>
+              </button>
             </div>
+          </div>
 
-            <!-- Info rows -->
-            <div
-              class="flex flex-col gap-3 mt-6 pt-6 border-t border-slate-200 dark:border-white/10"
-            >
-              @if (warrantyMonths() > 0) {
-                <div
-                  class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
-                >
-                  <span class="material-symbols-outlined text-primary">security</span>
-                  {{ 'product.warranty' | translate }} {{ warrantyMonths() }}
-                  {{ 'product.months' | translate }}
-                </div>
-              }
-              <div
-                class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
-              >
-                <span class="material-symbols-outlined text-emerald-500">local_shipping</span>
-                {{ 'home.shipping' | translate }}
+          <!-- Store / Policy Info -->
+          <!-- <div class="bg-white dark:bg-surface-dark rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm divide-y divide-slate-100 dark:divide-white/5">
+            <div class="p-4 flex items-center gap-4">
+              <span class="material-symbols-outlined text-primary">local_shipping</span>
+              <div>
+                <p class="text-xs font-bold text-slate-900 dark:text-white">Giao hàng miễn phí</p>
+                <p class="text-[10px] text-slate-500">Đơn hàng từ 1 triệu trở lên</p>
               </div>
-              @if (product().stockQuantity > 0) {
-                <div
-                  class="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest"
-                >
-                  <span class="material-symbols-outlined text-emerald-500">inventory_2</span>
-                  Con hang ({{ product().stockQuantity }})
+            </div>
+            <div class="p-4 flex items-center gap-4">
+              <span class="material-symbols-outlined text-primary">verified_user</span>
+              <div>
+                <p class="text-xs font-bold text-slate-900 dark:text-white">Bảo hành chính hãng</p>
+                <p class="text-[10px] text-slate-500">{{ warrantyMonths() }} tháng tại trung tâm ủy quyền</p>
+              </div>
+            </div>
+            <div class="p-4 flex items-center gap-4">
+              <span class="material-symbols-outlined text-primary">cached</span>
+              <div>
+                <p class="text-xs font-bold text-slate-900 dark:text-white">Đổi trả trong 30 ngày</p>
+                <p class="text-[10px] text-slate-500">Nếu có lỗi từ nhà sản xuất</p>
+              </div>
+            </div>
+          </div> -->
+        </div>
+      </div>
+
+      <!-- ── Details Tab Section ────────────────────────────────── -->
+      <div class="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Tab Content Area (8/12) -->
+        <div class="lg:col-span-8 space-y-8">
+          <!-- Tab Headers -->
+          <div class="flex gap-8 border-b border-slate-200 dark:border-white/10 sticky top-0 bg-[#f8f9fa] dark:bg-background-dark z-10 pt-4">
+            @for (tab of [
+              { id: 'description', label: 'Mô tả sản phẩm', icon: 'subject' },
+              { id: 'specs', label: 'Thông số kỹ thuật', icon: 'list_alt' },
+              { id: 'reviews', label: 'Đánh giá khách hàng', icon: 'reviews' }
+            ]; track tab.id) {
+              <button
+                type="button"
+                class="pb-3 border-b-2 text-sm font-bold transition-all flex items-center gap-2"
+                [class]="activeTab() === tab.id ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'"
+                (click)="setTab(tab.id)"
+              >
+                <span class="material-symbols-outlined text-lg">{{ tab.icon }}</span>
+                {{ tab.label }}
+              </button>
+            }
+          </div>
+
+          <div class="bg-white dark:bg-surface-dark rounded-2xl p-8 border border-slate-100 dark:border-white/5 shadow-sm min-h-[400px]">
+            <!-- Description -->
+            @if (activeTab() === 'description') {
+              <div class="prose dark:prose-invert max-w-none">
+                @if (description()) {
+                  <p class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{{ description() }}</p>
+                } @else {
+                  <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+                    <span class="material-symbols-outlined text-5xl mb-2">description</span>
+                    <p>Chưa có mô tả chi tiết cho sản phẩm này.</p>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Specs Table - Detailed -->
+            @if (activeTab() === 'specs') {
+              <div class="space-y-4">
+                <table class="w-full">
+                  <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+                    @for (spec of productSpecs(); track spec.specKey) {
+                      <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        <td class="py-4 px-2 w-1/3 text-sm font-medium text-slate-500 uppercase tracking-wider">{{ spec.specKey }}</td>
+                        <td class="py-4 px-2 text-sm font-semibold text-slate-900 dark:text-white">{{ spec.specValue }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <!-- Reviews -->
+            @if (activeTab() === 'reviews') {
+              <div class="space-y-10">
+                <!-- Summary -->
+                <div class="flex flex-col md:flex-row items-center gap-10 bg-slate-50 dark:bg-white/5 p-8 rounded-2xl">
+                  <div class="text-center shrink-0">
+                    <div class="text-5xl font-black text-slate-900 dark:text-white mb-2">{{ averageRating() }}</div>
+                    <div class="flex justify-center gap-1 mb-2">
+                      @for (star of getStarArray(5); track $index) {
+                        <span class="material-symbols-outlined text-xl" [class]="star ? 'text-amber-500 fill-1' : 'text-slate-200'">star</span>
+                      }
+                    </div>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">{{ totalReviews() }} đánh giá</p>
+                  </div>
+
+                  <div class="flex-1 space-y-3 w-full">
+                    @for (item of ratingDistribution(); track item.stars) {
+                      <div class="flex items-center gap-4">
+                        <span class="text-xs font-bold text-slate-600 w-8">{{ item.stars }} sao</span>
+                        <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div class="h-full bg-amber-500 transition-all duration-1000" [style.width.%]="item.percentage"></div>
+                        </div>
+                        <span class="text-xs font-medium text-slate-400 w-10">{{ item.percentage }}%</span>
+                      </div>
+                    }
+                  </div>
+
+                  <button 
+                    (click)="toggleWriteReview()"
+                    class="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl text-sm font-bold text-slate-900 dark:text-white hover:bg-primary hover:text-white hover:border-primary transition-all"
+                  >
+                    Viết đánh giá
+                  </button>
+                </div>
+
+                <!-- Review List -->
+                <div class="space-y-6">
+                  @for (review of reviews(); track review.reviewId) {
+                    <div class="border-b border-slate-100 dark:border-white/5 pb-8 last:border-0">
+                      <div class="flex items-center gap-4 mb-4">
+                        <div class="size-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center font-bold text-primary">
+                          {{ review.userName.charAt(0) }}
+                        </div>
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-900 dark:text-white">{{ review.userName }}</span>
+                            @if (review.isVerifiedPurchase) {
+                              <span class="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded font-bold">Đã mua hàng</span>
+                            }
+                          </div>
+                          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{{ review.createdAt | date:'dd/MM/yyyy' }}</p>
+                        </div>
+                      </div>
+                      <div class="flex gap-0.5 mb-2">
+                        @for (star of getStarArray(review.rating); track $index) {
+                          <span class="material-symbols-outlined text-[12px] text-amber-500 fill-1">star</span>
+                        }
+                      </div>
+                      <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{{ review.comment }}</p>
+                    </div>
+                  } @empty {
+                    <div class="text-center py-10 text-slate-400">
+                      <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Column 2 (sidebar): Technical Summary (4/12) -->
+        <div class="lg:col-span-4 space-y-6">
+          <div class="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-6">Thông số kỹ thuật tóm tắt</h3>
+            <div class="space-y-4">
+              @for (spec of productSpecs().slice(0, 8); track spec.specKey) {
+                <div class="flex justify-between items-center text-xs gap-4">
+                  <span class="text-slate-500 uppercase tracking-wider shrink-0">{{ spec.specKey }}</span>
+                  <span class="text-slate-900 dark:text-white font-bold text-right line-clamp-1">{{ spec.specValue }}</span>
                 </div>
               }
+              <button 
+                (click)="setTab('specs'); activeTabContent.scrollIntoView({ behavior: 'smooth' })"
+                class="w-full mt-4 py-2.5 text-xs font-bold text-primary border border-primary/20 rounded-xl hover:bg-primary/5 transition-colors"
+              >
+                Xem cấu hình chi tiết
+              </button>
             </div>
+          </div>
+
+          <!-- Comparison / Suggested (Phong Vu style) -->
+          <div class="bg-white dark:bg-surface-dark rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm">
+             <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-4">Sản phẩm tương tự</h3>
+             <div class="space-y-4 italic text-slate-400 text-xs text-center py-10">
+                Tính năng đang được cập nhật...
+             </div>
           </div>
         </div>
       </div>
 
-      <!-- ── Tabs ──────────────────────────────────────────────── -->
-      <div class="mt-24">
-        <!-- Tab Headers -->
-        <div
-          class="flex gap-3 p-2 bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-3xl mb-10 overflow-x-auto scrollbar-hide shadow-sm"
-        >
-          @for (
-            tab of [
-              { id: 'description', key: 'product.tab_description', icon: 'subject' },
-              { id: 'specs', key: 'product.tab_specs', icon: 'settings_input_component' },
-              { id: 'reviews', key: 'product.tab_reviews', icon: 'reviews' },
-            ];
-            track tab.id
-          ) {
-            <button
-              type="button"
-              class="flex items-center gap-2 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300 cursor-pointer whitespace-nowrap"
-              [class]="
-                activeTab() === tab.id
-                  ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-105'
-                  : 'text-slate-400 hover:text-primary'
-              "
-              (click)="setTab(tab.id)"
-            >
-              <span class="material-symbols-outlined text-base opacity-80">{{ tab.icon }}</span>
-              {{ tab.key | translate }}
-            </button>
-          }
-        </div>
+      <div #activeTabContent></div>
+    </main>
+  }
+</div>
 
-        <!-- Tab Content -->
-        <div class="min-h-[300px]">
-          <!-- Description -->
-          @if (activeTab() === 'description') {
-            <div class="max-w-4xl">
-              @if (description()) {
-                <p class="text-lg text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                  {{ description() }}
-                </p>
-              } @else {
-                <p class="text-slate-400 italic">{{ 'product.no_description' | translate }}</p>
-              }
-            </div>
-          }
-
-          <!-- Specs -->
-          @if (activeTab() === 'specs') {
-            <div class="max-w-4xl">
-              @if (productSpecs().length > 0) {
-                <div
-                  class="rounded-[2rem] overflow-hidden border border-slate-100 dark:border-white/10 bg-white dark:bg-surface-dark shadow-xl"
-                >
-                  <div
-                    class="bg-slate-50 dark:bg-white/5 px-8 py-5 border-b border-slate-100 dark:border-white/10"
-                  >
-                    <h4 class="text-xs font-black uppercase tracking-[0.3em] text-slate-400">
-                      {{ 'product.specs_title' | translate }}
-                    </h4>
-                  </div>
-                  <table class="w-full text-left">
-                    <tbody>
-                      @for (spec of productSpecs(); track spec.specId) {
-                        <tr
-                          class="border-b border-slate-50 dark:border-white/5 hover:bg-primary/5 transition-all"
-                        >
-                          <td
-                            class="px-8 py-5 text-[10px] text-primary font-black uppercase tracking-widest w-2/5"
-                          >
-                            {{ spec.specKey }}
-                          </td>
-                          <td
-                            class="px-8 py-5 font-bold text-slate-700 dark:text-slate-200 text-sm"
-                          >
-                            {{ spec.specValue }}
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              } @else {
-                <p class="text-slate-400 italic text-center py-12">
-                  {{ 'product.no_specs' | translate }}
-                </p>
-              }
-            </div>
-          }
-
-          <!-- Reviews (placeholder - chua co API) -->
-          @if (activeTab() === 'reviews') {
-            <div
-              class="bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-12 text-center shadow-xl mb-8"
-            >
-              <span
-                class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-4 block"
-                >reviews</span
-              >
-              <div class="text-7xl font-bold text-slate-900 dark:text-white mb-2 tracking-tighter">
-                {{ averageRating() }}
-              </div>
-              <div class="flex items-center justify-center gap-1.5 mb-6">
-                @for (star of getStarArray(5); track $index) {
-                  <span
-                    class="material-symbols-outlined text-2xl"
-                    [class]="star ? 'text-amber-500 fill-1' : 'text-slate-200'"
-                    >star</span
-                  >
-                }
-              </div>
-              <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-8">
-                {{ totalReviews() }} {{ 'product.tab_reviews' | translate }}
-              </p>
-              <button
-                class="w-full py-4 bg-primary text-white font-black rounded-2xl transition-all shadow-xl shadow-primary/30 hover:scale-[1.02] flex items-center justify-center gap-3 text-xs uppercase tracking-widest cursor-pointer"
-                (click)="toggleWriteReview()"
-              >
-                <span class="material-symbols-outlined text-lg">edit_note</span>
-                {{ 'product.write_review' | translate }}
-              </button>
-            </div>
-
-            <div
-              class="bg-white dark:bg-surface-dark rounded-[2rem] border border-slate-100 dark:border-white/5 p-10 shadow-2xl mb-8"
-            >
-              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">
-                {{ 'product.distribution' | translate }}
-              </h3>
-              <div class="space-y-6">
-                @for (item of ratingDistribution(); track item.stars) {
-                  <div class="flex items-center gap-6">
-                    <div class="flex items-center gap-2 w-14 shrink-0">
-                      <span class="text-sm font-black text-slate-900 dark:text-white">{{
-                        item.stars
-                      }}</span>
-                      <span class="material-symbols-outlined text-amber-500 text-sm fill-1"
-                        >star</span
-                      >
-                    </div>
-                    <div
-                      class="flex-1 h-3 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden"
-                    >
-                      <div
-                        class="h-full bg-primary shadow-[0_0_10px_rgba(0,102,255,0.4)] rounded-full transition-all duration-1000"
-                        [style.width.%]="item.percentage"
-                      ></div>
-                    </div>
-                    <span
-                      class="text-[10px] font-black text-slate-400 w-12 text-right uppercase tracking-widest"
-                      >{{ item.percentage }}%</span
-                    >
-                  </div>
-                }
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-              @for (review of reviews(); track review.reviewId) {
-                <div
-                  class="bg-white dark:bg-surface-dark rounded-[2.5rem] border border-slate-50 dark:border-white/5 p-8 shadow-xl hover:border-primary/30 transition-all group overflow-hidden relative"
-                >
-                  <div class="flex items-start justify-between mb-8 relative z-10">
-                    <div class="flex items-center gap-4">
-                      <div
-                        class="size-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 flex items-center justify-center font-orbitron font-bold text-xl shadow-sm"
-                      >
-                        {{ review.userName.charAt(0) }}
-                      </div>
-                      <div>
-                        <div class="flex items-center gap-3">
-                          <h4 class="font-bold text-slate-900 dark:text-white text-base">
-                            {{ review.userName }}
-                          </h4>
-                          @if (review.isVerifiedPurchase) {
-                            <span
-                              class="material-symbols-outlined text-emerald-500 text-lg"
-                              [title]="'product.verified' | translate"
-                              >verified</span
-                            >
-                          }
-                        </div>
-                        <p
-                          class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1"
-                        >
-                          {{ review.createdAt | date: 'MMMM yyyy' }}
-                        </p>
-                      </div>
-                    </div>
-                    <div class="flex gap-0.5">
-                      @for (star of getStarArray(review.rating); track $index) {
-                        <span
-                          class="material-symbols-outlined text-sm"
-                          [class]="
-                            star ? 'text-amber-500 fill-1' : 'text-slate-200 dark:text-slate-800'
-                          "
-                          >star</span
-                        >
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
+<!-- ── Sticky Purchase Bar ──────────────────────────────────── -->
+<div 
+  class="fixed bottom-0 left-0 w-full bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-white/10 z-[50] transition-transform duration-500 px-6 py-3"
+  [class.translate-y-full]="!showStickyBar()"
+  [class.translate-y-0]="showStickyBar()"
+>
+  <div class="max-w-7xl mx-auto flex items-center justify-between gap-6">
+    <div class="flex items-center gap-4 min-w-0">
+      <div class="size-12 rounded-lg border border-slate-100 dark:border-white/5 p-1 bg-white shrink-0 hidden sm:block">
+        <img [src]="mainImageUrl" class="w-full h-full object-contain" alt="sticky thumb" />
+      </div>
+      <div class="min-w-0">
+        <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-md">{{ product().name }}</h4>
+        <div class="flex items-center gap-3">
+          <span class="text-lg font-black text-red-600">{{ product().price | number:'1.0-0' }}đ</span>
+          @if (salePrice() !== null && regularPrice() > (salePrice() ?? 0)) {
+            <span class="text-[10px] text-slate-400 line-through">{{ regularPrice() | number:'1.0-0' }}đ</span>
           }
         </div>
       </div>
-    </main>
-  }
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+      <button 
+        (click)="addToCart()"
+        class="bg-primary text-white font-bold px-8 py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95"
+      >
+        Thêm vào giỏ
+      </button>
+      <button 
+        class="bg-red-600 text-white font-bold px-8 py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95 hidden md:block"
+      >
+        Mua ngay
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Write Review Modal -->
 @if (isWriteReviewOpen()) {
   <div
-    class="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-[100] p-6"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+    tabindex="0"
     (click)="toggleWriteReview()"
-    (keyup.escape)="toggleWriteReview()"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
+    (keydown.enter)="toggleWriteReview()"
   >
     <div
-      class="bg-white dark:bg-surface-dark w-full max-w-2xl rounded-[3rem] overflow-hidden border border-white/20 shadow-2xl"
-      (click)="$event.stopPropagation()"
-      (keyup.enter)="$event.stopPropagation()"
+      class="bg-white dark:bg-surface-dark w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
       tabindex="0"
+      (click)="$event.stopPropagation()"
+      (keydown.enter)="$event.stopPropagation()"
     >
-      <!-- Header -->
-      <div
-        class="flex items-center justify-between p-8 border-b border-slate-50 dark:border-white/5"
-      >
-        <div>
-          <h2 class="text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
-            {{ 'product.write_review' | translate }}
-          </h2>
-          <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">{{ product().name }}</p>
-        </div>
-        <button
-          type="button"
-          class="size-11 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border border-slate-100 dark:border-white/10"
-          (click)="toggleWriteReview()"
-        >
+      <div class="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Đánh giá sản phẩm</h2>
+        <button (click)="toggleWriteReview()" class="size-10 rounded-full hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center text-slate-400">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
 
-      <!-- Body -->
-      <div class="p-8 space-y-6 overflow-y-auto max-h-[60vh]">
-        <!-- Star rating -->
-        <div class="flex flex-col items-center gap-4">
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
-            {{ 'product.overall_rating' | translate }}
-          </h3>
-          <div class="flex gap-3">
+      <div class="p-8 space-y-6">
+        <div class="flex flex-col items-center gap-3">
+          <p class="text-sm font-medium text-slate-500">Bạn thấy sản phẩm này thế nào?</p>
+          <div class="flex gap-2">
             @for (num of [1, 2, 3, 4, 5]; track num) {
               <button
                 type="button"
-                class="group"
                 (click)="setRating(num)"
                 (mouseenter)="setHoverRating(num)"
                 (mouseleave)="setHoverRating(0)"
               >
                 <span
-                  class="material-symbols-outlined text-4xl transition-all group-hover:scale-125"
-                  [class]="
-                    (hoverRating() > 0 ? num <= hoverRating() : num <= selectedRating())
-                      ? 'text-amber-500 fill-1'
-                      : 'text-slate-100 dark:text-slate-800'
-                  "
-                  >star</span
-                >
+                  class="material-symbols-outlined text-4xl transition-all"
+                  [class]="(hoverRating() > 0 ? num <= hoverRating() : num <= selectedRating()) ? 'text-amber-500 fill-1 scale-110' : 'text-slate-200'"
+                >star</span>
               </button>
             }
           </div>
         </div>
 
-        <!-- Title input -->
-        <div class="space-y-2">
-          <label
-            for="review-title"
-            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]"
-          >
-            {{ 'product.review_title' | translate }}
-          </label>
-          <input
-            id="review-title"
-            type="text"
-            class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-2xl p-4 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-            [placeholder]="'product.review_title_placeholder' | translate"
-            [ngModel]="reviewTitle()"
-            (ngModelChange)="reviewTitle.set($event)"
-          />
-        </div>
-
-        <!-- Body textarea -->
-        <div class="space-y-2">
-          <label
-            for="review-body"
-            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]"
-          >
-            {{ 'product.review_body' | translate }}
-          </label>
+        <div class="space-y-4">
           <textarea
-            id="review-body"
-            class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/10 rounded-[2rem] p-5 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[130px] resize-none outline-none transition-all"
-            [placeholder]="'product.review_body_placeholder' | translate"
+            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none min-h-[150px] resize-none"
+            placeholder="Nhập nội dung đánh giá của bạn (tối thiểu 10 ký tự)..."
             [ngModel]="reviewBody()"
             (ngModelChange)="reviewBody.set($event)"
           ></textarea>
         </div>
       </div>
 
-      <!-- Footer -->
-      <div
-        class="p-8 border-t border-slate-50 dark:border-white/5 flex items-center justify-between"
-      >
-        <span class="text-[10px] text-slate-400 italic">{{
-          'product.review_public_notice' | translate
-        }}</span>
-        <div class="flex gap-3">
-          <button
-            type="button"
-            class="px-6 py-3 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all text-[10px] font-black uppercase tracking-widest"
-            (click)="toggleWriteReview()"
-          >
-            {{ 'product.cancel' | translate }}
-          </button>
-          <button
-            class="px-12 py-4 bg-primary text-white font-black rounded-2xl shadow-2xl shadow-primary/40 hover:scale-105 transition-all flex items-center gap-3 uppercase tracking-widest text-[10px] cursor-pointer"
-            (click)="submitReview()"
-          >
-            @if (isSubmittingReview()) {
-              <span class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
-            } @else {
-              <span class="material-symbols-outlined text-lg">rocket_launch</span>
-            }
-            {{ 'product.submit_review' | translate }}
-          </button>
-        </div>
+      <div class="p-6 border-t border-slate-100 dark:border-white/5 flex justify-end gap-3">
+        <button (click)="toggleWriteReview()" class="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900">Hủy bỏ</button>
+        <button
+          (click)="submitReview()"
+          [disabled]="isSubmittingReview()"
+          class="px-10 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
+        >
+          @if (isSubmittingReview()) { Gửi... } @else { Gửi đánh giá }
+        </button>
       </div>
     </div>
   </div>
 }
 
 <!-- Image Modal -->
-@if (activeImageIndex() >= 0) {
+@if (isImageModalOpen()) {
   <div
-    class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
-    (click)="activeImageIndex.set(-1)"
-    (keyup.escape)="activeImageIndex.set(-1)"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
+    class="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-4"
+    tabindex="0"
+    (click)="isImageModalOpen.set(false)"
+    (keydown.enter)="isImageModalOpen.set(false)"
   >
-    <div
-      class="relative bg-white dark:bg-surface-dark rounded-3xl overflow-hidden shadow-2xl max-w-5xl w-full max-h-[90vh]"
-      (click)="$event.stopPropagation()"
+    <button
+      class="absolute top-6 right-6 size-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all z-[210]"
+      (click)="isImageModalOpen.set(false)"
     >
-      <!-- Close button -->
-      <button
-        type="button"
-        class="absolute top-6 right-6 size-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm flex items-center justify-center transition-all z-20"
-        (click)="activeImageIndex.set(-1)"
-      >
-        <span class="material-symbols-outlined text-2xl">close</span>
-      </button>
+      <span class="material-symbols-outlined text-3xl">close</span>
+    </button>
 
-      <!-- Image -->
-      <img
-        [src]="productImages()[activeImageIndex()]"
-        alt="Product image"
-        class="w-full h-auto max-h-[90vh] object-contain"
-      />
-
-      <!-- Navigation -->
+    <div class="relative max-w-5xl w-full flex items-center justify-center" tabindex="0" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
       @if (productImages().length > 1) {
         <button
-          type="button"
-          class="absolute left-6 top-1/2 -translate-y-1/2 size-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm flex items-center justify-center transition-all z-20"
-          (click)="
-            activeImageIndex.set(
-              (activeImageIndex() - 1 + productImages().length) % productImages().length
-            )
-          "
+          class="absolute left-0 size-14 bg-white/5 hover:bg-white/10 text-white rounded-full flex items-center justify-center transition-all disabled:opacity-20"
+          (click)="setActiveImage((activeImageIndex() - 1 + productImages().length) % productImages().length)"
         >
-          <span class="material-symbols-outlined text-2xl">chevron_left</span>
+          <span class="material-symbols-outlined text-4xl">chevron_left</span>
         </button>
-        <button
-          type="button"
-          class="absolute right-6 top-1/2 -translate-y-1/2 size-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm flex items-center justify-center transition-all z-20"
-          (click)="activeImageIndex.set((activeImageIndex() + 1) % productImages().length)"
-        >
-          <span class="material-symbols-outlined text-2xl">chevron_right</span>
-        </button>
-
-        <!-- Image counter -->
-        <div
-          class="absolute bottom-6 right-6 px-4 py-2 rounded-full bg-black/50 text-white text-sm font-bold backdrop-blur-sm z-20"
-        >
-          {{ activeImageIndex() + 1 }} / {{ productImages().length }}
-        </div>
       }
+
+      <img
+        [src]="productImages()[activeImageIndex()]"
+        alt="gallery image"
+        class="max-w-full max-h-[90vh] object-contain animate-in fade-in duration-300"
+      />
+
+      @if (productImages().length > 1) {
+        <button
+          class="absolute right-0 size-14 bg-white/5 hover:bg-white/10 text-white rounded-full flex items-center justify-center transition-all disabled:opacity-20"
+          (click)="setActiveImage((activeImageIndex() + 1) % productImages().length)"
+        >
+          <span class="material-symbols-outlined text-4xl">chevron_right</span>
+        </button>
+      }
+      
+      <div class="absolute -bottom-10 text-white/60 text-sm font-bold tracking-widest">
+        {{ activeImageIndex() + 1 }} / {{ productImages().length }}
+      </div>
     </div>
   </div>
 }

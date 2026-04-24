@@ -9,12 +9,8 @@ import { ToastService } from '../../../core/services/toast.service';
 import {
   ProductDto,
   ProductFullDto,
-  ProductImageDto,
-  ProductSpecDto,
   CreateProductDto,
   UpdateProductDto,
-  CreateProductImageDto,
-  CreateProductSpecDto,
 } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
 import { Brand } from '../../../core/models/brand.model';
@@ -117,7 +113,7 @@ export class ManageProduct implements OnInit {
       newSpecKey: '',
       newSpecValue: '',
     };
-    // Load full product to get images/specs
+    // Load full product to get images
     this.productService.getFullById(product.productId).subscribe({
       next: (full) => {
         this.editingFull.set(full);
@@ -126,10 +122,21 @@ export class ManageProduct implements OnInit {
           url: img.imageUrl,
           isPrimary: img.isPrimary,
         }));
-        this.form.specs = full.specs.map((s) => ({
-          key: s.specKey,
-          value: s.specValue,
-        }));
+        
+        // Parse specs from JSON specifications field
+        if (product.specifications) {
+          try {
+            const parsed = JSON.parse(product.specifications);
+            if (typeof parsed === 'object' && parsed !== null) {
+              this.form.specs = Object.entries(parsed).map(([key, value]) => ({
+                key,
+                value: String(value)
+              }));
+            }
+          } catch (e) {
+            console.warn('Failed to parse specifications JSON in Admin', e);
+          }
+        }
       },
     });
     this.showModal.set(true);
@@ -225,7 +232,9 @@ export class ManageProduct implements OnInit {
       stockQuantity: this.form.stockQuantity,
       warrantyMonths: this.form.warrantyMonths,
       description: this.form.description || undefined,
-      specifications: this.form.specs.length ? JSON.stringify(this.form.specs) : undefined,
+      specifications: this.form.specs.length 
+        ? JSON.stringify(this.form.specs.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {})) 
+        : undefined,
       status: Number(this.form.status) || 1, 
     };
 
@@ -240,10 +249,7 @@ export class ManageProduct implements OnInit {
               sortOrder: i,
             }),
           );
-          const specObs = this.form.specs.map((s) =>
-            this.productService.addSpec(created.productId, { specKey: s.key, specValue: s.value }),
-          );
-          return imageObs.length || specObs.length ? forkJoin([...imageObs, ...specObs]) : of([]);
+          return imageObs.length ? forkJoin(imageObs) : of([]);
         }),
       )
       .subscribe({
@@ -274,7 +280,9 @@ export class ManageProduct implements OnInit {
       stockQuantity: this.form.stockQuantity,
       warrantyMonths: this.form.warrantyMonths,
       description: this.form.description || undefined,
-      specifications: this.form.specs.length ? JSON.stringify(this.form.specs) : undefined,
+      specifications: this.form.specs.length 
+        ? JSON.stringify(this.form.specs.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {})) 
+        : undefined,
       status: Number(this.form.status),
     };
 
