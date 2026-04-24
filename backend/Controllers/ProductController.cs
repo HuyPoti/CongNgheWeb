@@ -58,6 +58,14 @@ public class ProductController : ControllerBase
         return Ok(product);
     }
 
+    // GET: api/product/slug/{slug}/full
+    [HttpGet("slug/{slug}/full")]
+    public async Task<IActionResult> GetFullBySlug(string slug, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetFullBySlugAsync(slug, cancellationToken);
+        return Ok(result);
+    }
+
     // POST: api/product
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto, CancellationToken cancellationToken)

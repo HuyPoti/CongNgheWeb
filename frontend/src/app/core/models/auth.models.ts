@@ -5,12 +5,13 @@ export interface UserDto {
   phone?: string;
   role: string;
   isActive: boolean;
+  hasPassword: boolean;
   avatarUrl?: string;
 }
 
 export interface AuthResponse {
   token: string;
-  refreshToken: string;  // ← THÊM
+  refreshToken: string; // ← THÊM
   user: UserDto;
 }
 
@@ -26,11 +27,11 @@ export interface RegisterDto {
   phone?: string;
 }
 
-export interface ForgotPasswordDto{
+export interface ForgotPasswordDto {
   email: string;
 }
 
-export interface ResetPasswordDto{
+export interface ResetPasswordDto {
   email: string;
   otpCode: string;
   newPassword: string;
@@ -48,4 +49,10 @@ export interface ResendVerificationDto {
 export interface ChangePasswordDto {
   currentPassword: string;
   newPassword: string;
+}
+
+export interface UpdateProfileDto {
+  fullName?: string;
+  phone?: string;
+  avatarUrl?: string;
 }

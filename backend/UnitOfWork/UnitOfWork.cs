@@ -13,7 +13,6 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
     public IRepository<Banner> Banners { get; } = new Repository<Banner>(dbContext, mapper);
     public IRepository<User> Users { get; } = new Repository<User>(dbContext, mapper);
     public IRepository<ProductImage> ProductImages { get; } = new Repository<ProductImage>(dbContext, mapper);
-    public IRepository<ProductSpec> ProductSpecs { get; } = new Repository<ProductSpec>(dbContext, mapper);
     public IRepository<News> News { get; } = new Repository<News>(dbContext, mapper);
     public IRepository<NewsCategory> NewsCategories { get; } = new Repository<NewsCategory>(dbContext, mapper);
     public IRepository<Order> Orders { get; } = new Repository<Order>(dbContext, mapper);

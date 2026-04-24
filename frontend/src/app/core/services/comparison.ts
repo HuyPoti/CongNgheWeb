@@ -77,7 +77,6 @@ export class ComparisonService {
             specsObj = {};
           }
         }
-        full.specs.forEach((s) => (specsObj[s.specKey] = s.specValue));
 
         this._selectedProducts.update((list) =>
           list.map((p) =>

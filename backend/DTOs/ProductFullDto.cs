@@ -8,5 +8,4 @@ public class ProductFullDto
 {
     public ProductDto Product { get; set; } = default!;
     public List<ProductImageDto> Images { get; set; } = new();
-    public List<ProductSpecDto> Specs { get; set; } = new();
 }

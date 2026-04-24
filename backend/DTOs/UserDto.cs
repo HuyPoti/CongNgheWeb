@@ -10,8 +10,10 @@ public class UserDto
     public string Email {get ; set; } = string.Empty;
     public string FullName {get; set;} = string.Empty;
     public string? Phone {get; set;} = string.Empty;
+    public string? AvatarUrl { get; set; }
     public UserRole Role {get; set;} = UserRole.customer;
     public bool IsActive { get; set; }
+    public bool HasPassword { get; set; }
     public DateTime CreatedAt {get; set;}
     public DateTime UpdatedAt {get; set;}
 }

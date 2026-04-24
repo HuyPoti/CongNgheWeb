@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, UserDto, LoginDto, RegisterDto, VerifyEmailDto, ResendVerificationDto } from '../models/auth.models';
+import {
+  AuthResponse,
+  UserDto,
+  LoginDto,
+  RegisterDto,
+  VerifyEmailDto,
+  ResendVerificationDto,
+  UpdateProfileDto,
+} from '../models/auth.models';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from '../models/auth.models';
 import { SocialAuthService } from '@abacritt/angularx-social-login';
@@ -13,6 +21,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private socialAuthService = inject(SocialAuthService, { optional: true });
   private apiUrl = `${environment.apiUrl}/auth`;
+  private profileUrl = `${environment.apiUrl}/profile`;
 
   private currentUserSubject = new BehaviorSubject<UserDto | null>(this.getUserFromStorage());
   currentUser$ = this.currentUserSubject.asObservable();
@@ -47,15 +56,15 @@ export class AuthService {
   }
 
   logout() {
-    const refreshToken = typeof localStorage !== 'undefined'
-      ? localStorage.getItem('refreshToken') : null;
+    const refreshToken =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null;
     // Gọi API thu hồi refresh token phía server
     if (refreshToken) {
       this.http.post(`${this.apiUrl}/logout`, { refreshToken }).subscribe();
     }
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');  // ← THÊM
+      localStorage.removeItem('refreshToken'); // ← THÊM
       localStorage.removeItem('user');
     }
     this.currentUserSubject.next(null);
@@ -83,7 +92,7 @@ export class AuthService {
   private setSession(authResult: AuthResponse) {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('token', authResult.token);
-      localStorage.setItem('refreshToken', authResult.refreshToken);  // ← THÊM
+      localStorage.setItem('refreshToken', authResult.refreshToken); // ← THÊM
       localStorage.setItem('user', JSON.stringify(authResult.user));
     }
     this.currentUserSubject.next(authResult.user);
@@ -109,14 +118,29 @@ export class AuthService {
   }
 
   verifyEmail(data: VerifyEmailDto): Observable<{ message: string }> {
-    return this.http.post<{message: string }>(`${this.apiUrl}/verify-email`, data);
+    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, data);
   }
 
-  resendVerification(data: ResendVerificationDto): Observable<{message: string}> {
-    return this.http.post<{message: string}>(`${this.apiUrl}/resend-verification`, data);
+  resendVerification(data: ResendVerificationDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-verification`, data);
   }
 
-  changePassword(data: ChangePasswordDto): Observable<{message: string}> {
-    return this.http.post<{message: string}>(`${this.apiUrl}/change-password`, data);
+  changePassword(data: ChangePasswordDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/change-password`, data);
+  }
+
+  updateProfile(data: UpdateProfileDto): Observable<UserDto> {
+    return this.http.put<UserDto>(`${this.profileUrl}`, data).pipe(
+      tap((user) => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(user));
+          this.currentUserSubject.next(user);
+        }
+      }),
+    );
+  }
+
+  getProfile(): Observable<UserDto> {
+    return this.http.get<UserDto>(this.profileUrl);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -25,7 +25,7 @@ export class Login implements OnInit {
 
   loginForm: FormGroup;
   returnUrl = '/';
-  isLoading = false;
+  isLoading = signal(false);
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -39,23 +39,18 @@ export class Login implements OnInit {
 
     this.socialAuthService.authState.subscribe((socialUser) => {
       if (socialUser && socialUser.idToken) {
-        setTimeout(() => {
-          this.isLoading = true;
-          this.cdr.detectChanges();
-          this.authService.googleLogin(socialUser.idToken as string).subscribe({
-            next: () => {
-              this.isLoading = false;
-              this.cdr.detectChanges();
-              this.toastService.success('Đăng nhập thành công với Google');
-              this.router.navigateByUrl(this.returnUrl || '/');
-            },
-            error: (err) => {
-              this.isLoading = false;
-              this.cdr.detectChanges();
-              const msg = err.error?.message || 'Lỗi xác thực Google';
-              this.toastService.error(msg);
-            },
-          });
+        this.isLoading.set(true);
+        this.authService.googleLogin(socialUser.idToken as string).subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            this.toastService.success('Đăng nhập thành công với Google');
+            this.router.navigateByUrl(this.returnUrl || '/');
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            const msg = err.error?.message || 'Lỗi xác thực Google';
+            this.toastService.error(msg);
+          },
         });
       }
     });
@@ -67,18 +62,15 @@ export class Login implements OnInit {
       return;
     }
 
-    this.isLoading = true;
-    this.cdr.detectChanges();
+    this.isLoading.set(true);
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.isLoading.set(false);
         this.toastService.success('Đăng nhập thành công!');
         this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.isLoading.set(false);
         console.log(err);
         const msg = err.error?.message || 'Đã có lỗi xảy ra trong quá trình đăng nhập';
         this.toastService.error(msg);

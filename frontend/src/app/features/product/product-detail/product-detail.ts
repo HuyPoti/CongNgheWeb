@@ -1,11 +1,11 @@
 import { FormsModule } from '@angular/forms';
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
-import { ProductCard, ProductFullDto, ProductSpecDto } from '../../../core/models/product.model';
+import { ProductCard, ProductFullDto } from '../../../core/models/product.model';
 import { ReviewService } from '../../../core/services/review.service';
 import { ReviewDto } from '../../../core/models/review.model';
 import { ToastService } from '../../../core/services/toast.service';
@@ -25,7 +25,8 @@ export class ProductDetail implements OnInit {
   private toastService = inject(ToastService);
 
   activeTab = signal<string>('specs');
-  activeImageIndex = signal<number>(-1);
+  activeImageIndex = signal<number>(0);
+  isImageModalOpen = signal(false);
   isWriteReviewOpen = signal(false);
   selectedRating = signal(0);
   hoverRating = signal(0);
@@ -34,12 +35,19 @@ export class ProductDetail implements OnInit {
   isSubmittingReview = signal(false);
   isLoading = signal(true);
   errorMsg = signal('');
+  showStickyBar = signal(false);
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    this.showStickyBar.set(window.scrollY > 600);
+  }
 
   // ── Product data ──────────────────────────────────────────────────
   // product() → UI model de dung trong template (gia, anh, ten...)
   product = signal<ProductCard>({
     id: '',
     name: '',
+    slug: '',
     price: 0,
     regularPrice: 0,
     salePrice: null,
@@ -52,7 +60,8 @@ export class ProductDetail implements OnInit {
     specs: {},
   });
   productImages = signal<string[]>([]);
-  productSpecs = signal<ProductSpecDto[]>([]);
+  productSpecs = signal<{ specKey: string; specValue: string }[]>([]);
+  keySpecs = computed(() => this.productSpecs().slice(0, 5));
   regularPrice = signal(0);
   salePrice = signal<number | null>(null);
   description = signal<string | null>(null);
@@ -66,21 +75,21 @@ export class ProductDetail implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
+    const slug = this.route.snapshot.paramMap.get('slug');
+    if (!slug) {
       this.errorMsg.set('Khong tim thay san pham');
       this.isLoading.set(false);
       return;
     }
-    this.loadProduct(id);
+    this.loadProduct(slug);
   }
 
   // ── Data ──────────────────────────────────────────────────────────
-  private loadProduct(id: string): void {
+  private loadProduct(slug: string): void {
     this.isLoading.set(true);
     this.errorMsg.set('');
 
-    this.productService.getFullById(id).subscribe({
+    this.productService.getFullBySlug(slug).subscribe({
       next: (full: ProductFullDto) => {
         const dto = full.product;
 
@@ -90,11 +99,27 @@ export class ProductDetail implements OnInit {
 
         // Specs → Record de dung trong ProductCard
         const specsMap: Record<string, string> = {};
-        full.specs.forEach((s) => (specsMap[s.specKey] = s.specValue));
+        const finalSpecs: { specKey: string; specValue: string }[] = [];
+        
+        if (dto.specifications) {
+          try {
+            const parsed = JSON.parse(dto.specifications);
+            if (typeof parsed === 'object' && parsed !== null) {
+              Object.entries(parsed).forEach(([key, value]) => {
+                const valStr = String(value);
+                finalSpecs.push({ specKey: key, specValue: valStr });
+                specsMap[key] = valStr;
+              });
+            }
+          } catch (e) {
+            console.warn('Failed to parse specifications JSON', e);
+          }
+        }
 
         this.product.set({
           id: dto.productId,
           name: dto.name,
+          slug: dto.slug,
           price: dto.salePrice ?? dto.regularPrice,
           regularPrice: dto.regularPrice,
           salePrice: dto.salePrice,
@@ -108,14 +133,14 @@ export class ProductDetail implements OnInit {
         });
 
         this.productImages.set(full.images.map((i) => i.imageUrl));
-        this.productSpecs.set(full.specs);
+        this.productSpecs.set(finalSpecs);
         this.regularPrice.set(dto.regularPrice);
         this.salePrice.set(dto.salePrice);
         this.description.set(dto.description);
         this.warrantyMonths.set(dto.warrantyMonths);
         this.activeImageIndex.set(0);
         this.isLoading.set(false);
-        this.reviewsService.getByProductId(id).subscribe({
+        this.reviewsService.getByProductId(dto.productId).subscribe({
           next: (data) => {
             this.reviews.set(data);
             this.calculateRatingRate(data);

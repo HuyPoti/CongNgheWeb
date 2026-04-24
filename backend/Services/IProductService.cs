@@ -15,6 +15,7 @@ public interface IProductService
     );
 
     Task<ProductFullDto> GetFullByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<ProductFullDto> GetFullBySlugAsync(string slug, CancellationToken cancellationToken);
     Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken);
 
