@@ -9,5 +9,11 @@ obj/**
 *.user
 *.suo
 *.sln.docstates
+
+# Configuration & Secrets
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
 .env
-*.log
+
+*.log
