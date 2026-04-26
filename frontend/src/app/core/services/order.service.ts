@@ -16,11 +16,14 @@ export class OrderService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/orders`;
 
-  // GET: /api/orders?status=&page=&pageSize=
-  getAll(status?: string, page = 1, pageSize = 10): Observable<PagedResult<OrderDto>> {
+  // GET: /api/orders?status=&page=&pageSize=&userId=
+  getAll(status?: string, page = 1, pageSize = 10, userId?: string): Observable<PagedResult<OrderDto>> {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
     if (status) {
       params = params.set('status', status);
+    }
+    if (userId) {
+      params = params.set('userId', userId);
     }
     return this.http.get<PagedResult<OrderDto>>(this.baseUrl, { params });
   }

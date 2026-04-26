@@ -1,0 +1,296 @@
+================================================================================
+ LUỒNG THANH TOÁN (Payment Swimlane)
+ Tài liệu kỹ thuật chi tiết - Planning
+ 👤 THÀNH VIÊN: [Tên thành viên #1]
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0. RANH GIỚI & QUY ƯỚC CHỐNG XUNG ĐỘT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  ĐỌC KỸ TRƯỚC KHI CODE!
+
+--- 0.1 File LUỒNG NÀY SỞ HỮU (chỉ mình sửa) ---
+  ✅ Models/Payment.cs                      → TẠO MỚI
+  ✅ Services/IPaymentService.cs             → TẠO MỚI
+  ✅ Services/PaymentService.cs              → TẠO MỚI
+  ✅ Services/IVnPayService.cs               → TẠO MỚI
+  ✅ Services/VnPayService.cs                → TẠO MỚI
+  ✅ Controllers/PaymentsController.cs       → TẠO MỚI
+  ✅ DTOs/PaymentDto.cs                      → TẠO MỚI
+  ✅ DTOs/CreatePaymentDto.cs                → TẠO MỚI
+  ✅ DTOs/VnPayCallbackDto.cs                → TẠO MỚI
+  ✅ Frontend: features/cart/vnpay-return/   → TẠO MỚI
+  ✅ Frontend: core/services/payment.service.ts → TẠO MỚI
+  ✅ Frontend: core/models/payment.model.ts  → TẠO MỚI
+  ✅ Frontend: core/services/address.service.ts → TẠO MỚI
+  ✅ Backend: Email template order_confirmation.html → TẠO MỚI
+
+--- 0.2 File DÙNG CHUNG (đã tách sang Phase 0, KHÔNG tự sửa) ---
+  ❌ Models/Order.cs          → Phase 0 đã thêm: Payment navigation
+  ❌ AppDbContext.cs           → Phase 0 đã thêm: DbSet<Payment>
+  ❌ Program.cs                → Phase 0 đã đăng ký: PaymentService, VnPayService
+  ❌ DTOs/CreateOrderDto.cs    → Phase 0 đã thêm: PaymentMethod field
+  ❌ DTOs/OrderDetailDto.cs    → Phase 0 đã thêm: Payment info
+  ❌ db.sql / migration        → Phase 0 đã chạy tất cả ALTER TABLE
+  ❌ Frontend: order.model.ts  → Phase 0 đã thêm: PaymentDto interface
+
+--- 0.3 File LUỒNG KHÁC SỞ HỮU nhưng mình cần PHỐI HỢP ---
+  🤝 OrderService.cs → OWNER: Kho & Vận chuyển
+     Mình cung cấp: PaymentService.CreatePaymentAsync() interface
+     Kho & VC sẽ gọi trong OrderService.CreateAsync()
+     → KHÔNG tự sửa OrderService.cs
+
+  🤝 EmpOrders (Frontend) → OWNER: Kho & Vận chuyển
+     Mình thêm: Nút "Xác nhận chuyển khoản" 
+     → Tạo thành COMPONENT RIÊNG: emp-confirm-payment.component.ts
+     → Kho & VC sẽ import component này vào EmpOrders
+
+  🤝 EmailService.cs → OWNER CHUNG
+     Mình thêm: template gửi email xác nhận đơn hàng
+     Sau bán hàng thêm: template gửi email thay đổi trạng thái
+     → Mỗi bên tạo FILE TEMPLATE RIÊNG, EmailService chỉ đọc template
+
+--- 0.4 THỨ TỰ TRIỂN KHAI ---
+  1️⃣  Chờ Phase 0 hoàn thành (shared foundation)
+  2️⃣  Tạo Payment Model + DTOs (dùng DbSet đã có từ Phase 0)
+  3️⃣  Tạo VnPayService (độc lập hoàn toàn)
+  4️⃣  Tạo PaymentService + Controller
+  5️⃣  Tạo Frontend Payment UI + VnPay Return
+  6️⃣  Tạo email template order_confirmation.html
+  7️⃣  Giao component emp-confirm-payment cho Kho & VC import
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. HIỆN TRẠNG (Baseline)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ĐÃ CÓ:
+  - Bảng payments (DB): payment_id, order_id, amount, payment_method, transaction_id, status, paid_at
+  - Order.PaymentMethod: lưu string ("cod")
+  - Order.PaymentStatus: 1=unpaid, 2=paid, 3=refunded
+  - Frontend Payment component: Chỉ hỗ trợ COD
+  - Frontend Checkout: Nhập thông tin giao hàng cơ bản (firstName, lastName, phone, addressLine)
+  - Admin ManageOrder: Có thể cập nhật paymentStatus thủ công
+  - EmailService: Đã có hạ tầng gửi email (SMTP)
+
+❌ THIẾU:
+  - Không có tích hợp cổng thanh toán online (VNPay/MoMo/ZaloPay)
+  - Bảng payments chưa có Model/Entity trong backend
+  - Checkout thiếu tỉnh/huyện/xã (chỉ có addressLine string thô)
+  - Không gửi email xác nhận đơn hàng sau khi đặt thành công
+  - Không có xác nhận thanh toán chuyển khoản (Employee xác nhận thủ công)
+  - Không có invoice/hóa đơn điện tử
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. DATABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  Tất cả thay đổi DB đã chuyển sang Phase 0 (planning-phase0-shared.txt)
+    Luồng này KHÔNG tự chạy migration riêng.
+
+Tham khảo: Bảng payments cần ALTER thêm cột:
+  - gateway_response JSONB  (lưu response VNPay/MoMo)
+  - return_url VARCHAR(500)
+  - created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. BACKEND - MODELS (FILE MỚI, LUỒNG NÀY SỞ HỮU)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- 3.1 Models/Payment.cs (MỚI) ---
+  [Table("payments")]
+  Thuộc tính:
+    - PaymentId: Guid (PK) - Khóa chính của bản ghi thanh toán.
+    - OrderId: Guid (FK → Order) - Liên kết với đơn hàng cần thanh toán.
+    - Amount: decimal - Số tiền cần thanh toán cho đơn hàng này.
+    - PaymentMethod: string - Phương thức thanh toán (cod, vnpay, momo, bank_transfer).
+    - TransactionId: string? - Mã giao dịch do cổng thanh toán (VNPay/MoMo) cung cấp sau khi thanh toán xong.
+    - Status: int - Trạng thái thanh toán nội bộ (1=pending, 2=success, 3=failed, 4=refunded).
+    - GatewayResponse: string? - Lưu toàn bộ dữ liệu phản hồi từ Gateway dưới dạng JSON để đối soát khi cần.
+    - PaidAt: DateTime? - Thời điểm thực tế nhận được tiền.
+    - CreatedAt: DateTime - Thời điểm tạo yêu cầu thanh toán.
+  Navigation: Order
+
+--- 3.2 Đăng ký trong AppDbContext (đã làm ở Phase 0) ---
+  - DbSet<Payment> Payments
+  - Cấu hình relationship: Order 1-N Payment
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. BACKEND - DTOs (FILE MỚI, LUỒNG NÀY SỞ HỮU)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- PaymentDto ---
+  - PaymentId, OrderId, Amount, PaymentMethod: Thông tin cơ bản về thanh toán.
+  - TransactionId: Mã giao dịch từ bên thứ 3.
+  - Status: Trạng thái thanh toán (đã chuyển sang kiểu string để frontend dễ đọc).
+  - PaidAt, CreatedAt: Các mốc thời gian liên quan.
+
+--- CreatePaymentDto ---
+  - OrderId: Guid (required) - ID đơn hàng khách vừa đặt.
+  - PaymentMethod: string (required) - Phương thức khách chọn.
+  - ReturnUrl: string? - URL mà Gateway sẽ chuyển hướng khách về sau khi thanh toán xong (frontend cung cấp).
+
+--- VnPayCallbackDto ---
+  - vnp_TxnRef: Mã tham chiếu giao dịch (OrderId của hệ thống).
+  - vnp_Amount: Số tiền thanh toán.
+  - vnp_ResponseCode: Mã phản hồi từ VNPay (00 là thành công).
+  - vnp_TransactionNo: Mã giao dịch của VNPay.
+  - vnp_SecureHash: Chữ ký bảo mật để kiểm tra tính toàn vẹn của dữ liệu.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. BACKEND - SERVICES (FILE MỚI, LUỒNG NÀY SỞ HỮU)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- 5.1 IPaymentService / PaymentService ---
+Ý nghĩa các hàm:
+  - CreatePaymentAsync: Khởi tạo một bản ghi thanh toán. Nếu là thanh toán online, hàm này sẽ trả về URL để redirect khách sang trang của Gateway.
+  - ProcessVnPayCallbackAsync: Xử lý dữ liệu trả về từ VNPay sau khi khách thanh toán xong. Kiểm tra chữ ký, cập nhật trạng thái đơn hàng và thanh toán.
+  - ConfirmBankTransferAsync: Cho phép nhân viên xác nhận bằng tay các đơn hàng thanh toán qua chuyển khoản ngân hàng.
+  - GetByOrderIdAsync: Lấy thông tin thanh toán mới nhất của một đơn hàng.
+
+--- 5.2 IVnPayService / VnPayService ---
+Ý nghĩa các hàm:
+  - CreatePaymentUrl: Xây dựng URL thanh toán theo chuẩn của VNPay, bao gồm việc băm (hash) dữ liệu để đảm bảo an toàn.
+  - ValidateCallback: Kiểm tra chữ ký (Checksum) được gửi từ VNPay để đảm bảo dữ liệu không bị thay đổi trên đường truyền.
+
+Config cần thêm vào appsettings.json:
+  "VnPay": {
+    "TmnCode": "...",
+    "HashSecret": "...",
+    "PaymentUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+    "ReturnUrl": "https://yourdomain.com/payment/vnpay-return"
+  }
+
+--- 5.3 PHỐI HỢP VỚI OrderService (owner: Kho & VC) ---
+  ⚠️  KHÔNG tự sửa OrderService.cs!
+  Thay vào đó, cung cấp interface IPaymentService cho Kho & VC inject:
+    - Kho & VC sẽ gọi: await _paymentService.CreatePaymentAsync(orderId, paymentMethod)
+    - Kho & VC sẽ gọi: khi delivered + COD → auto _paymentService.AutoCompleteCodAsync(orderId)
+  
+  Hàm mình cần expose cho Kho & VC:
+    - CreatePaymentAsync(Guid orderId, string paymentMethod) → PaymentDto
+    - AutoCompleteCodAsync(Guid orderId) → void (set payment status = success)
+
+--- 5.4 Email xác nhận đơn hàng ---
+  Tạo FILE TEMPLATE RIÊNG: EmailTemplates/order_confirmation.html
+  ⚠️  KHÔNG sửa EmailService.cs trực tiếp (chỉ thêm 1 method mới nếu cần)
+  Template HTML gửi khi tạo đơn thành công:
+  - Tiêu đề: "Xác nhận đơn hàng #{orderCode}"
+  - Nội dung: Danh sách sản phẩm, tổng tiền, địa chỉ giao, phương thức TT
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. BACKEND - CONTROLLERS (FILE MỚI, LUỒNG NÀY SỞ HỮU)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- PaymentsController ---
+  POST   /api/payments              → Tạo payment (redirect VNPay nếu cần)
+  GET    /api/payments/vnpay-return  → VNPay callback (verify + cập nhật)
+  GET    /api/payments/order/{id}    → Lấy payment info theo orderId
+  PATCH  /api/payments/{id}/confirm  → Employee xác nhận chuyển khoản
+                                       [Authorize(Roles = "staff,admin")]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. FRONTEND - CẬP NHẬT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- 7.1 Cập nhật Checkout (features/cart/checkout/) ---
+  Hiện tại chỉ có: firstName, lastName, phone, addressLine
+  Cần thêm:
+  a) Dropdown Province/District/Ward:
+     - Dùng API miễn phí: https://provinces.open-api.vn/
+     - Cascade: Chọn Tỉnh → load Huyện → load Xã
+  b) Checkbox "Lưu địa chỉ cho lần sau" (nếu đã đăng nhập)
+
+--- 7.2 Cập nhật Payment (features/cart/payment/) ---
+  Hiện tại chỉ có: paymentMethod = 'cod'
+  Cần thêm:
+  a) Radio buttons chọn phương thức:
+     ○ COD (Thanh toán khi nhận hàng)
+     ○ VNPay (Thẻ ATM/Visa/Master/QR)
+     ○ Chuyển khoản ngân hàng (hiển thị thông tin TK)
+  b) Khi chọn VNPay:
+     - Gọi POST /api/payments → nhận URL redirect
+     - window.location.href = vnpayUrl
+  c) Khi chọn Chuyển khoản:
+     - Hiển thị: Số TK, Ngân hàng, Nội dung CK (= mã đơn hàng)
+     - Thông báo: "Nhân viên sẽ xác nhận sau khi nhận được tiền"
+
+--- 7.3 Tạo mới: VnPay Return Page (LUỒNG NÀY SỞ HỮU) ---
+  File: features/cart/vnpay-return/
+  Chức năng:
+  - Nhận query params từ VNPay redirect
+  - Gọi GET /api/payments/vnpay-return?{params}
+  - Hiển thị: ✅ Thanh toán thành công / ❌ Thanh toán thất bại
+  - Nút "Xem đơn hàng" → navigate tới order tracking
+
+--- 7.4 Component riêng cho EmpOrders (TÁCH RIÊNG, không sửa EmpOrders trực tiếp) ---
+  ⚠️  Tạo component riêng: emp-confirm-payment/
+  Chức năng:
+  - Nút "Xác nhận thanh toán" cho đơn chuyển khoản
+  - Chỉ hiển thị khi: paymentMethod = "bank_transfer" && paymentStatus = "unpaid"
+  - Gọi PATCH /api/payments/{id}/confirm
+  → Giao component này cho Kho & VC import vào EmpOrders
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. FRONTEND - MODELS & SERVICES (FILE MỚI, LUỒNG NÀY SỞ HỮU)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- core/models/payment.model.ts ---
+  - PaymentDto { paymentId, orderId, amount, paymentMethod, transactionId, status, paidAt }
+  - CreatePaymentDto { orderId, paymentMethod, returnUrl? }
+  - VnPayResponse { paymentUrl: string } (response từ POST /api/payments khi method=vnpay)
+
+--- core/services/payment.service.ts ---
+  - create(dto) → Observable<PaymentDto | VnPayResponse>
+  - getByOrderId(orderId) → Observable<PaymentDto>
+  - confirmBankTransfer(paymentId) → Observable<ApiResponse>
+  - processVnPayReturn(queryParams) → Observable<PaymentDto>
+
+--- core/services/address.service.ts ---
+  - getProvinces() → Observable<Province[]>
+  - getDistricts(provinceCode) → Observable<District[]>
+  - getWards(districtCode) → Observable<Ward[]>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. BUSINESS RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [P1] COD: paymentStatus = unpaid cho đến khi delivered → auto set paid
+       → Logic nằm trong OrderService (owner: Kho & VC), gọi PaymentService.AutoCompleteCodAsync
+  [P2] VNPay: Redirect → callback verify → success/failed ngay lập tức
+  [P3] Bank Transfer: unpaid → Employee xác nhận thủ công → paid
+  [P4] Refund: Chỉ Admin mới có quyền set paymentStatus = refunded
+  [P5] Đơn hàng VNPay/Bank chưa paid sau 24h → tự hủy (optional cronjob)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10. ƯỚC LƯỢNG THỜI GIAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Payment Model + DTOs:                  1-2 giờ
+  VnPayService (tích hợp sandbox):      4-6 giờ
+  PaymentService + Controller:          3-4 giờ
+  Frontend Checkout (Province API):     3-4 giờ
+  Frontend Payment (multi method):      3-4 giờ
+  Frontend VnPay Return page:           2-3 giờ
+  Email template đơn hàng:              2-3 giờ
+  Component emp-confirm-payment:        1-2 giờ
+  Testing end-to-end:                   3-4 giờ
+  ─────────────────────────────────────────────
+  TỔNG:                                 ~22-32 giờ (3-5 ngày)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+11. ĐIỂM BÀN GIAO CHO CÁC LUỒNG KHÁC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📤 GIAO CHO KHO & VẬN CHUYỂN:
+     - IPaymentService interface (để inject vào OrderService)
+     - Component emp-confirm-payment (để import vào EmpOrders)
+     - Hàm AutoCompleteCodAsync (gọi khi delivered + COD)
+
+  📤 GIAO CHO SAU BÁN HÀNG:
+     - Payment status info (để hiển thị trong Order Tracking)
+     - Hàm RefundAsync (gọi khi return request approved + refund > 0)
+
+  📥 NHẬN TỪ KHO & VẬN CHUYỂN:
+     - OrderService.CreateAsync sẽ gọi PaymentService.CreatePaymentAsync
+     - Khi status = delivered + COD → gọi AutoCompleteCodAsync

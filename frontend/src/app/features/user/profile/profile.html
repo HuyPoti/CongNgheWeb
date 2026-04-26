@@ -1,5 +1,70 @@
 <!-- Profile Content (rendered inside UserLayout's router-outlet) -->
 <div class="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+  <!-- ========== AVATAR UPLOAD CARD ========== -->
+  <div
+    class="bg-white dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-white/5 p-8 md:p-10 shadow-xl shadow-slate-200/50 dark:shadow-none"
+  >
+    <div class="flex items-center gap-4 mb-10 pb-6 border-b border-slate-50 dark:border-white/5">
+      <div class="size-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined font-bold">photo_camera</span>
+      </div>
+      <h2 class="text-2xl font-orbitron font-bold text-slate-900 dark:text-white">
+        {{ 'user.profile_avatar' | translate }}
+      </h2>
+    </div>
+
+    <div class="flex flex-col md:flex-row items-center gap-8">
+      <!-- Avatar Preview -->
+      <div class="relative group">
+        <div
+          class="w-32 h-32 rounded-[2rem] overflow-hidden border-4 border-slate-100 dark:border-white/10 shadow-xl"
+        >
+          @if (avatarPreview()) {
+            <img [src]="avatarPreview()" alt="Avatar" class="w-full h-full object-cover" />
+          } @else {
+            <div
+              class="w-full h-full bg-gradient-to-br from-primary to-accent-cyan flex items-center justify-center text-white text-4xl font-black"
+            >
+              {{ user()?.fullName?.charAt(0)?.toUpperCase() || 'U' }}
+            </div>
+          }
+        </div>
+
+        <!-- Loading Overlay -->
+        @if (isUploading()) {
+          <div class="absolute inset-0 bg-black/50 rounded-[2rem] flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-3xl animate-spin"
+              >progress_activity</span
+            >
+          </div>
+        }
+      </div>
+
+      <!-- Upload Controls -->
+      <div class="flex-1 space-y-4 text-center md:text-left">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
+            {{ 'user.profile_change_avatar' | translate }}
+          </h3>
+          <p class="text-sm text-slate-400 dark:text-slate-500">JPG, PNG, WebP, GIF. Max 2MB.</p>
+        </div>
+        <label
+          for="avatarInput"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-2xl cursor-pointer hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
+        >
+          <span class="material-symbols-outlined text-lg">upload</span>
+          Upload
+        </label>
+        <input
+          id="avatarInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          (change)="onAvatarSelected($event)"
+          class="hidden"
+        />
+      </div>
+    </div>
+  </div>
   <!-- Personal Information -->
   <div
     class="bg-white dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-white/5 p-8 md:p-10 shadow-xl shadow-slate-200/50 dark:shadow-none"
