@@ -239,12 +239,32 @@
             <p class="text-xs text-slate-500">Chi tiết đơn hàng</p>
           </div>
         </div>
-        <button
-          (click)="closeDetail()"
-          class="text-slate-400 hover:text-white p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
-        >
-          <span class="material-symbols-outlined">close</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <!-- QC Button -->
+          <button
+            (click)="openQC(showDetail()!.orderCode)"
+            class="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all text-xs font-bold"
+          >
+            <span class="material-symbols-outlined text-sm">fact_check</span>
+            QC & Đóng gói
+          </button>
+          
+          <!-- Packing Slip Button -->
+          <button
+            (click)="printPackingSlip(showDetail()!.orderCode)"
+            class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all text-xs font-bold"
+          >
+            <span class="material-symbols-outlined text-sm">print</span>
+            In phiếu
+          </button>
+
+          <button
+            (click)="closeDetail()"
+            class="text-slate-400 hover:text-white p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
       <div class="p-6 space-y-6">
         <!-- Status -->
@@ -346,4 +366,13 @@
       </div>
     </div>
   </div>
+}
+
+<!-- QC Modal Component Overlay -->
+@if (showQCModal()) {
+  <app-qc-modal 
+    [orderId]="showQCModal()!" 
+    (closed)="showQCModal.set(null)"
+    (submitted)="onQCSubmitted($event)">
+  </app-qc-modal>
 }

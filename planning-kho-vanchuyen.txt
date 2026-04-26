@@ -1,0 +1,93 @@
+================================================================================
+ LUỒNG KHO & VẬN CHUYỂN (Warehouse & Shipping)
+ 👤 THÀNH VIÊN: [Tên #2]
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0. RANH GIỚI & QUY ƯỚC CHỐNG XUNG ĐỘT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- File LUỒNG NÀY SỞ HỮU ---
+  ✅ Models: OrderStatusHistory.cs, Shipment.cs (MỚI)
+  ✅ Services: IShipmentService, ShipmentService (MỚI)
+  ✅ Controllers: ShipmentsController.cs (MỚI)
+  ✅ DTOs: ShipmentDto, CreateShipmentDto, UpdateShipmentDto, OrderStatusHistoryDto (MỚI)
+  ✅ Frontend: packing-slip/, shipment.service.ts (MỚI)
+  ⭐ OrderService.cs — OWNER CHÍNH (inject service từ luồng khác)
+  ⭐ OrdersController.cs — OWNER CHÍNH
+  ⭐ EmpOrders (Frontend) — OWNER CHÍNH
+  ⭐ Order Tracking (Frontend) — OWNER LAYOUT
+
+--- File DÙNG CHUNG (Phase 0, KHÔNG tự sửa) ---
+  ❌ Order.cs, AppDbContext, Program.cs, DTOs chung, db.sql, order.model.ts
+
+--- PHỐI HỢP ---
+  📥 Từ Thanh toán: IPaymentService, component emp-confirm-payment
+  📥 Từ Sau bán hàng: component order-return-button, email templates
+  📥 Từ Marketing: ICouponService, IFlashSaleService
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1-2. HIỆN TRẠNG & DATABASE → Xem Phase 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bảng mới: order_status_history, shipments
+Cập nhật orders: shipping_fee, discount_amount, cancelled_reason, cancelled_by
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. BACKEND MODELS & DTOs (TẠO MỚI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OrderStatusHistory.cs: Id, OrderId, OldStatus, NewStatus, ChangedBy, Note, CreatedAt
+Shipment.cs: ShipmentId, OrderId, Carrier, TrackingCode, ShippingFee, EstimatedDelivery, ActualDelivery, Status, PackedBy, PackedAt, QcPassed, QcNotes
+ShipmentDto/CreateShipmentDto/UpdateShipmentDto/OrderStatusHistoryDto (chi tiết giữ nguyên)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. BACKEND SERVICES & CONTROLLERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- ShipmentService (SỞ HỮU) ---
+  CreateAsync, UpdateAsync, GetByOrderIdAsync, MarkQcPassedAsync, MarkPackedAsync
+  Logic: QC+Packed → status=processing; TrackingCode → status=shipping
+
+--- OrderService (⭐ OWNER — tích hợp tất cả luồng) ---
+  Inject: IPaymentService, ICouponService, IFlashSaleService, IEmailNotificationService
+  CreateAsync: trừ stock + ghi history + gọi payment + coupon + flash price + email
+  UpdateStatusAsync: ghi history + hoàn stock khi hủy + COD→paid khi delivered + email
+  CancelOrderAsync, GetStatusHistoryAsync
+
+--- ShipmentsController (SỞ HỮU) ---
+  POST /api/shipments, PUT /{id}, GET /order/{orderId}
+  PATCH /{id}/qc, PATCH /{id}/packed
+
+--- OrdersController (⭐ OWNER) ---
+  Thêm: GET /{id}/history, POST /{id}/cancel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. FRONTEND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- EmpOrders (⭐ OWNER) ---
+  QC & Đóng gói modal, nhập mã vận đơn, Timeline
+  Import: emp-confirm-payment (TT), emp-return-tab (SBH)
+
+--- Order Tracking (⭐ OWNER LAYOUT) ---
+  Stepper timeline, mã vận đơn, chi tiết đơn
+  Import: order-return-button (SBH)
+
+--- Packing Slip (SỞ HỮU) --- CSS @media print, nút In phiếu
+--- shipment.service.ts (SỞ HỮU) --- create, update, getByOrderId, markQc, markPacked
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. BUSINESS RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [R1] CreateOrder: Trừ stock + history null→pending
+  [R2] confirmed→processing: Bắt buộc Shipment + QC
+  [R3] processing→shipping: Bắt buộc trackingCode
+  [R4] shipping→delivered: COD→auto paid; set actualDelivery
+  [R5] Hủy: Bắt buộc reason + hoàn stock + history
+  [R6] Mọi thay đổi → INSERT order_status_history
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. ƯỚC LƯỢNG: ~24-34 giờ (3-5 ngày)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -18,4 +18,8 @@ export const EMPLOYEE_ROUTES: Routes = [
     path: 'customers',
     loadComponent: () => import('./emp-customers/emp-customers').then((m) => m.EmpCustomers),
   },
+  {
+    path: 'packing-slip',
+    loadComponent: () => import('./packing-slip/packing-slip.component').then((m) => m.PackingSlipComponent),
+  },
 ];

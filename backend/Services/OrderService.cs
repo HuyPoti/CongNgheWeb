@@ -89,7 +89,7 @@ public class OrderService(
         uow.Orders.Insert(order);
         await uow.SaveAsync(cancellationToken);
 
-        var detail = await GetByIdAsync(order.OrderId, cancellationToken);
+        var detail = await GetByIdAsync(order.OrderId, userId, cancellationToken);
         if (detail == null)
             throw new NotFoundException("Order created but cannot be loaded");
 
@@ -99,6 +99,7 @@ public class OrderService(
     // GET ALL WITH PAGINATION + FILTER
     public async Task<PagedResult<OrderDto>> GetAllAsync(
         string? status,
+        Guid? userId,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
@@ -116,6 +117,12 @@ public class OrderService(
         {
             var statusInt = MapStatusToInt(status);
             query = query.Where(o => o.Status == statusInt);
+        }
+
+        // Filter by userId
+        if (userId.HasValue && userId.Value != Guid.Empty)
+        {
+            query = query.Where(o => o.UserId == userId.Value);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -150,15 +157,23 @@ public class OrderService(
     // GET BY ID (Order detail)
     public async Task<OrderDetailDto?> GetByIdAsync(
         Guid id,
+        Guid? userId,
         CancellationToken cancellationToken)
     {
-        var order = await uow.Orders.Query()
+        var query = uow.Orders.Query()
             .Include(o => o.User)
             .Include(o => o.Address)
             .Include(o => o.OrderItems)
             .ThenInclude(oi => oi.Product)
             .ThenInclude(p => p.Images)
-            .FirstOrDefaultAsync(o => o.OrderId == id, cancellationToken);
+            .AsQueryable();
+
+        if (userId.HasValue && userId.Value != Guid.Empty)
+        {
+            query = query.Where(o => o.UserId == userId.Value);
+        }
+
+        var order = await query.FirstOrDefaultAsync(o => o.OrderId == id, cancellationToken);
 
         if (order == null) return null;
 

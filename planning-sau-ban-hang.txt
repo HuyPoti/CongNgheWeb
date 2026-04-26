@@ -1,0 +1,118 @@
+================================================================================
+ LUỒNG SAU BÁN HÀNG & CHĂM SÓC (After-Sales & Customer Care)
+ 👤 THÀNH VIÊN: [Tên #3]
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0. RANH GIỚI & QUY ƯỚC CHỐNG XUNG ĐỘT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- File LUỒNG NÀY SỞ HỮU ---
+  ✅ Models: ReturnRequest.cs, ReturnRequestItem.cs, ReturnRequestImage.cs, Wishlist.cs (MỚI)
+  ✅ Services: IReturnRequestService, ReturnRequestService (MỚI)
+  ✅ Services: IWishlistService, WishlistService (MỚI)
+  ✅ Services: IEmailNotificationService, EmailNotificationService (MỚI)
+  ✅ Controllers: ReturnRequestsController, WishlistController (MỚI)
+  ✅ DTOs: ReturnRequestDto, CreateReturnRequestDto, UpdateReturnRequestDto, WishlistItemDto (MỚI)
+  ✅ Frontend: features/user/return-request/ (MỚI)
+  ✅ Frontend: features/user/wishlist/ (MỚI)
+  ✅ Frontend: components: order-return-button, emp-return-tab (MỚI)
+  ✅ Email templates: order_confirmed, order_shipping, order_delivered, return_processed (MỚI)
+
+--- File DÙNG CHUNG (Phase 0, KHÔNG tự sửa) ---
+  ❌ Order.cs, AppDbContext, Program.cs, DTOs chung, db.sql, order.model.ts
+
+--- PHỐI HỢP ---
+  🤝 OrderService.cs → OWNER: Kho & VC
+     Mình cung cấp: IEmailNotificationService interface
+     Kho & VC gọi: SendStatusUpdateEmail trong UpdateStatusAsync
+
+  🤝 Order Tracking (Frontend) → OWNER: Kho & VC
+     Mình tạo component riêng: order-return-button
+     Kho & VC import vào Order Tracking layout
+
+  🤝 EmpOrders (Frontend) → OWNER: Kho & VC
+     Mình tạo component riêng: emp-return-tab
+     Kho & VC import vào EmpOrders như 1 tab riêng
+
+  🤝 ProductCard/ProductDetail → PHỐI HỢP với Marketing
+     Mình thêm: nút ❤️ wishlist (tạo directive/component riêng)
+     Marketing thêm: flash sale badge (component riêng)
+     → Mỗi bên thêm vào KHU VỰC RIÊNG trong template
+
+  🤝 ReviewService.cs → Mình CÓ THỂ sửa (verified purchase check)
+     Chỉ thêm logic kiểm tra đã mua hàng, KHÔNG thay đổi API signature
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1-2. HIỆN TRẠNG & DATABASE → Xem Phase 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bảng mới: return_requests, return_request_items, return_request_images, wishlists
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. BACKEND MODELS & DTOs (TẠO MỚI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ReturnRequest.cs: ReturnId, OrderId, UserId, Reason, Description, Status, RefundAmount, ProcessedBy, ProcessedAt, AdminNote
+ReturnRequestItem.cs: Id, ReturnId, OrderItemId, Quantity, ReasonDetail
+ReturnRequestImage.cs: Id, ReturnId, ImageUrl
+Wishlist.cs: WishlistId, UserId, ProductId
+
+DTOs: ReturnRequestDto, CreateReturnRequestDto (orderId, reason, items[]), UpdateReturnRequestDto (status, refundAmount, adminNote), WishlistItemDto
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. BACKEND SERVICES & CONTROLLERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- ReturnRequestService (SỞ HỮU) ---
+  CreateAsync (check delivered + 7 ngày), GetAllAsync, GetByIdAsync, ProcessAsync (approve/reject + hoàn stock), GetByOrderIdAsync
+
+--- WishlistService (SỞ HỮU) ---
+  GetByUserAsync, ToggleAsync, IsInWishlistAsync, CountAsync
+
+--- EmailNotificationService (SỞ HỮU) ---
+  SendOrderConfirmedEmail, SendOrderShippingEmail, SendOrderDeliveredEmail, SendReturnProcessedEmail
+  ⚠️ Tạo FILE TEMPLATE HTML riêng cho mỗi loại email
+  Kho & VC sẽ inject và gọi service này trong OrderService
+
+--- Cập nhật ReviewService ---
+  Thêm logic: kiểm tra user đã mua SP chưa → set is_verified_purchase = true
+
+--- Controllers (SỞ HỮU) ---
+  ReturnRequestsController: POST, GET, GET/{id}, PUT/{id}, GET/order/{id}
+  WishlistController: GET, POST/toggle/{productId}, GET/check/{productId}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. FRONTEND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- Return Request page (SỞ HỮU) ---
+  Form: select lý do, textarea, upload ảnh, chọn SP + số lượng
+  Danh sách yêu cầu đã tạo + trạng thái
+
+--- Wishlist page (SỞ HỮU) ---
+  Grid sản phẩm yêu thích, nút xóa, nút thêm giỏ hàng, badge hết/còn hàng
+
+--- Component riêng giao cho luồng khác ---
+  order-return-button: Nút "Yêu cầu đổi trả" → giao Kho & VC import vào Order Tracking
+  emp-return-tab: Tab đổi trả (list + modal approve/reject) → giao Kho & VC import vào EmpOrders
+  wishlist-toggle: Directive/component nút ❤️ → thêm vào ProductCard/ProductDetail
+
+--- Review UI ---
+  Thêm badge "✓ Đã mua hàng" cho verified purchase
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. BUSINESS RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [A1] Đổi trả chỉ khi status = delivered
+  [A2] Thời hạn: 7 ngày từ deliveredAt
+  [A3] Mỗi đơn tối đa 1 return request
+  [A4] Return approved → hoàn stock
+  [A5] Return completed + refund > 0 → paymentStatus = refunded
+  [A6] Wishlist: tối đa 50 SP/user
+  [A7] Verified Purchase: chỉ khi user có đơn delivered chứa SP đó
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. ƯỚC LƯỢNG: ~26-36 giờ (4-5 ngày)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

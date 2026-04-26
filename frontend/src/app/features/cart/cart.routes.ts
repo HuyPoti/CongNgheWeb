@@ -4,5 +4,6 @@ import { authGuard } from '../../core/guards/auth-guard';
 export const CART_ROUTES: Routes = [
   { path: '', loadComponent: () => import('./cart-page/cart-page').then(m => m.CartPage) },
   { path: 'checkout', canActivate: [authGuard], loadComponent: () => import('./checkout/checkout').then(m => m.Checkout) },
-  { path: 'payment', canActivate: [authGuard], loadComponent: () => import('./payment/payment').then(m => m.Payment) }
+  { path: 'payment', canActivate: [authGuard], loadComponent: () => import('./payment/payment').then(m => m.Payment) },
+  { path: 'vnpay-return', loadComponent: () => import('./vnpay-return/vnpay-return').then(m => m.VnPayReturnComponent) },
 ];

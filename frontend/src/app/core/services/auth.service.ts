@@ -69,13 +69,16 @@ export class AuthService {
     }
     this.currentUserSubject.next(null);
     if (this.socialAuthService) {
-      try {
-        this.socialAuthService
-          .signOut()
-          .catch((err: unknown) => console.log('Google sign out error', err));
-      } catch (e: unknown) {
-        console.log('Google sign out error', e);
-      }
+      // Chỉ gọi signOut nếu chắc chắn socialAuthService đã sẵn sàng
+      // và có khả năng đang có user social
+      this.socialAuthService.signOut().then(() => {
+        console.log('Social signed out');
+      }).catch((err: unknown) => {
+        // Bỏ qua lỗi nếu provider chưa sẵn sàng (thường xảy ra khi logout tự động lúc khởi chạy)
+        if (err !== 'Login providers not ready yet') {
+          console.log('Google sign out error', err);
+        }
+      });
     }
   }
 
@@ -112,6 +115,10 @@ export class AuthService {
 
   refreshAccessToken(): Observable<AuthResponse> {
     const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      // Nếu không có refresh token, không gọi API để tránh lỗi 400
+      throw new Error('No refresh token available');
+    }
     return this.http
       .post<AuthResponse>(`${this.apiUrl}/refresh-token`, { refreshToken })
       .pipe(tap((res) => this.setSession(res)));

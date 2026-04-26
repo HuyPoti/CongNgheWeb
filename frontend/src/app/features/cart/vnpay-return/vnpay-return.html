@@ -1,0 +1,56 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+    <!-- Header Icon -->
+    <div [class]="isSuccess ? 'bg-emerald-500' : 'bg-red-500'" class="py-12 text-center relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl text-white mb-6 animate-bounce">
+        <span class="material-symbols-outlined text-4xl font-black">
+          {{ isSuccess ? 'check_circle' : 'cancel' }}
+        </span>
+      </div>
+      <h2 class="text-2xl font-black text-white px-4 uppercase tracking-tight italic font-neon">
+        {{ isSuccess ? 'Thanh toán thành công' : 'Thanh toán thất bại' }}
+      </h2>
+    </div>
+
+    <!-- Details Card -->
+    <div class="p-8">
+      <p class="text-slate-500 text-center mb-10 leading-relaxed font-medium">
+        {{ message }}
+      </p>
+
+      <div class="space-y-4 bg-slate-50 rounded-3xl p-6 border border-slate-100">
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400 text-xs font-black uppercase tracking-widest">Mã đơn hàng</span>
+          <span class="font-black text-slate-900 tracking-wider">#{{ orderCode }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400 text-xs font-black uppercase tracking-widest">Số tiền đã trả</span>
+          <span class="font-black text-primary text-xl tracking-tight">{{ amount | currency:'VND' }}</span>
+        </div>
+        @if (isSuccess) {
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400 text-xs font-black uppercase tracking-widest">Mã giao dịch</span>
+            <span class="text-[10px] bg-white px-2 py-1 rounded-lg border border-slate-200 font-mono font-bold text-slate-500">{{ transactionId }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-10 grid grid-cols-1 gap-4">
+        <button (click)="viewOrderDetails()" class="w-full bg-slate-900 hover:bg-primary text-white hover:text-slate-900 font-black uppercase tracking-widest text-xs py-5 rounded-2xl transition-all shadow-lg shadow-slate-200 flex items-center justify-center gap-2 group">
+          <span>Xem chi tiết đơn hàng</span>
+          <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </button>
+        <button (click)="backToHome()" class="w-full bg-white hover:bg-slate-50 text-slate-500 font-black uppercase tracking-widest text-[10px] py-5 rounded-2xl border border-slate-200 transition-all">
+          Quay lại trang chủ
+        </button>
+      </div>
+    </div>
+    
+    <!-- Footer Help -->
+    <div class="bg-slate-50 p-6 text-center border-t border-slate-100">
+      <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bạn gặp vấn đề? <a href="#" class="text-primary hover:underline">Liên hệ hỗ trợ 24/7</a></p>
+    </div>
+  </div>
+</div>

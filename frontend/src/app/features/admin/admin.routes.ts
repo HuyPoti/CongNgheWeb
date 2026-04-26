@@ -13,4 +13,6 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'brand-management', loadComponent: () => import('./brand-management/brand-management').then(m => m.BrandManagement) },
   { path: 'cms-news', loadComponent: () => import('./cms-news/cms-news').then(m => m.CmsNews) },
   { path: 'reviews', loadComponent: () => import('./reviews/reviews').then(m => m.AdminReviewsComponent) },
+  { path: 'coupons', loadComponent: () => import('./coupons/coupon-list').then(m => m.CouponListComponent) },
+  { path: 'flash-sales', loadComponent: () => import('./flash-sales/flash-sale-list').then(m => m.FlashSaleListComponent) },
 ];
