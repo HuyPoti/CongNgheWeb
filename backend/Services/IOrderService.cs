@@ -13,6 +13,7 @@ public interface IOrderService
     // GET: Order list with pagination + filter
     Task<PagedResult<OrderDto>> GetAllAsync(
         string? status, // Filter by status
+        Guid? userId,   // Filter by user
         int page,
         int pageSize,
         CancellationToken cancellationToken
@@ -21,6 +22,7 @@ public interface IOrderService
     // GET: A order detail
     Task<OrderDetailDto?> GetByIdAsync(
         Guid id,
+        Guid? userId,
         CancellationToken cancellationToken
     );
 

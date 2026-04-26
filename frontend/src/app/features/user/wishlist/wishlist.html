@@ -1,0 +1,69 @@
+<div class="max-w-6xl mx-auto py-12 px-4">
+  <div class="flex items-center justify-between mb-10">
+    <div class="flex items-center gap-4">
+      <div class="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shadow-sm">
+        <span class="material-symbols-outlined text-2xl animate-pulse">favorite</span>
+      </div>
+      <div>
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Sản phẩm yêu thích</h1>
+        <p class="text-slate-500 font-medium">Bạn đang có {{ wishlistItems.length }} sản phẩm trong danh sách</p>
+      </div>
+    </div>
+    <button class="text-slate-400 hover:text-red-500 font-bold text-sm transition-colors">
+      Xóa tất cả
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    @for (item of wishlistItems; track item.id) {
+      <div class="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+        <!-- Product Image -->
+        <div class="relative overflow-hidden aspect-square">
+          <img [src]="item.image" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="">
+          <div class="absolute top-4 right-4">
+            <button (click)="removeItem(item.id)" class="w-10 h-10 bg-white/80 backdrop-blur-md text-slate-400 hover:text-red-500 rounded-xl shadow-lg flex items-center justify-center transition-all">
+              <span class="material-symbols-outlined text-sm">delete</span>
+            </button>
+          </div>
+          @if (!item.inStock) {
+            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center">
+              <span class="bg-white/90 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest text-slate-900">Hết hàng</span>
+            </div>
+          }
+        </div>
+
+        <!-- Product Info -->
+        <div class="p-6">
+          <h3 class="font-bold text-slate-900 mb-2 line-clamp-2 h-12">{{ item.name }}</h3>
+          <div class="flex items-end gap-3 mb-6">
+            <span class="text-2xl font-black text-primary">{{ item.price | currency:'VND' }}</span>
+            <span class="text-sm text-slate-400 line-through mb-1">{{ item.oldPrice | currency:'VND' }}</span>
+          </div>
+
+          <button (click)="addToCart(item)" 
+                  [disabled]="!item.inStock"
+                  [class.opacity-50]="!item.inStock"
+                  [class.cursor-not-allowed]="!item.inStock"
+                  class="w-full bg-slate-900 hover:bg-primary text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn shadow-lg shadow-slate-200">
+            <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:-translate-y-1">shopping_cart</span>
+            <span>Thêm vào giỏ hàng</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Empty State -->
+  @if (wishlistItems.length === 0) {
+    <div class="py-32 text-center">
+      <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
+        <span class="material-symbols-outlined text-4xl">heart_broken</span>
+      </div>
+      <h2 class="text-2xl font-bold text-slate-900 mb-2">Chưa có sản phẩm nào</h2>
+      <p class="text-slate-500 mb-8">Hãy ❤️ sản phẩm bạn thích để lưu lại đây nhé!</p>
+      <button class="bg-primary text-white font-bold py-4 px-10 rounded-2xl shadow-xl shadow-primary/20">
+        Khám phá ngay
+      </button>
+    </div>
+  }
+</div>

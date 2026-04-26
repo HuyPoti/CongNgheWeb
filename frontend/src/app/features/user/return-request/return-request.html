@@ -1,0 +1,93 @@
+<div class="max-w-3xl mx-auto py-10 px-4">
+  <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+    <div class="p-8">
+      <div class="flex items-center gap-4 mb-8">
+        <div class="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center">
+          <i class="fas fa-undo-alt text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold">Yêu cầu đổi trả / hoàn tiền</h1>
+          <p class="text-gray-500 text-sm">Đơn hàng: #{{ orderId }}</p>
+        </div>
+      </div>
+
+      <div class="space-y-8">
+        <!-- Step 1: Select Items -->
+        <section>
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-gray-900 text-white text-xs rounded-full flex items-center justify-center">1</span>
+            Chọn sản phẩm cần đổi trả
+          </h3>
+          <div class="space-y-3">
+            @for (item of mockItems; track item.id) {
+              <div [class.border-primary]="item.selected"
+                   class="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-gray-200 transition-all cursor-pointer bg-gray-50/50"
+                   (click)="item.selected = !item.selected">
+                <div class="w-6 h-6 rounded border flex items-center justify-center transition-colors"
+                     [class.bg-primary]="item.selected" [class.border-primary]="item.selected">
+                  @if (item.selected) {
+                    <i class="fas fa-check text-white text-xs"></i>
+                  }
+                </div>
+                <img [src]="item.image" class="w-16 h-16 object-cover rounded-lg">
+                <div class="flex-1">
+                  <h4 class="font-bold text-sm">{{ item.name }}</h4>
+                  <p class="text-xs text-gray-500">Số lượng: {{ item.quantity }} • {{ item.price | currency:'VND' }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- Step 2: Reason -->
+        <section>
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-gray-900 text-white text-xs rounded-full flex items-center justify-center">2</span>
+            Lý do đổi trả
+          </h3>
+          <select [(ngModel)]="selectedReason" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+            <option value="" disabled selected>Chọn lý do của bạn</option>
+            @for (r of reasons; track r.id) {
+              <option [value]="r.id">{{ r.label }}</option>
+            }
+          </select>
+          
+          <textarea [(ngModel)]="description" 
+                    placeholder="Mô tả chi tiết tình trạng sản phẩm hoặc vấn đề bạn gặp phải..."
+                    class="w-full mt-4 p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 h-32 transition-all"></textarea>
+        </section>
+
+        <!-- Step 3: Images -->
+        <section>
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-gray-900 text-white text-xs rounded-full flex items-center justify-center">3</span>
+            Hình ảnh minh chứng (không bắt buộc)
+          </h3>
+          <div class="flex flex-wrap gap-3">
+            @for (img of uploadedImages; track $index; let i = $index) {
+              <div class="relative group">
+                <img [src]="img" class="w-20 h-20 object-cover rounded-xl border border-gray-200">
+                <button (click)="removeImage(i)" class="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            }
+            <label class="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all text-gray-400 hover:text-primary">
+              <i class="fas fa-camera text-xl mb-1"></i>
+              <span class="text-[10px] font-bold">Thêm ảnh</span>
+              <input type="file" (change)="onImageUpload($event)" class="hidden">
+            </label>
+          </div>
+        </section>
+
+        <button (click)="submitRequest()" 
+                class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-primary/20 mt-4">
+          Gửi yêu cầu đổi trả
+        </button>
+        <p class="text-center text-xs text-gray-400 px-8 leading-relaxed">
+          Bằng cách nhấn gửi, bạn đồng ý với <a href="#" class="text-primary hover:underline font-semibold">Chính sách đổi trả</a> của GearVN. Chúng tôi sẽ phản hồi trong vòng 24h làm việc.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

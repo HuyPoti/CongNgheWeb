@@ -78,16 +78,6 @@ CREATE TABLE product_images (
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
--- 6. Bảng product_specs
-CREATE TABLE product_specs (
-    spec_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_id UUID NOT NULL,
-    spec_key VARCHAR(100) NOT NULL,
-    spec_value VARCHAR(500) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
-);
-
 -- 7. Bảng cart_items
 CREATE TABLE cart_items (
     cart_item_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

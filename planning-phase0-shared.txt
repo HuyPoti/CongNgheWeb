@@ -1,0 +1,252 @@
+================================================================================
+ PHASE 0: SHARED FOUNDATION (Cả nhóm làm chung TRƯỚC khi phân chia)
+ ⏱️  Ước lượng: 4-6 giờ (1 ngày) — Làm 1 lần duy nhất
+================================================================================
+
+MỤC ĐÍCH:
+  Tạo xong TẤT CẢ thay đổi trên các file dùng chung (shared files) để khi
+  4 thành viên bắt đầu code song song, KHÔNG AI cần sửa các file này nữa.
+  → Loại bỏ 90% nguy cơ merge conflict.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. DATABASE — TẤT CẢ DDL TẬP TRUNG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- 1.1 ALTER TABLE orders (gộp từ Kho + Marketing) ---
+  ALTER TABLE orders ADD COLUMN shipping_fee DECIMAL(15,2) DEFAULT 0;
+  ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(15,2) DEFAULT 0;
+  ALTER TABLE orders ADD COLUMN cancelled_reason TEXT;
+  ALTER TABLE orders ADD COLUMN cancelled_by UUID REFERENCES users(user_id);
+  ALTER TABLE orders ADD COLUMN coupon_id UUID REFERENCES coupons(coupon_id);
+
+--- 1.2 ALTER TABLE payments (từ Thanh toán) ---
+  ALTER TABLE payments ADD COLUMN gateway_response JSONB;
+  ALTER TABLE payments ADD COLUMN return_url VARCHAR(500);
+  ALTER TABLE payments ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+--- 1.3 ALTER TABLE products (từ Marketing) ---
+  ALTER TABLE products ADD COLUMN meta_title VARCHAR(255);
+  ALTER TABLE products ADD COLUMN meta_description VARCHAR(500);
+
+--- 1.4 CREATE TABLE mới (gộp từ cả 4 luồng) ---
+
+  -- Từ Kho & Vận chuyển:
+  CREATE TABLE order_status_history (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+      old_status INT,
+      new_status INT NOT NULL,
+      changed_by UUID NOT NULL REFERENCES users(user_id),
+      note TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE shipments (
+      shipment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+      carrier VARCHAR(50) NOT NULL,
+      tracking_code VARCHAR(100),
+      shipping_fee DECIMAL(15,2) DEFAULT 0,
+      estimated_delivery DATE,
+      actual_delivery TIMESTAMP WITH TIME ZONE,
+      status VARCHAR(20) DEFAULT 'pending',
+      packed_by UUID REFERENCES users(user_id),
+      packed_at TIMESTAMP WITH TIME ZONE,
+      qc_passed BOOLEAN DEFAULT FALSE,
+      qc_notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Từ Sau bán hàng:
+  CREATE TABLE return_requests (
+      return_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      order_id UUID NOT NULL REFERENCES orders(order_id),
+      user_id UUID NOT NULL REFERENCES users(user_id),
+      reason VARCHAR(50) NOT NULL,
+      description TEXT,
+      status VARCHAR(20) DEFAULT 'pending',
+      refund_amount DECIMAL(15,2),
+      processed_by UUID REFERENCES users(user_id),
+      processed_at TIMESTAMP WITH TIME ZONE,
+      admin_note TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE return_request_items (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      return_id UUID NOT NULL REFERENCES return_requests(return_id) ON DELETE CASCADE,
+      order_item_id UUID NOT NULL REFERENCES order_items(order_item_id),
+      quantity INT NOT NULL,
+      reason_detail TEXT
+  );
+
+  CREATE TABLE return_request_images (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      return_id UUID NOT NULL REFERENCES return_requests(return_id) ON DELETE CASCADE,
+      image_url VARCHAR(500) NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE wishlists (
+      wishlist_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+      product_id UUID NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, product_id)
+  );
+
+  -- Từ Marketing:
+  CREATE TABLE coupons (
+      coupon_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      code VARCHAR(50) UNIQUE NOT NULL,
+      description TEXT,
+      discount_type VARCHAR(20) NOT NULL,
+      discount_value DECIMAL(15,2) NOT NULL,
+      min_order_amount DECIMAL(15,2) DEFAULT 0,
+      max_discount DECIMAL(15,2),
+      usage_limit INT,
+      used_count INT DEFAULT 0,
+      per_user_limit INT DEFAULT 1,
+      start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+      end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_by UUID REFERENCES users(user_id),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE coupon_usages (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      coupon_id UUID NOT NULL REFERENCES coupons(coupon_id),
+      user_id UUID NOT NULL REFERENCES users(user_id),
+      order_id UUID NOT NULL REFERENCES orders(order_id),
+      discount_amount DECIMAL(15,2) NOT NULL,
+      used_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE flash_sales (
+      flash_sale_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      title VARCHAR(255) NOT NULL,
+      start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+      end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+      is_active BOOLEAN DEFAULT TRUE,
+      created_by UUID REFERENCES users(user_id),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE flash_sale_items (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      flash_sale_id UUID NOT NULL REFERENCES flash_sales(flash_sale_id) ON DELETE CASCADE,
+      product_id UUID NOT NULL REFERENCES products(product_id),
+      flash_price DECIMAL(15,2) NOT NULL,
+      stock_limit INT NOT NULL,
+      sold_count INT DEFAULT 0,
+      UNIQUE(flash_sale_id, product_id)
+  );
+
+  CREATE TABLE activity_logs (
+      log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(user_id),
+      action VARCHAR(50) NOT NULL,
+      entity_type VARCHAR(50),
+      entity_id UUID,
+      old_value TEXT,
+      new_value TEXT,
+      ip_address VARCHAR(45),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. BACKEND — CẬP NHẬT SHARED FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- 2.1 Models/Order.cs (thêm TẤT CẢ fields 1 lần) ---
+  Thêm properties:
+    ShippingFee (decimal), DiscountAmount (decimal)
+    CancelledReason (string?), CancelledBy (Guid?)
+    CouponId (Guid?)
+  Thêm navigation:
+    Payment, Shipment, StatusHistory, Coupon, CancelledByUser
+
+--- 2.2 Models/Product.cs (thêm SEO fields) ---
+  Thêm: MetaTitle (string?), MetaDescription (string?)
+
+--- 2.3 AppDbContext.cs (thêm TẤT CẢ DbSet 1 lần) ---
+  DbSet<Payment>, DbSet<OrderStatusHistory>, DbSet<Shipment>
+  DbSet<ReturnRequest>, DbSet<ReturnRequestItem>, DbSet<ReturnRequestImage>
+  DbSet<Wishlist>, DbSet<Coupon>, DbSet<CouponUsage>
+  DbSet<FlashSale>, DbSet<FlashSaleItem>, DbSet<ActivityLog>
+
+--- 2.4 Program.cs (đăng ký TẤT CẢ services 1 lần) ---
+  // Thanh toán
+  builder.Services.AddScoped<IPaymentService, PaymentService>();
+  builder.Services.AddScoped<IVnPayService, VnPayService>();
+  // Kho & Vận chuyển
+  builder.Services.AddScoped<IShipmentService, ShipmentService>();
+  // Sau bán hàng
+  builder.Services.AddScoped<IReturnRequestService, ReturnRequestService>();
+  builder.Services.AddScoped<IWishlistService, WishlistService>();
+  builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
+  // Marketing
+  builder.Services.AddScoped<ICouponService, CouponService>();
+  builder.Services.AddScoped<IFlashSaleService, FlashSaleService>();
+  builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+  builder.Services.AddScoped<IDashboardService, DashboardService>();
+
+  ⚠️ Lúc này các class chưa tồn tại → Tạo file STUB (interface rỗng + class rỗng)
+     để build không lỗi. Mỗi luồng sẽ implement chi tiết sau.
+
+--- 2.5 DTOs chung (cập nhật 1 lần) ---
+  CreateOrderDto: thêm PaymentMethod, CouponCode?, ShippingFee
+  OrderDetailDto: thêm ShippingFee, DiscountAmount, Payment?, Shipment?, StatusHistory[], ReturnRequest?
+  UpdateOrderDto: thêm CancelledReason?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. FRONTEND — CẬP NHẬT SHARED FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- 3.1 core/models/order.model.ts (thêm TẤT CẢ interfaces 1 lần) ---
+  Thêm interfaces: PaymentDto, ShipmentDto, OrderStatusHistoryDto, ReturnRequestDto, WishlistItemDto
+  Cập nhật OrderDetailDto: thêm tất cả fields mới
+
+--- 3.2 app.routes.ts (thêm TẤT CẢ routes 1 lần) ---
+  /payment/vnpay-return    → VnPayReturnComponent
+  /user/wishlist            → WishlistComponent
+  /user/return-request/:id  → ReturnRequestComponent
+  /admin/coupons            → CouponsComponent
+  /admin/flash-sales        → FlashSalesComponent
+  /admin/activity-logs      → ActivityLogsComponent
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. CHECKLIST TRƯỚC KHI PHÂN CHIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [ ] Tất cả DDL đã chạy thành công (migration)
+  [ ] Order.cs đã có đủ tất cả fields + navigation
+  [ ] Product.cs đã có MetaTitle, MetaDescription
+  [ ] AppDbContext đã có đủ tất cả DbSet
+  [ ] Program.cs đã đăng ký tất cả services (stub)
+  [ ] Tất cả interface stub đã tạo (build không lỗi)
+  [ ] DTOs chung đã cập nhật xong
+  [ ] Frontend order.model.ts đã có đủ interfaces
+  [ ] Routes đã thêm xong
+  [ ] Commit & push branch "phase0-foundation"
+  [ ] Tất cả 4 thành viên pull branch này trước khi bắt đầu
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. SAU PHASE 0 — LUỒNG LÀM VIỆC
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Mỗi người tạo branch riêng từ phase0-foundation:
+    feature/payment       ← Thanh toán
+    feature/warehouse     ← Kho & Vận chuyển
+    feature/after-sales   ← Sau bán hàng
+    feature/marketing     ← Marketing
+
+  Quy tắc:
+    ✅ Chỉ tạo FILE MỚI trong phạm vi luồng mình
+    ✅ Nếu cần sửa file chung → báo cho cả nhóm review trước
+    ✅ OrderService.cs: CHỈ Kho & VC sửa (inject interface từ luồng khác)
+    ✅ EmpOrders: CHỈ Kho & VC sửa (import component từ luồng khác)
+    ✅ Merge theo thứ tự: Kho & VC → Thanh toán → Sau bán hàng → Marketing

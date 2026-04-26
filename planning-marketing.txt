@@ -1,0 +1,133 @@
+================================================================================
+ QUẢN TRỊ MARKETING (Admin Swimlane)
+ 👤 THÀNH VIÊN: [Tên #4]
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+0. RANH GIỚI & QUY ƯỚC CHỐNG XUNG ĐỘT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- File LUỒNG NÀY SỞ HỮU ---
+  ✅ Models: Coupon.cs, CouponUsage.cs, FlashSale.cs, FlashSaleItem.cs, ActivityLog.cs (MỚI)
+  ✅ Services: ICouponService, CouponService (MỚI)
+  ✅ Services: IFlashSaleService, FlashSaleService (MỚI)
+  ✅ Services: IActivityLogService, ActivityLogService (MỚI)
+  ✅ Services: IDashboardService, DashboardService (MỚI)
+  ✅ Controllers: CouponsController, FlashSalesController, DashboardController, ActivityLogsController (MỚI)
+  ✅ DTOs: CouponDto, FlashSaleDto, DashboardDto, ActivityLogDto... (MỚI)
+  ✅ Frontend: features/admin/coupons/ (MỚI)
+  ✅ Frontend: features/admin/flash-sales/ (MỚI)
+  ✅ Frontend: features/admin/activity-logs/ (MỚI)
+  ✅ Frontend: Flash Sale section trên Homepage (MỚI - component riêng)
+
+--- File DÙNG CHUNG (Phase 0, KHÔNG tự sửa) ---
+  ❌ Order.cs, AppDbContext, Program.cs, DTOs chung, db.sql, order.model.ts
+
+--- PHỐI HỢP ---
+  🤝 OrderService.cs → OWNER: Kho & VC
+     Mình cung cấp: ICouponService + IFlashSaleService interface
+     Kho & VC inject và gọi trong OrderService.CreateAsync:
+       - _couponService.ValidateAsync(code, totalAmount)
+       - _couponService.ApplyAsync(couponId, orderId)
+       - _flashSaleService.GetFlashPriceAsync(productId)
+
+  🤝 ProductCard/ProductDetail → PHỐI HỢP với Sau bán hàng
+     Mình thêm: flash-sale-badge component (hiển thị giá flash + countdown)
+     SBH thêm: wishlist-toggle component (nút ❤️)
+     → Mỗi bên tạo COMPONENT RIÊNG, import vào template
+
+  🤝 Checkout (Frontend) → OWNER: Thanh toán
+     Mình tạo component riêng: coupon-input (input mã + nút Áp dụng)
+     Thanh toán import component này vào Checkout page
+
+  🤝 Homepage → Mình tạo component flash-sale-section riêng
+     Import vào Homepage mà KHÔNG sửa code homepage hiện tại nhiều
+
+  🤝 Admin Dashboard → Mình SỞ HỮU việc cập nhật (data thực)
+     Không ai khác sửa Dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1-2. HIỆN TRẠNG & DATABASE → Xem Phase 0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bảng mới: coupons, coupon_usages, flash_sales, flash_sale_items, activity_logs
+Cập nhật orders: coupon_id
+Cập nhật products: meta_title, meta_description
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. BACKEND MODELS & DTOs (TẠO MỚI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Coupon.cs: Code, DiscountType, DiscountValue, MinOrderAmount, MaxDiscount, UsageLimit, UsedCount, PerUserLimit, StartDate, EndDate, IsActive, CreatedBy
+CouponUsage.cs: CouponId, UserId, OrderId, DiscountAmount, UsedAt
+FlashSale.cs: Title, StartTime, EndTime, IsActive, CreatedBy → Nav: Items
+FlashSaleItem.cs: FlashSaleId, ProductId, FlashPrice, StockLimit, SoldCount
+ActivityLog.cs: UserId, Action, EntityType, EntityId, OldValue, NewValue, IpAddress
+
+DTOs tương ứng cho CRUD + Dashboard DTOs (OverviewDto, RevenueChartDto, TopProductDto)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. BACKEND SERVICES & CONTROLLERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- CouponService (SỞ HỮU) ---
+  CreateAsync, ValidateAsync, ApplyAsync, DeactivateAsync
+  ⚠️ ValidateAsync + ApplyAsync sẽ được Kho & VC gọi qua interface
+
+--- FlashSaleService (SỞ HỮU) ---
+  CreateAsync, GetActiveAsync, GetFlashPriceAsync
+  ⚠️ GetFlashPriceAsync sẽ được Kho & VC gọi qua interface
+
+--- ActivityLogService (SỞ HỮU) ---
+  LogAsync, GetLogsAsync
+
+--- DashboardService (SỞ HỮU) ---
+  GetOverviewAsync, GetRevenueChartAsync, GetTopProductsAsync
+
+--- ProductService (PHỐI HỢP) ---
+  ⚠️ KHÔNG sửa trực tiếp ProductService
+  Thay vào đó, tạo FlashSaleService.GetFlashPriceAsync
+  Frontend sẽ gọi thêm API flash-sales/active rồi merge data ở client
+
+--- Controllers (SỞ HỮU) ---
+  CouponsController: POST, GET, PUT/{id}, DELETE/{id}, POST/validate
+  FlashSalesController: POST, GET, GET/active, POST/{id}/items, DELETE/{id}/items/{pid}
+  DashboardController: GET/overview, GET/revenue, GET/top-products, GET/top-customers
+  ActivityLogsController: GET
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. FRONTEND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+--- Admin Dashboard (SỞ HỮU) ---
+  Stat Cards, Revenue Chart (Chart.js/ngx-charts), Top Products, Recent Orders, Activity Feed
+
+--- Admin Coupons (SỞ HỮU) ---
+  Danh sách, Form tạo/sửa, Nút bật/tắt
+
+--- Admin Flash Sales (SỞ HỮU) ---
+  Danh sách (đã/đang/sắp), Form tạo, Thêm SP + giá flash, Progress bar
+
+--- Admin Activity Logs (SỞ HỮU) ---
+  Timeline feed, Filter theo user/entity/thời gian
+
+--- Component riêng giao cho luồng khác ---
+  coupon-input: Input mã + nút Áp dụng → giao Thanh toán import vào Checkout
+  flash-sale-badge: Badge giá flash + countdown → thêm vào ProductCard/ProductDetail
+  flash-sale-section: Section trên Homepage (countdown + grid SP)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. BUSINESS RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [M1] Mỗi đơn chỉ 1 coupon
+  [M2] discountAmount ≤ maxDiscount (nếu %)
+  [M3] flash_price < sale_price < regular_price
+  [M4] soldCount ≥ stockLimit → hết trong flash sale
+  [M5] Chỉ 1 flash sale active tại 1 thời điểm
+  [M6] Activity Log: ghi tự động khi thay đổi dữ liệu quan trọng
+  [M7] SEO: metaTitle max 60 ký tự, metaDescription max 160 ký tự
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. ƯỚC LƯỢNG: ~34-47 giờ (5-7 ngày)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

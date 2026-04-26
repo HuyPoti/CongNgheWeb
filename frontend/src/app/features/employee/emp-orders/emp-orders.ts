@@ -4,16 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../../core/services/toast.service';
 import { OrderService } from '../../../core/services/order.service';
 import { OrderDto, OrderDetailDto, UpdateOrderDto } from '../../../core/models/order.model';
+import { QcModalComponent } from './qc-modal.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-emp-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, QcModalComponent],
   templateUrl: './emp-orders.html',
 })
 export class EmpOrders implements OnInit {
   private orderService = inject(OrderService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   // States
   isLoading = signal(true);
@@ -22,6 +25,7 @@ export class EmpOrders implements OnInit {
   selectedStatus = signal<string | undefined>(undefined);
   orders = signal<OrderDto[]>([]);
   showDetail = signal<OrderDetailDto | null>(null);
+  showQCModal = signal<string | null>(null); // Lưu orderId khi mở QC
   searchQuery = signal('');
 
   // Employee chỉ được cập nhật trạng thái theo quy trình tuần tự
@@ -154,5 +158,19 @@ export class EmpOrders implements OnInit {
       shipping: orders.filter((o) => o.status === 'shipping').length,
       delivered: orders.filter((o) => o.status === 'delivered').length,
     };
+  }
+
+  // --- NEW ACTIONS ---
+  openQC(orderId: string) {
+    this.showQCModal.set(orderId);
+  }
+
+  printPackingSlip(orderId: string) {
+    this.router.navigate(['/employee/packing-slip'], { queryParams: { id: orderId } });
+  }
+
+  onQCSubmitted(data: any) {
+    this.toast.success('Đã lưu kết quả kiểm tra chất lượng');
+    // Thực tế sẽ gọi API cập nhật trạng thái đơn hàng sang 'processing' hoặc 'shipping'
   }
 }

@@ -104,8 +104,11 @@ export class Register implements OnInit {
     this.authService.register(registerData).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.toastService.success('Tạo tài khoản thành công!');
-        this.router.navigateByUrl(this.returnUrl);
+        this.toastService.success('Tạo tài khoản thành công! Vui lòng kiểm tra email để lấy mã xác nhận.');
+        // Chuyển hướng sang trang xác thực OTP ngay lập tức
+        this.router.navigate(['/auth/verify-email'], { 
+          queryParams: { email: this.registerForm.value.email } 
+        });
       },
       error: (err) => {
         this.isLoading.set(false);
