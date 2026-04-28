@@ -69,6 +69,11 @@ export const routes: Routes = [
         path: 'cart',
         loadChildren: () => import('./features/cart/cart.routes').then((m) => m.CART_ROUTES),
       },
+      {
+        path: 'payment/vnpay-return',
+        loadComponent: () =>
+          import('./features/cart/vnpay-return/vnpay-return').then((m) => m.VnPayReturnComponent),
+      },
     ],
   },
 ];

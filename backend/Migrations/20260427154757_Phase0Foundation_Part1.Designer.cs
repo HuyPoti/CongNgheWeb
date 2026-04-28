@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427154757_Phase0Foundation_Part1")]
+    partial class Phase0Foundation_Part1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,56 +24,6 @@ namespace backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("backend.Models.ActivityLog", b =>
-                {
-                    b.Property<Guid>("LogId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("log_id");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("action");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("EntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("entity_id");
-
-                    b.Property<string>("EntityType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("entity_type");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)")
-                        .HasColumnName("ip_address");
-
-                    b.Property<string>("NewValue")
-                        .HasColumnType("text")
-                        .HasColumnName("new_value");
-
-                    b.Property<string>("OldValue")
-                        .HasColumnType("text")
-                        .HasColumnName("old_value");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("LogId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("activity_logs", (string)null);
-                });
 
             modelBuilder.Entity("backend.Models.Address", b =>
                 {
@@ -378,121 +331,6 @@ namespace backend.Migrations
                     b.ToTable("coupons", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Models.CouponUsage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CouponId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("coupon_id");
-
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("discount_amount");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.Property<DateTime>("UsedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("used_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CouponId");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("coupon_usages", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.FlashSale", b =>
-                {
-                    b.Property<Guid>("FlashSaleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("flash_sale_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime>("EndTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_time");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_time");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("title");
-
-                    b.HasKey("FlashSaleId");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.ToTable("flash_sales", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.FlashSaleItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("FlashPrice")
-                        .HasColumnType("numeric")
-                        .HasColumnName("flash_price");
-
-                    b.Property<Guid>("FlashSaleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("flash_sale_id");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
-
-                    b.Property<int>("SoldCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("sold_count");
-
-                    b.Property<int>("StockLimit")
-                        .HasColumnType("integer")
-                        .HasColumnName("stock_limit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("FlashSaleId", "ProductId")
-                        .IsUnique();
-
-                    b.ToTable("flash_sale_items", (string)null);
-                });
-
             modelBuilder.Entity("backend.Models.News", b =>
                 {
                     b.Property<Guid>("NewsId")
@@ -745,46 +583,6 @@ namespace backend.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("order_items");
-                });
-
-            modelBuilder.Entity("backend.Models.OrderStatusHistory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ChangedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("changed_by");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<int>("NewStatus")
-                        .HasColumnType("integer")
-                        .HasColumnName("new_status");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text")
-                        .HasColumnName("note");
-
-                    b.Property<int?>("OldStatus")
-                        .HasColumnType("integer")
-                        .HasColumnName("old_status");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChangedBy");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("order_status_history", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.PasswordResetToken", b =>
@@ -1048,132 +846,6 @@ namespace backend.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Models.ReturnRequest", b =>
-                {
-                    b.Property<Guid>("ReturnId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("return_id");
-
-                    b.Property<string>("AdminNote")
-                        .HasColumnType("text")
-                        .HasColumnName("admin_note");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("processed_at");
-
-                    b.Property<Guid?>("ProcessedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("processed_by");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("reason");
-
-                    b.Property<decimal?>("RefundAmount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("refund_amount");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("ReturnId");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("ProcessedBy");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("return_requests", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.ReturnRequestImage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("image_url");
-
-                    b.Property<Guid>("ReturnId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("return_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReturnId");
-
-                    b.ToTable("return_request_images", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.ReturnRequestItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("OrderItemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_item_id");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer")
-                        .HasColumnName("quantity");
-
-                    b.Property<string>("ReasonDetail")
-                        .HasColumnType("text")
-                        .HasColumnName("reason_detail");
-
-                    b.Property<Guid>("ReturnId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("return_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderItemId");
-
-                    b.HasIndex("ReturnId");
-
-                    b.ToTable("return_request_items", (string)null);
-                });
-
             modelBuilder.Entity("backend.Models.Review", b =>
                 {
                     b.Property<Guid>("ReviewId")
@@ -1320,79 +992,6 @@ namespace backend.Migrations
                     b.ToTable("review_replies", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Models.Shipment", b =>
-                {
-                    b.Property<Guid>("ShipmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("shipment_id");
-
-                    b.Property<DateTime?>("ActualDelivery")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("actual_delivery");
-
-                    b.Property<string>("Carrier")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("carrier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("EstimatedDelivery")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("estimated_delivery");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.Property<DateTime?>("PackedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("packed_at");
-
-                    b.Property<Guid?>("PackedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("packed_by");
-
-                    b.Property<string>("QcNotes")
-                        .HasColumnType("text")
-                        .HasColumnName("qc_notes");
-
-                    b.Property<bool>("QcPassed")
-                        .HasColumnType("boolean")
-                        .HasColumnName("qc_passed");
-
-                    b.Property<decimal>("ShippingFee")
-                        .HasColumnType("numeric")
-                        .HasColumnName("shipping_fee");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("status");
-
-                    b.Property<string>("TrackingCode")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("tracking_code");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("ShipmentId");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("PackedBy");
-
-                    b.ToTable("shipments", (string)null);
-                });
-
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1467,46 +1066,6 @@ namespace backend.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Models.Wishlist", b =>
-                {
-                    b.Property<Guid>("WishlistId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("wishlist_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("WishlistId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId", "ProductId")
-                        .IsUnique();
-
-                    b.ToTable("wishlists", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.ActivityLog", b =>
-                {
-                    b.HasOne("backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("backend.Models.Address", b =>
                 {
                     b.HasOne("backend.Models.User", "User")
@@ -1535,61 +1094,6 @@ namespace backend.Migrations
                         .HasForeignKey("CreatedBy");
 
                     b.Navigation("Creator");
-                });
-
-            modelBuilder.Entity("backend.Models.CouponUsage", b =>
-                {
-                    b.HasOne("backend.Models.Coupon", "Coupon")
-                        .WithMany()
-                        .HasForeignKey("CouponId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Coupon");
-
-                    b.Navigation("Order");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("backend.Models.FlashSale", b =>
-                {
-                    b.HasOne("backend.Models.User", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy");
-
-                    b.Navigation("Creator");
-                });
-
-            modelBuilder.Entity("backend.Models.FlashSaleItem", b =>
-                {
-                    b.HasOne("backend.Models.FlashSale", "FlashSale")
-                        .WithMany("Items")
-                        .HasForeignKey("FlashSaleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Product", "Product")
-                        .WithMany("FlashSaleItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("FlashSale");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("backend.Models.News", b =>
@@ -1674,25 +1178,6 @@ namespace backend.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("backend.Models.OrderStatusHistory", b =>
-                {
-                    b.HasOne("backend.Models.User", "ChangedByUser")
-                        .WithMany()
-                        .HasForeignKey("ChangedBy")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Order", "Order")
-                        .WithMany("StatusHistory")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChangedByUser");
-
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("backend.Models.PasswordResetToken", b =>
                 {
                     b.HasOne("backend.Models.User", "User")
@@ -1754,61 +1239,6 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("backend.Models.ReturnRequest", b =>
-                {
-                    b.HasOne("backend.Models.Order", "Order")
-                        .WithMany("ReturnRequests")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "ProcessedByUser")
-                        .WithMany()
-                        .HasForeignKey("ProcessedBy");
-
-                    b.HasOne("backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-
-                    b.Navigation("ProcessedByUser");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("backend.Models.ReturnRequestImage", b =>
-                {
-                    b.HasOne("backend.Models.ReturnRequest", "ReturnRequest")
-                        .WithMany("Images")
-                        .HasForeignKey("ReturnId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ReturnRequest");
-                });
-
-            modelBuilder.Entity("backend.Models.ReturnRequestItem", b =>
-                {
-                    b.HasOne("backend.Models.OrderItem", "OrderItem")
-                        .WithMany()
-                        .HasForeignKey("OrderItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.ReturnRequest", "ReturnRequest")
-                        .WithMany("Items")
-                        .HasForeignKey("ReturnId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("OrderItem");
-
-                    b.Navigation("ReturnRequest");
                 });
 
             modelBuilder.Entity("backend.Models.Review", b =>
@@ -1879,52 +1309,11 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("backend.Models.Shipment", b =>
-                {
-                    b.HasOne("backend.Models.Order", "Order")
-                        .WithMany("Shipments")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "PackedByUser")
-                        .WithMany()
-                        .HasForeignKey("PackedBy");
-
-                    b.Navigation("Order");
-
-                    b.Navigation("PackedByUser");
-                });
-
-            modelBuilder.Entity("backend.Models.Wishlist", b =>
-                {
-                    b.HasOne("backend.Models.Product", "Product")
-                        .WithMany("Wishlists")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("backend.Models.Category", b =>
                 {
                     b.Navigation("Children");
 
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("backend.Models.FlashSale", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("backend.Models.NewsCategory", b =>
@@ -1939,28 +1328,11 @@ namespace backend.Migrations
                     b.Navigation("OrderItems");
 
                     b.Navigation("Payment");
-
-                    b.Navigation("ReturnRequests");
-
-                    b.Navigation("Shipments");
-
-                    b.Navigation("StatusHistory");
                 });
 
             modelBuilder.Entity("backend.Models.Product", b =>
                 {
-                    b.Navigation("FlashSaleItems");
-
                     b.Navigation("Images");
-
-                    b.Navigation("Wishlists");
-                });
-
-            modelBuilder.Entity("backend.Models.ReturnRequest", b =>
-                {
-                    b.Navigation("Images");
-
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("backend.Models.Review", b =>

@@ -15,4 +15,5 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'reviews', loadComponent: () => import('./reviews/reviews').then(m => m.AdminReviewsComponent) },
   { path: 'coupons', loadComponent: () => import('./coupons/coupon-list').then(m => m.CouponListComponent) },
   { path: 'flash-sales', loadComponent: () => import('./flash-sales/flash-sale-list').then(m => m.FlashSaleListComponent) },
+  { path: 'activity-logs', loadComponent: () => import('./activity-logs/activity-logs').then(m => m.ActivityLogsComponent) },
 ];

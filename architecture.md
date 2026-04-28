@@ -85,9 +85,20 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 
 - `Users`: Quản trị viên và khách hàng.
-- `Products`: Thông tin sản phẩm (bao gồm cột `specifications` kiểu JSONB cho thông số kỹ thuật).
+- `Products`: Thông tin sản phẩm (bao gồm cột `specifications` kiểu JSONB cho thông số kỹ thuật, và các trường SEO `meta_title`, `meta_description`).
 - `Categories`: Danh mục sản phẩm.
 - `Brands`: Thương hiệu sản phẩm.
+- `Orders`: Đơn hàng (bao gồm phí ship, giảm giá, lý do hủy).
+- `OrderItems`: Chi tiết đơn hàng.
+- `Payments`: Thông tin thanh toán (bao gồm JSONB response từ gateway).
+- `Coupons`: Mã giảm giá.
+- `CouponUsages`: Lịch sử sử dụng mã giảm giá.
+- `OrderStatusHistory`: Lịch sử thay đổi trạng thái đơn hàng.
+- `Shipments`: Thông tin vận chuyển.
+- `ReturnRequests` & `ReturnRequestItems` & `ReturnRequestImages`: Quản lý đổi trả hàng.
+- `Wishlists`: Danh sách sản phẩm yêu thích.
+- `FlashSales` & `FlashSaleItems`: Chương trình khuyến mãi giới hạn thời gian.
+- `ActivityLogs`: Nhật ký hoạt động hệ thống.
 - `News` & `NewsCategories`: Quản lý tin tức.
 - `Banners`: Hình ảnh quảng cáo.
 - `Reviews`: Đánh giá và bình luận sản phẩm.
@@ -95,6 +106,41 @@ Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 - `ReviewReplies`: Phản hồi từ quản trị viên đối với đánh giá.
 - `PasswordResetTokens`: Lưu trữ mã OTP khôi phục mật khẩu.
 - `RefreshTokens`: Quản lý phiên đăng nhập và làm mới token.
+
+---
+
+## 5. Danh sách Services & DTOs Shared (Phase 0)
+
+### 🛠️ Services (Stubs)
+- `PaymentService`, `VnPayService`: Xử lý thanh toán.
+- `ShipmentService`: Quản lý vận chuyển.
+- `ReturnRequestService`: Quản lý đổi trả.
+- `WishlistService`: Sản phẩm yêu thích.
+- `EmailNotificationService`: Thông báo email (mở rộng).
+- `CouponService`: Mã giảm giá.
+- `FlashSaleService`: Khuyến mãi Flash Sale.
+- `ActivityLogService`: Ghi log hoạt động.
+- `DashboardService`: Dữ liệu tổng hợp.
+
+### 📦 DTOs Shared
+- `CreateOrderDto`: Cập nhật `CouponCode`, `ShippingFee`.
+- `OrderDetailDto`: Cập nhật `Payment`, `Shipment`, `StatusHistory`, `ReturnRequest`.
+- `UpdateOrderDto`: Cập nhật `CancelledReason`.
+- `PaymentDto`, `ShipmentDto`, `OrderStatusHistoryDto`, `ReturnRequestDto`: DTOs hỗ trợ hiển thị chi tiết đơn hàng.
+
+---
+
+## 6. Shared Frontend Foundation (Phase 0)
+
+### 📦 Models (`core/models/order.model.ts`)
+- `PaymentDto`, `ShipmentDto`, `OrderStatusHistoryDto`, `ReturnRequestDto`: Đồng bộ với Backend.
+- `WishlistItemDto`: Dùng cho wishlist.
+- `OrderDetailDto`: Cập nhật đầy đủ các trường thông tin mở rộng.
+
+### 🛣️ Routes
+- `/payment/vnpay-return`: Xử lý phản hồi từ VnPay.
+- `/user/wishlist`, `/user/return-request/:id`: Routes người dùng mở rộng.
+- `/admin/coupons`, `/admin/flash-sales`, `/admin/activity-logs`: Routes quản trị mở rộng.
 
 ---
 
