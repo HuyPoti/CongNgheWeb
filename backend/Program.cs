@@ -41,6 +41,22 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Phase 0: Shared Foundation Services (Stub)
+// Thanh toán
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+// Kho & Vận chuyển
+builder.Services.AddScoped<IShipmentService, ShipmentService>();
+// Sau bán hàng
+builder.Services.AddScoped<IReturnRequestService, ReturnRequestService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
+// Marketing
+builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IFlashSaleService, FlashSaleService>();
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

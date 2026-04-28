@@ -13,7 +13,14 @@ public class OrderDetailDto
     // 1: unpaid - 2: paid - 3: refunded
     public string PaymentStatus { get; set; } = "unpaid";
     public decimal TotalAmount { get; set; }
+    public decimal ShippingFee { get; set; }
+    public decimal DiscountAmount { get; set; }
     public string? Notes { get; set; }
+
+    public PaymentDto? Payment { get; set; }
+    public ShipmentDto? Shipment { get; set; }
+    public List<OrderStatusHistoryDto> StatusHistory { get; set; } = new();
+    public ReturnRequestDto? ReturnRequest { get; set; }
 
     public Guid UserId { get; set; }
     public string CustomerName { get; set; } = string.Empty;

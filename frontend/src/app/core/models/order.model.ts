@@ -31,14 +31,62 @@ export interface OrderItemDto {
 
 export interface OrderDetailDto extends OrderDto {
   notes: string | null;
+  shippingFee: number;
+  discountAmount: number;
   userId: string;
   shippingAddress: AddressDto;
   items: OrderItemDto[];
+  payment?: PaymentDto;
+  shipment?: ShipmentDto;
+  statusHistory: OrderStatusHistoryDto[];
+  returnRequest?: ReturnRequestDto;
+}
+
+export interface PaymentDto {
+  paymentId: string;
+  paymentMethod: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface ShipmentDto {
+  shipmentId: string;
+  carrier: string;
+  trackingCode?: string;
+  status: string;
+  estimatedDelivery?: string;
+  actualDelivery?: string;
+}
+
+export interface OrderStatusHistoryDto {
+  id: string;
+  oldStatus: number;
+  newStatus: number;
+  note?: string;
+  createdAt: string;
+}
+
+export interface ReturnRequestDto {
+  returnId: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface WishlistItemDto {
+  wishlistId: string;
+  productId: string;
+  productName: string;
+  productImageUrl: string;
+  price: number;
+  createdAt: string;
 }
 
 export interface UpdateOrderDto {
   status?: 'pending' | 'confirmed' | 'processing' | 'shipping' | 'delivered' | 'cancelled';
   paymentStatus?: 'unpaid' | 'paid' | 'refunded';
+  cancelledReason?: string;
 }
 
 export interface CreateOrderItemDto {
@@ -51,6 +99,8 @@ export interface CreateOrderDto {
   shippingAddressId?: string;
   shippingAddress?: CreateOrderShippingAddressDto;
   paymentMethod: string;
+  couponCode?: string;
+  shippingFee: number;
   notes?: string;
   items: CreateOrderItemDto[];
 }
