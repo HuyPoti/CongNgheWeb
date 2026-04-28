@@ -12,6 +12,8 @@ public class CreateOrderDto
     public Guid? ShippingAddressId { get; set; }
     public CreateOrderShippingAddressDto? ShippingAddress { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;
+    public string? CouponCode { get; set; }
+    public decimal ShippingFee { get; set; }
     public string? Notes { get; set; }
     public List<CreateOrderItemDto> Items { get; set; } = new();
 }

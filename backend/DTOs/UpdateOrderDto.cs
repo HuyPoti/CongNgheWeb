@@ -7,4 +7,6 @@ public class UpdateOrderDto
 
     // PaymentStatus: unpaid, paid, refunded
     public string? PaymentStatus { get; set; }
+
+    public string? CancelledReason { get; set; }
 }

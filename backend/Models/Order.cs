@@ -37,6 +37,21 @@ public class Order
     [Column("payment_status")]
     public int PaymentStatus { get; set; } = 1;
 
+    [Column("shipping_fee")]
+    public decimal ShippingFee { get; set; } = 0;
+
+    [Column("discount_amount")]
+    public decimal DiscountAmount { get; set; } = 0;
+
+    [Column("cancelled_reason")]
+    public string? CancelledReason { get; set; }
+
+    [Column("cancelled_by")]
+    public Guid? CancelledBy { get; set; }
+
+    [Column("coupon_id")]
+    public Guid? CouponId { get; set; }
+
     [Required]
     [Column("shipping_address_id")]
     public Guid ShippingAddressId { get; set; }
@@ -54,8 +69,18 @@ public class Order
     [ForeignKey("UserId")]
     public User User { get; set; } = null!;
 
+    [ForeignKey("CancelledBy")]
+    public User? CancelledByUser { get; set; }
+
+    [ForeignKey("CouponId")]
+    public Coupon? Coupon { get; set; }
+
     [ForeignKey("ShippingAddressId")]
     public Address Address { get; set; } = null!;
 
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public Payment? Payment { get; set; }
+    public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
+    public ICollection<Shipment> Shipments { get; set; } = new List<Shipment>();
+    public ICollection<ReturnRequest> ReturnRequests { get; set; } = new List<ReturnRequest>();
 }

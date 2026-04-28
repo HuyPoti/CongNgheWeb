@@ -61,6 +61,8 @@ CREATE TABLE products (
     description TEXT,
     specifications JSONB,
     status INT DEFAULT 1,
+    meta_title VARCHAR(255),
+    meta_description VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(category_id),
@@ -104,7 +106,26 @@ CREATE TABLE addresses (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 9. Bảng orders
+-- 9. Bảng coupons
+CREATE TABLE coupons (
+    coupon_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT,
+    discount_type VARCHAR(20) NOT NULL,
+    discount_value DECIMAL(15,2) NOT NULL,
+    min_order_amount DECIMAL(15,2) DEFAULT 0,
+    max_discount DECIMAL(15,2),
+    usage_limit INT,
+    used_count INT DEFAULT 0,
+    per_user_limit INT DEFAULT 1,
+    start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES users(user_id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Bảng orders
 CREATE TABLE orders (
     order_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -114,14 +135,21 @@ CREATE TABLE orders (
     payment_method VARCHAR(50) NOT NULL,
     payment_status INT DEFAULT 1,
     shipping_address_id UUID NOT NULL,
+    shipping_fee DECIMAL(15,2) DEFAULT 0,
+    discount_amount DECIMAL(15,2) DEFAULT 0,
+    cancelled_reason TEXT,
+    cancelled_by UUID,
+    coupon_id UUID,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (shipping_address_id) REFERENCES addresses(address_id)
+    FOREIGN KEY (shipping_address_id) REFERENCES addresses(address_id),
+    FOREIGN KEY (cancelled_by) REFERENCES users(user_id),
+    FOREIGN KEY (coupon_id) REFERENCES coupons(coupon_id)
 );
 
--- 10. Bảng order_items
+-- 11. Bảng order_items
 CREATE TABLE order_items (
     order_item_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL,
@@ -132,7 +160,7 @@ CREATE TABLE order_items (
     FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
--- 11. Bảng payments
+-- 12. Bảng payments
 CREATE TABLE payments (
     payment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL,
@@ -141,10 +169,130 @@ CREATE TABLE payments (
     transaction_id VARCHAR(100),
     status INT DEFAULT 1,
     paid_at TIMESTAMP WITH TIME ZONE NULL,
+    gateway_response JSONB,
+    return_url VARCHAR(500),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
--- 12. Bảng news_categories
+-- 13. Bảng order_status_history
+CREATE TABLE order_status_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    old_status INT,
+    new_status INT NOT NULL,
+    changed_by UUID NOT NULL REFERENCES users(user_id),
+    note TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. Bảng shipments
+CREATE TABLE shipments (
+    shipment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    carrier VARCHAR(50) NOT NULL,
+    tracking_code VARCHAR(100),
+    shipping_fee DECIMAL(15,2) DEFAULT 0,
+    estimated_delivery DATE,
+    actual_delivery TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) DEFAULT 'pending',
+    packed_by UUID REFERENCES users(user_id),
+    packed_at TIMESTAMP WITH TIME ZONE,
+    qc_passed BOOLEAN DEFAULT FALSE,
+    qc_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. Bảng return_requests
+CREATE TABLE return_requests (
+    return_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES orders(order_id),
+    user_id UUID NOT NULL REFERENCES users(user_id),
+    reason VARCHAR(50) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    refund_amount DECIMAL(15,2),
+    processed_by UUID REFERENCES users(user_id),
+    processed_at TIMESTAMP WITH TIME ZONE,
+    admin_note TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 16. Bảng return_request_items
+CREATE TABLE return_request_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    return_id UUID NOT NULL REFERENCES return_requests(return_id) ON DELETE CASCADE,
+    order_item_id UUID NOT NULL REFERENCES order_items(order_item_id),
+    quantity INT NOT NULL,
+    reason_detail TEXT
+);
+
+-- 17. Bảng return_request_images
+CREATE TABLE return_request_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    return_id UUID NOT NULL REFERENCES return_requests(return_id) ON DELETE CASCADE,
+    image_url VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 18. Bảng wishlists
+CREATE TABLE wishlists (
+    wishlist_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, product_id)
+);
+
+-- 19. Bảng coupon_usages
+CREATE TABLE coupon_usages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    coupon_id UUID NOT NULL REFERENCES coupons(coupon_id),
+    user_id UUID NOT NULL REFERENCES users(user_id),
+    order_id UUID NOT NULL REFERENCES orders(order_id),
+    discount_amount DECIMAL(15,2) NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 20. Bảng flash_sales
+CREATE TABLE flash_sales (
+    flash_sale_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by UUID REFERENCES users(user_id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 21. Bảng flash_sale_items
+CREATE TABLE flash_sale_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    flash_sale_id UUID NOT NULL REFERENCES flash_sales(flash_sale_id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(product_id),
+    flash_price DECIMAL(15,2) NOT NULL,
+    stock_limit INT NOT NULL,
+    sold_count INT DEFAULT 0,
+    UNIQUE(flash_sale_id, product_id)
+);
+
+-- 22. Bảng activity_logs
+CREATE TABLE activity_logs (
+    log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(user_id),
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id UUID,
+    old_value TEXT,
+    new_value TEXT,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 23. Bảng news_categories
 CREATE TABLE news_categories (
     category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
@@ -156,7 +304,7 @@ CREATE TABLE news_categories (
     FOREIGN KEY (parent_id) REFERENCES news_categories(category_id) ON DELETE SET NULL
 );
 
--- 13. Bảng news
+-- 24. Bảng news
 CREATE TABLE news (
     news_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
@@ -178,7 +326,7 @@ CREATE TABLE news (
     FOREIGN KEY (author_id) REFERENCES users(user_id)
 );
 
--- 14. Bảng banners
+-- 25. Bảng banners
 CREATE TABLE banners (
     banner_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255),
@@ -194,7 +342,7 @@ CREATE TABLE banners (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 15. Bảng reviews
+-- 26. Bảng reviews
 CREATE TABLE reviews (
     review_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id UUID NOT NULL,
@@ -209,7 +357,7 @@ CREATE TABLE reviews (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 16. Bảng review_images
+-- 27. Bảng review_images
 CREATE TABLE review_images (
     image_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     review_id UUID NOT NULL,
@@ -218,7 +366,7 @@ CREATE TABLE review_images (
     FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE
 );
 
--- 17. Bảng review_helpful_votes
+-- 28. Bảng review_helpful_votes
 CREATE TABLE review_helpful_votes (
     vote_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     review_id UUID NOT NULL,
@@ -229,7 +377,7 @@ CREATE TABLE review_helpful_votes (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 18. Bảng review_replies
+-- 29. Bảng review_replies
 CREATE TABLE review_replies (
     reply_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     review_id UUID NOT NULL,
@@ -242,7 +390,7 @@ CREATE TABLE review_replies (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 19. Bảng refresh_tokens
+-- 30. Bảng refresh_tokens
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -253,7 +401,7 @@ CREATE TABLE refresh_tokens (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- 20. Bảng password_reset_tokens
+-- 31. Bảng password_reset_tokens
 CREATE TABLE password_reset_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -301,45 +449,10 @@ INSERT INTO categories (category_id, name, slug, parent_id, is_active, created_a
 ('c0000002-0000-0000-0000-000000000007', 'NVIDIA', 'gpu-nvidia', 'c0000001-0000-0000-0000-000000000004', TRUE, NOW()),
 ('c0000002-0000-0000-0000-000000000008', 'AMD', 'gpu-amd', 'c0000001-0000-0000-0000-000000000004', TRUE, NOW());
 
--- 4. Products (Dành cho Compare Page)
--- Sản phẩm 1: RTX 4090
-INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
-('d0000000-0000-0000-0000-000000000001', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'ASUS ROG Strix RTX 4090 OC', 'vga-asus-rog-strix-rtx-4090-oc', 'RTX4090-ROG-STRIX', 58000000, 55900000, 10, 36, '{"chipset": "RTX 4090", "vram": "24GB GDDR6X", "bus": "384-bit", "core_clock": "2610 MHz", "power": "450W", "slots": "3.5 slot"}', 2, NOW(), NOW());
-
--- Sản phẩm 2: RTX 4080 Super
-INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
-('d0000000-0000-0000-0000-000000000002', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', 'MSI Suprim X RTX 4080 Super', 'vga-msi-suprim-x-rtx-4080-super', 'RTX4080S-MSI-SUPRIM', 35000000, 33500000, 15, 36, '{"chipset": "RTX 4080 Super", "vram": "16GB GDDR6X", "bus": "256-bit", "core_clock": "2640 MHz", "power": "320W", "slots": "3.3 slot"}', 2, NOW(), NOW());
-
--- Sản phẩm 3: RTX 4070 Ti Super
-INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
-('d0000000-0000-0000-0000-000000000003', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000003', 'Gigabyte AORUS Master RTX 4070 Ti Super', 'vga-gigabyte-aorus-master-rtx-4070-ti-super', 'RTX4070TIS-AORUS', 26000000, 24900000, 20, 36, '{"chipset": "RTX 4070 Ti Super", "vram": "16GB GDDR6X", "bus": "256-bit", "core_clock": "2670 MHz", "power": "285W", "slots": "3.0 slot"}', 2, NOW(), NOW());
-
--- Sản phẩm 4: RX 7900 XTX
-INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, created_at, updated_at) VALUES 
-('d0000000-0000-0000-0000-000000000004', 'c0000002-0000-0000-0000-000000000008', 'b0000000-0000-0000-0000-000000000001', 'ASUS TUF Gaming RX 7900 XTX OC', 'vga-asus-tuf-rx-7900-xtx-oc', 'RX7900XTX-ASUS-TUF', 32000000, 29900000, 8, 36, '{"chipset": "RX 7900 XTX", "vram": "24GB GDDR6", "bus": "384-bit", "core_clock": "2615 MHz", "power": "355W", "slots": "3.6 slot"}', 2, NOW(), NOW());
-
--- 5. Product Specs (Chi tiết để so sánh)
-INSERT INTO product_specs (spec_id, product_id, spec_key, spec_value) VALUES 
--- RTX 4090
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Nhân CUDA', '16384'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Xung nhịp tối đa', '2610 MHz'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Bộ nhớ', '24GB GDDR6X'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', 'Tiêu thụ điện', '450W'),
--- RTX 4080 Super
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Nhân CUDA', '10240'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Xung nhịp tối đa', '2640 MHz'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Bộ nhớ', '16GB GDDR6X'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', 'Tiêu thụ điện', '320W'),
--- RTX 4070 Ti Super
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Nhân CUDA', '8448'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Xung nhịp tối đa', '2670 MHz'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Bộ nhớ', '16GB GDDR6X'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', 'Tiêu thụ điện', '285W'),
--- RX 7900 XTX
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Nhân Stream', '6144'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Xung nhịp tối đa', '2615 MHz'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Bộ nhớ', '24GB GDDR6'),
-(gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', 'Tiêu thụ điện', '355W');
+-- 4. Products
+INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regular_price, sale_price, stock_quantity, warranty_months, specifications, status, meta_title, meta_description, created_at, updated_at) VALUES 
+('d0000000-0000-0000-0000-000000000001', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000001', 'ASUS ROG Strix RTX 4090 OC', 'vga-asus-rog-strix-rtx-4090-oc', 'RTX4090-ROG-STRIX', 58000000, 55900000, 10, 36, '{"chipset": "RTX 4090", "vram": "24GB GDDR6X", "bus": "384-bit", "core_clock": "2610 MHz", "power": "450W", "slots": "3.5 slot"}', 2, 'ASUS ROG Strix RTX 4090 OC - Card đồ họa mạnh nhất', 'Mua ngay ASUS ROG Strix RTX 4090 OC chính hãng tại GearVN. Hỗ trợ trả góp 0%, bảo hành 36 tháng.', NOW(), NOW()),
+('d0000000-0000-0000-0000-000000000002', 'c0000002-0000-0000-0000-000000000007', 'b0000000-0000-0000-0000-000000000002', 'MSI Suprim X RTX 4080 Super', 'vga-msi-suprim-x-rtx-4080-super', 'RTX4080S-MSI-SUPRIM', 35000000, 33500000, 15, 36, '{"chipset": "RTX 4080 Super", "vram": "16GB GDDR6X", "bus": "256-bit", "core_clock": "2640 MHz", "power": "320W", "slots": "3.3 slot"}', 2, 'MSI Suprim X RTX 4080 Super - Hiệu năng cực đỉnh', 'MSI Suprim X RTX 4080 Super thiết kế sang trọng, hiệu năng mạnh mẽ cho game thủ và designer.', NOW(), NOW());
 
 -- 6. Product Images
 INSERT INTO product_images (product_id, image_url, is_primary, sort_order) VALUES 

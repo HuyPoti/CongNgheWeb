@@ -24,6 +24,18 @@ public class AppDbContext : DbContext
     public DbSet<ReviewHelpfulVote> ReviewHelpfulVotes { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens {get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Coupon> Coupons { get; set; }
+    public DbSet<Payment> Payments { get; set; }
+    public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
+    public DbSet<Shipment> Shipments { get; set; }
+    public DbSet<ReturnRequest> ReturnRequests { get; set; }
+    public DbSet<ReturnRequestItem> ReturnRequestItems { get; set; }
+    public DbSet<ReturnRequestImage> ReturnRequestImages { get; set; }
+    public DbSet<Wishlist> Wishlists { get; set; }
+    public DbSet<CouponUsage> CouponUsages { get; set; }
+    public DbSet<FlashSale> FlashSales { get; set; }
+    public DbSet<FlashSaleItem> FlashSaleItems { get; set; }
+    public DbSet<ActivityLog> ActivityLogs { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -199,6 +211,134 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Payments
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.ToTable("payments");
+            entity.HasKey(e => e.PaymentId);
+            entity.Property(e => e.GatewayResponse).HasColumnType("jsonb");
+            entity.HasOne(e => e.Order)
+                .WithOne(o => o.Payment)
+                .HasForeignKey<Payment>(e => e.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Coupons
+        modelBuilder.Entity<Coupon>(entity =>
+        {
+            entity.ToTable("coupons");
+            entity.HasKey(e => e.CouponId);
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        // Order Status History
+        modelBuilder.Entity<OrderStatusHistory>(entity =>
+        {
+            entity.ToTable("order_status_history");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Order)
+                .WithMany(o => o.StatusHistory)
+                .HasForeignKey(e => e.OrderId);
+        });
+
+        // Shipments
+        modelBuilder.Entity<Shipment>(entity =>
+        {
+            entity.ToTable("shipments");
+            entity.HasKey(e => e.ShipmentId);
+            entity.HasOne(e => e.Order)
+                .WithMany(o => o.Shipments)
+                .HasForeignKey(e => e.OrderId);
+        });
+
+        // Return Requests
+        modelBuilder.Entity<ReturnRequest>(entity =>
+        {
+            entity.ToTable("return_requests");
+            entity.HasKey(e => e.ReturnId);
+            entity.HasOne(e => e.Order)
+                .WithMany(o => o.ReturnRequests)
+                .HasForeignKey(e => e.OrderId);
+        });
+
+        // Return Request Items
+        modelBuilder.Entity<ReturnRequestItem>(entity =>
+        {
+            entity.ToTable("return_request_items");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.ReturnRequest)
+                .WithMany(r => r.Items)
+                .HasForeignKey(e => e.ReturnId);
+        });
+
+        // Return Request Images
+        modelBuilder.Entity<ReturnRequestImage>(entity =>
+        {
+            entity.ToTable("return_request_images");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.ReturnRequest)
+                .WithMany(r => r.Images)
+                .HasForeignKey(e => e.ReturnId);
+        });
+
+        // Wishlists
+        modelBuilder.Entity<Wishlist>(entity =>
+        {
+            entity.ToTable("wishlists");
+            entity.HasKey(e => e.WishlistId);
+            entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.Wishlists)
+                .HasForeignKey(e => e.ProductId);
+        });
+
+        // Coupon Usages
+        modelBuilder.Entity<CouponUsage>(entity =>
+        {
+            entity.ToTable("coupon_usages");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Coupon)
+                .WithMany()
+                .HasForeignKey(e => e.CouponId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId);
+            entity.HasOne(e => e.Order)
+                .WithMany()
+                .HasForeignKey(e => e.OrderId);
+        });
+
+        // Flash Sales
+        modelBuilder.Entity<FlashSale>(entity =>
+        {
+            entity.ToTable("flash_sales");
+            entity.HasKey(e => e.FlashSaleId);
+        });
+
+        // Flash Sale Items
+        modelBuilder.Entity<FlashSaleItem>(entity =>
+        {
+            entity.ToTable("flash_sale_items");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.FlashSaleId, e.ProductId }).IsUnique();
+            entity.HasOne(e => e.FlashSale)
+                .WithMany(f => f.Items)
+                .HasForeignKey(e => e.FlashSaleId);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.FlashSaleItems)
+                .HasForeignKey(e => e.ProductId);
+        });
+
+        // Activity Logs
+        modelBuilder.Entity<ActivityLog>(entity =>
+        {
+            entity.ToTable("activity_logs");
+            entity.HasKey(e => e.LogId);
         });
     }
 }

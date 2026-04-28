@@ -63,6 +63,14 @@ public class Product
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    [MaxLength(255)]
+    [Column("meta_title")]
+    public string? MetaTitle { get; set; }
+
+    [MaxLength(500)]
+    [Column("meta_description")]
+    public string? MetaDescription { get; set; }
+
     [Required]
     [Column("brand_id")]
     public Guid BrandId { get; set; }
@@ -75,4 +83,6 @@ public class Product
     public Category Category { get; set; } = null!;
 
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
-}
+    public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+    public ICollection<FlashSaleItem> FlashSaleItems { get; set; } = new List<FlashSaleItem>();
+}
