@@ -22,6 +22,11 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
     public IRepository<ReviewReply> ReviewReplies { get; } = new Repository<ReviewReply>(dbContext, mapper);
     public IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; } = new Repository<ReviewHelpfulVote>(dbContext, mapper);
 
+    public IRepository<Supplier> Suppliers { get; } = new Repository<Supplier>(dbContext, mapper);
+    public IRepository<InventoryReceipt> InventoryReceipts { get; } = new Repository<InventoryReceipt>(dbContext, mapper);
+    public IRepository<InventoryReceiptItem> InventoryReceiptItems { get; } = new Repository<InventoryReceiptItem>(dbContext, mapper);
+    public IRepository<InventoryTransaction> InventoryTransactions { get; } = new Repository<InventoryTransaction>(dbContext, mapper);
+
     public async Task<int> SaveAsync(CancellationToken cancellationToken)
     {
         return await dbContext.SaveChangesAsync(cancellationToken);

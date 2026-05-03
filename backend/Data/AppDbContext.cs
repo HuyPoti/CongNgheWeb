@@ -36,6 +36,10 @@ public class AppDbContext : DbContext
     public DbSet<FlashSale> FlashSales { get; set; }
     public DbSet<FlashSaleItem> FlashSaleItems { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
+    public DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<InventoryReceipt> InventoryReceipts { get; set; }
+    public DbSet<InventoryReceiptItem> InventoryReceiptItems { get; set; }
+    public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -339,6 +343,59 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("activity_logs");
             entity.HasKey(e => e.LogId);
+        });
+
+        // Suppliers
+        modelBuilder.Entity<Supplier>(entity =>
+        {
+            entity.ToTable("suppliers");
+            entity.HasKey(e => e.SupplierId);
+        });
+
+        // Inventory Receipts
+        modelBuilder.Entity<InventoryReceipt>(entity =>
+        {
+            entity.ToTable("inventory_receipts");
+            entity.HasKey(e => e.ReceiptId);
+            entity.HasIndex(e => e.ReceiptCode).IsUnique();
+            entity.HasOne(e => e.Supplier)
+                .WithMany(s => s.Receipts)
+                .HasForeignKey(e => e.SupplierId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Creator)
+                .WithMany(u => u.InventoryReceipts)
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Inventory Receipt Items
+        modelBuilder.Entity<InventoryReceiptItem>(entity =>
+        {
+            entity.ToTable("inventory_receipt_items");
+            entity.HasKey(e => e.ItemId);
+            entity.HasOne(e => e.Receipt)
+                .WithMany(r => r.Items)
+                .HasForeignKey(e => e.ReceiptId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.InventoryReceiptItems)
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Inventory Transactions
+        modelBuilder.Entity<InventoryTransaction>(entity =>
+        {
+            entity.ToTable("inventory_transactions");
+            entity.HasKey(e => e.TransactionId);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.InventoryTransactions)
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Creator)
+                .WithMany(u => u.InventoryTransactions)
+                .HasForeignKey(e => e.CreatedBy)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

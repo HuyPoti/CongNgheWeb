@@ -20,6 +20,10 @@ public interface IUnitOfWork
     IRepository<ReviewReply> ReviewReplies { get; }
     IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; }
 
+    IRepository<Supplier> Suppliers { get; }
+    IRepository<InventoryReceipt> InventoryReceipts { get; }
+    IRepository<InventoryReceiptItem> InventoryReceiptItems { get; }
+    IRepository<InventoryTransaction> InventoryTransactions { get; }
     
     Task<int> SaveAsync(CancellationToken cancellationToken);
 }

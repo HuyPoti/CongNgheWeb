@@ -11,7 +11,7 @@ public class UpdateProductDto
     public decimal? RegularPrice { get; set; }
     public decimal? SalePrice { get; set; }
 
-    public int? StockQuantity { get; set; }
+    // Removed StockQuantity to enforce updating via Inventory Transactions
     public int? WarrantyMonths { get; set; }
 
     public string? Description { get; set; }
