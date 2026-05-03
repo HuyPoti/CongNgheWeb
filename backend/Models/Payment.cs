@@ -38,6 +38,9 @@ public class Payment
     [Column("return_url")]
     public string? ReturnUrl { get; set; }
 
+    [Column("paid_at")]
+    public DateTime? PaidAt { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
