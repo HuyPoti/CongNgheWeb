@@ -3,6 +3,7 @@ using backend.Exceptions;
 using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace backend.Services;
 
@@ -17,15 +18,12 @@ public interface IPaymentService
 public class PaymentService : IPaymentService
 {
     private readonly IUnitOfWork _uow;
+    private readonly PaymentConfig _paymentConfig;
 
-    // Thông tin tài khoản ngân hàng
-    private const string BANK_NAME = "Vietcombank";
-    private const string BANK_ACCOUNT = "1234567890";
-    private const string BANK_OWNER = "CONG TY TNHH GEARVN";
-
-    public PaymentService(IUnitOfWork uow)
+    public PaymentService(IUnitOfWork uow, IConfiguration configuration)
     {
         _uow = uow;
+        _paymentConfig = configuration.GetSection("Payment").Get<PaymentConfig>() ?? new PaymentConfig();
     }
 
     public async Task<CreatePaymentResponseDto> CreatePaymentAsync(
@@ -72,9 +70,9 @@ public class PaymentService : IPaymentService
 
         if (payment.PaymentMethod == "bank_transfer")
         {
-            response.BankInfo = $"Ngân hàng: {BANK_NAME}\n" +
-                               $"Số tài khoản: {BANK_ACCOUNT}\n" +
-                               $"Chủ tài khoản: {BANK_OWNER}\n" +
+            response.BankInfo = $"Ngân hàng: {_paymentConfig.BankName}\n" +
+                               $"Số tài khoản: {_paymentConfig.BankAccount}\n" +
+                               $"Chủ tài khoản: {_paymentConfig.BankOwner}\n" +
                                $"Nội dung chuyển khoản: {order.OrderCode}";
         }
 
