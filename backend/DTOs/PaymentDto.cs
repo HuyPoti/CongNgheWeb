@@ -7,7 +7,7 @@ public class PaymentDto
     public decimal Amount { get; set; }
     public string PaymentMethod { get; set; } = string.Empty;  // cod, vnpay, bank_transfer
     public string? TransactionId { get; set; }
-    public string Status { get; set; } = string.Empty;  // pending, success, failed, refunded
+    public int Status { get; set; }  // 1=pending, 2=success, 3=failed, 4=refunded
     public string? GatewayResponse { get; set; }
     public string? ReturnUrl { get; set; }
     public DateTime? PaidAt { get; set; }

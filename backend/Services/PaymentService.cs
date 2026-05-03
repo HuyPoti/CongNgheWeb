@@ -41,7 +41,8 @@ public class PaymentService : IPaymentService
             .OrderByDescending(p => p.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (existingPayment != null && existingPayment.Status == "success")
+        // 2 = success
+        if (existingPayment != null && existingPayment.Status == 2)
         {
             throw new BadRequestException("Order has already been paid");
         }
@@ -52,7 +53,8 @@ public class PaymentService : IPaymentService
             OrderId = dto.OrderId,
             Amount = order.TotalAmount,
             PaymentMethod = dto.PaymentMethod.ToLower(),
-            Status = "pending",
+            Status = 1,  // 1 = pending
+            TransactionId = string.Empty,
             ReturnUrl = dto.ReturnUrl,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -65,7 +67,7 @@ public class PaymentService : IPaymentService
         {
             PaymentId = payment.PaymentId,
             PaymentMethod = payment.PaymentMethod,
-            Status = payment.Status
+            Status = payment.Status.ToString()
         };
 
         if (payment.PaymentMethod == "bank_transfer")
@@ -120,10 +122,11 @@ public class PaymentService : IPaymentService
         if (payment.PaymentMethod != "bank_transfer")
             throw new BadRequestException("Only bank transfer payments can be confirmed this way");
 
-        if (payment.Status == "success")
+        // 2 = success
+        if (payment.Status == 2)
             throw new BadRequestException("Payment has already been confirmed");
 
-        payment.Status = "success";
+        payment.Status = 2;  // 2 = success
         payment.PaidAt = DateTime.UtcNow;
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId = $"BT-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
@@ -161,10 +164,11 @@ public class PaymentService : IPaymentService
             .OrderByDescending(p => p.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (payment == null || payment.Status == "success")
+        // 2 = success
+        if (payment == null || payment.Status == 2)
             return;
 
-        payment.Status = "success";
+        payment.Status = 2;  // 2 = success
         payment.PaidAt = DateTime.UtcNow;
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId = $"COD-{DateTime.UtcNow:yyyyMMddHHmmss}";
