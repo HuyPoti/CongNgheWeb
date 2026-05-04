@@ -10,6 +10,9 @@ interface ShippingAddress {
   recipientName: string;
   phone: string;
   addressLine: string;
+  province?: string;
+  district?: string;
+  ward?: string;
 }
 
 
@@ -31,8 +34,8 @@ export class Payment implements OnInit {
   isPlacingOrder = false;
 
   constructor() {
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras.state as { shippingAddress: ShippingAddress } | undefined;
+    // Use history.state instead of deprecated getCurrentNavigation()
+    const state = history.state as { shippingAddress?: ShippingAddress };
     if (state && state.shippingAddress) {
       this.shippingAddress = state.shippingAddress;
     }
@@ -52,6 +55,7 @@ export class Payment implements OnInit {
     const payload = {
       paymentMethod: this.paymentMethod,
       shippingAddress: this.shippingAddress,
+      shippingFee: 30000,
       items: this.cartService.getCartItems().map((item) => ({
         productId: item.id,
         quantity: item.quantity,
