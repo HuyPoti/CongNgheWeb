@@ -22,11 +22,12 @@ import { Brand } from '../../../core/models/brand.model';
 import { Category } from '../../../core/models/category.model';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { ShopStateService, PriceRange } from '../../../core/services/shop-state.service';
+import { WishlistToggleComponent } from '../../../shared/components/wishlist-toggle/wishlist-toggle';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, TranslatePipe],
+  imports: [RouterLink, CommonModule, FormsModule, TranslatePipe, WishlistToggleComponent],
   templateUrl: './product-list.html',
 })
 export class ProductList implements OnInit, OnDestroy {

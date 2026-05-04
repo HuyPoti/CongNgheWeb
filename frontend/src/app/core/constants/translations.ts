@@ -247,6 +247,7 @@ export const TRANSLATIONS = {
 
     // User Sidebar
     'user.sidebar_overview': 'Tổng quan',
+    'user.sidebar_wishlist': 'Sản phẩm yêu thích',
     'user.sidebar_orders': 'Đơn hàng',
     'user.sidebar_tracking': 'Theo dõi đơn hàng',
     'user.sidebar_settings': 'Cài đặt',
@@ -660,6 +661,7 @@ export const TRANSLATIONS = {
 
     // User Sidebar
     'user.sidebar_overview': 'Overview',
+    'user.sidebar_wishlist': 'Wishlist',
     'user.sidebar_orders': 'My Orders',
     'user.sidebar_tracking': 'Track Order',
     'user.sidebar_settings': 'Settings',

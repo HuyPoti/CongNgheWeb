@@ -1,6 +1,7 @@
 using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -16,6 +17,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _reviewService.GetAllAsync(ct);
@@ -48,6 +50,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpPatch("{id}/active")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> UpdateActive(Guid id, [FromBody] UpdateReviewActiveDto dto, CancellationToken ct)
     {
         var result = await _reviewService.UpdateActiveAsync(id, dto, ct);
@@ -56,6 +59,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var success = await _reviewService.DeleteAsync(id, ct);
@@ -69,6 +73,7 @@ public class ReviewsController : ControllerBase
 
     // POST api/reviews/{reviewId}/replies
     [HttpPost("{reviewId}/replies")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> CreateReply(Guid reviewId, [FromBody] CreateReviewReplyDto dto, CancellationToken ct)
     {
         var result = await _reviewService.CreateReplyAsync(reviewId, dto, ct);
@@ -78,6 +83,7 @@ public class ReviewsController : ControllerBase
 
     // PUT api/reviews/replies/{replyId}
     [HttpPut("replies/{replyId}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> UpdateReply(Guid replyId, [FromBody] UpdateReviewReplyDto dto, CancellationToken ct)
     {
         var result = await _reviewService.UpdateReplyAsync(replyId, dto, ct);
@@ -87,6 +93,7 @@ public class ReviewsController : ControllerBase
 
     // DELETE api/reviews/replies/{replyId}
     [HttpDelete("replies/{replyId}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> DeleteReply(Guid replyId, CancellationToken ct)
     {
         var success = await _reviewService.DeleteReplyAsync(replyId, ct);

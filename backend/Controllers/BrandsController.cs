@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 namespace backend.Controllers;
 
 [ApiController]
@@ -22,19 +23,25 @@ public class BrandsController : ControllerBase
         return brand == null ? NotFound(new { message = "Không tìm thấy thương hiệu"}) : Ok(brand);
     }
 
-    [HttpPost] public async Task<ActionResult<BrandDto>> Create([FromBody] CreateBrandDto dto, CancellationToken cancellationToken){
+    [HttpPost]
+    [Authorize(Roles = "admin,staff")]
+    public async Task<ActionResult<BrandDto>> Create([FromBody] CreateBrandDto dto, CancellationToken cancellationToken){
         if (!ModelState.IsValid) return BadRequest();
         var brand = await _service.CreateAsync(dto, cancellationToken);
         if (brand == null) return Conflict(new {message = "Slug đã tồn tại"});
         return CreatedAtAction(nameof(GetById), new { id = brand.BrandId}, brand);
     }
 
-    [HttpPut("{id}")] public async Task<ActionResult<BrandDto>> Update(Guid id, [FromBody] UpdateBrandDto dto, CancellationToken cancellationToken) {
+    [HttpPut("{id}")]
+    [Authorize(Roles = "admin,staff")]
+    public async Task<ActionResult<BrandDto>> Update(Guid id, [FromBody] UpdateBrandDto dto, CancellationToken cancellationToken) {
         var brand = await _service.UpdateAsync(id, dto, cancellationToken);
         return brand == null ? NotFound(new { message = "Không tìm thấy hoặc slug trùng"}) : Ok(brand);
     }
 
-    [HttpDelete("{id}")] public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) {
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "admin,staff")]
+    public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken) {
         if (!await _service.DeleteAsync(id, cancellationToken)) return NotFound();
         return NoContent();  
     }

@@ -7,11 +7,13 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
 [ApiController]                    // ← Đánh dấu đây là API Controller
 [Route("api/[controller]")]        // ← Route: /api/users
+[Authorize(Roles = "admin,staff")] // ← Chỉ Admin và Staff mới được quản lý Users
 public class UsersController : ControllerBase
 {
     private readonly IUserService _service;

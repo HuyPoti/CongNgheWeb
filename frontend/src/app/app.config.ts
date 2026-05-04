@@ -3,10 +3,10 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { CurrencyPipe, DatePipe, registerLocaleData } from '@angular/common';
-import vi from '@angular/common/locales/vi';
+import localeVi from '@angular/common/locales/vi';
 
-// Register locale data
-registerLocaleData(vi);
+// Đăng ký dữ liệu locale Tiếng Việt
+registerLocaleData(localeVi);
 
 // --- PHẦN THÊM MỚI TỪ AUTH.TXT ---
 import {

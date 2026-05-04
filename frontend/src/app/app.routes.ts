@@ -1,9 +1,17 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from './core/guards/role.guard';
+
 
 export const routes: Routes = [
   {
+    path: 'portal',
+    loadComponent: () => import('./features/auth/internal-login/internal-login').then((m) => m.InternalLoginComponent),
+  },
+    {
     path: 'admin',
     loadComponent: () => import('./layouts/admin-layout/admin-layout').then((m) => m.AdminLayout),
+    canActivate: [roleGuard], // Bật bảo vệ route
+    data: { roles: ['admin'] }, // Chỉ cho phép role admin
     children: [
       {
         path: '',
@@ -13,16 +21,17 @@ export const routes: Routes = [
   },
   {
     path: 'employee',
-    loadComponent: () =>
-      import('./layouts/employee-layout/employee-layout').then((m) => m.EmployeeLayout),
+    loadComponent: () => import('./layouts/employee-layout/employee-layout').then((m) => m.EmployeeLayout),
+    canActivate: [roleGuard], // Bật bảo vệ route
+    data: { roles: ['admin', 'staff'] }, // Cho phép cả admin và nhân viên
     children: [
       {
         path: '',
-        loadChildren: () =>
-          import('./features/employee/employee.routes').then((m) => m.EMPLOYEE_ROUTES),
+        loadChildren: () => import('./features/employee/employee.routes').then((m) => m.EMPLOYEE_ROUTES),
       },
     ],
   },
+
   {
     path: '',
     loadComponent: () => import('./layouts/main-layout/main-layout').then((m) => m.MainLayout),

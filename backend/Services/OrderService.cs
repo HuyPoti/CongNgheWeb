@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 namespace backend.Services;
 
 public class OrderService(
-    IUnitOfWork uow) : IOrderService
+    IUnitOfWork uow,
+    IEmailNotificationService emailNotification) : IOrderService
 {
     // CREATE ORDER
     public async Task<OrderDetailDto> CreateAsync(
@@ -88,6 +89,9 @@ public class OrderService(
 
         uow.Orders.Insert(order);
         await uow.SaveAsync(cancellationToken);
+
+        // Gửi email xác nhận đơn hàng
+        _ = emailNotification.SendOrderConfirmedEmail(order.OrderId);
 
         var detail = await GetByIdAsync(order.OrderId, userId, cancellationToken);
         if (detail == null)
@@ -243,6 +247,16 @@ public class OrderService(
 
         uow.Orders.Update(order);
         await uow.SaveAsync(cancellationToken);
+
+        // Gửi email thông báo trạng thái mới
+        if (order.Status == 4) // shipping
+        {
+            _ = emailNotification.SendOrderShippingEmail(order.OrderId);
+        }
+        else if (order.Status == 5) // delivered
+        {
+            _ = emailNotification.SendOrderDeliveredEmail(order.OrderId);
+        }
 
         return true;
     }

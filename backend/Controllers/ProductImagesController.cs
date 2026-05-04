@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using backend.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -23,6 +24,7 @@ public class ProductImagesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Add(Guid productId, [FromBody] CreateProductImageDto dto, CancellationToken ct)
     {
         var result = await _service.AddAsync(productId, dto, ct);
@@ -30,6 +32,7 @@ public class ProductImagesController : ControllerBase
     }
 
     [HttpDelete("{imageId}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Delete(Guid imageId, CancellationToken ct)
     {
         await _service.DeleteAsync(imageId, ct);

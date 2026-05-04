@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { OrderDetailDto, OrderDto } from '../../../core/models/order.model';
 import { OrderService } from '../../../core/services/order.service';
 
@@ -7,7 +8,7 @@ type OrderFilter = 'all' | 'active' | 'completed' | 'cancelled';
 
 @Component({
   selector: 'app-orders',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
 })

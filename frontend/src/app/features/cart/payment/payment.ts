@@ -69,6 +69,7 @@ export class Payment implements OnInit {
         quantity: item.quantity,
       })),
       notes: 'Created from web checkout flow',
+      shippingFee: 0,
     };
 
     this.orderService.create(payload).subscribe({

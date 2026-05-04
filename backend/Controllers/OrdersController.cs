@@ -5,6 +5,7 @@ using backend.DTOs;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -27,11 +28,7 @@ public class OrdersController : ControllerBase
         return Guid.TryParse(idStr, out var guid) ? guid : null;
     }
 
-    private bool IsAdminOrStaff()
-    {
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        return role == UserRole.admin.ToString() || role == UserRole.staff.ToString();
-    }
+
 
     // POST: api/orders
     [HttpPost]
@@ -58,7 +55,8 @@ public class OrdersController : ControllerBase
         var currentUserId = GetCurrentUserId();
 
         // Security: If not admin/staff, force filter by current user's ID
-        if (!IsAdminOrStaff() && currentUserId.HasValue)
+        bool isAdminOrStaff = User.IsInRole("admin") || User.IsInRole("staff");
+        if (!isAdminOrStaff && currentUserId.HasValue)
         {
             userId = currentUserId;
         }
@@ -80,7 +78,8 @@ public class OrdersController : ControllerBase
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var userId = IsAdminOrStaff() ? null : GetCurrentUserId();
+        bool isAdminOrStaff = User.IsInRole("admin") || User.IsInRole("staff");
+        var userId = isAdminOrStaff ? null : GetCurrentUserId();
         
         var order = await _service.GetByIdAsync(id, userId, cancellationToken);
         if (order == null) return NotFound(new { message = "Orders not found" });
@@ -90,6 +89,7 @@ public class OrdersController : ControllerBase
 
     // PUT: api/orders/{id}
     [HttpPut("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Update(
         Guid id,
         [FromBody] UpdateOrderDto dto,
