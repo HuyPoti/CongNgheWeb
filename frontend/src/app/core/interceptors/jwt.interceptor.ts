@@ -7,10 +7,15 @@ import { Router } from '@angular/router';
 let isRefreshing = false;
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
+  // Skip interceptor in SSR - check if we're in browser
+  if (typeof window === 'undefined') {
+    return next(req);
+  }
+
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = localStorage.getItem('token');
 
   // Gắn token vào header
   if (token) {
