@@ -41,6 +41,15 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `ProfileService`: Quản lý thông tin cá nhân của người dùng.
   - **Profile**: `GetProfileAsync`, `UpdateProfileAsync`.
 
+- `WishlistService`: Quản lý sản phẩm yêu thích.
+  - **Logic**: Tối đa 50 sản phẩm/user, `ToggleAsync`, `GetByUserAsync`.
+
+- `ReturnRequestService`: Xử lý đổi trả hàng.
+  - **Logic**: Kiểm tra thời hạn 7 ngày, trạng thái `Delivered`, tự động hoàn kho khi duyệt.
+
+- `EmailNotificationService`: Hệ thống thông báo tự động.
+  - **Emails**: Xác nhận đơn hàng, cập nhật vận chuyển, kết quả đổi trả.
+
 ### ⚙️ Quy trình xử lý (Data Flow)
 
 `Request` -> `Controller` -> `Service` -> `UnitOfWork` -> `Repository` -> `Database`
@@ -52,7 +61,9 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 ### 📂 Cơ cấu thư mục chi tiết
 
 - `src/app/core/`: Chứa các thành phần cốt lõi dùng chung (Guards, Interceptors, Pipes, Services toàn cục như Auth, Theme).
-- `src/app/shared/`: Chứa các UI Components dùng lại ở nhiều nơi (Navbar, Toast, Loading, Modals).
+- `src/app/shared/`: Chứa các UI Components dùng lại ở nhiều nơi:
+  - **Common**: Navbar, Toast, Loading, Modals.
+  - **After-Sales**: `WishlistToggleComponent`, `VerifiedBadgeComponent`.
 - `src/app/features/`: Chia theo từng phân hệ chức năng:
   - `admin/`: Quản lý Dashboard, Products, News, Banners.
   - `employee/`: Quản lý đơn hàng, kho sản phẩm, phản hồi đánh giá và tra cứu khách hàng (dành riêng cho role Staff).
@@ -77,6 +88,9 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `AuthService`: Liên kết với backend để xử lý đăng nhập, đăng ký và khôi phục mật khẩu.
   - **Auth**: `login`, `register`, `googleLogin`.
   - **Password Recovery**: `forgotPassword`, `resetPassword`.
+
+- `WishlistService`: Đồng bộ danh sách yêu thích.
+- `ReturnRequestService`: Gửi yêu cầu và tra cứu trạng thái đổi trả.
 
 ---
 
@@ -114,9 +128,6 @@ Hệ thống sử dụng **PostgreSQL** với các bảng chính:
 ### 🛠️ Services (Stubs)
 - `PaymentService`, `VnPayService`: Xử lý thanh toán.
 - `ShipmentService`: Quản lý vận chuyển.
-- `ReturnRequestService`: Quản lý đổi trả.
-- `WishlistService`: Sản phẩm yêu thích.
-- `EmailNotificationService`: Thông báo email (mở rộng).
 - `CouponService`: Mã giảm giá.
 - `FlashSaleService`: Khuyến mãi Flash Sale.
 - `ActivityLogService`: Ghi log hoạt động.

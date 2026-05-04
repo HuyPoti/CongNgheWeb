@@ -10,11 +10,13 @@ import { ReviewService } from '../../../core/services/review.service';
 import { ReviewDto } from '../../../core/models/review.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { WishlistToggleComponent } from '../../../shared/components/wishlist-toggle/wishlist-toggle';
+import { VerifiedBadgeComponent } from '../../../shared/components/verified-badge/verified-badge';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, WishlistToggleComponent, VerifiedBadgeComponent],
   templateUrl: './product-detail.html',
 })
 export class ProductDetail implements OnInit {

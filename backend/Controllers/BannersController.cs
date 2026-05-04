@@ -1,6 +1,7 @@
 using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -35,6 +36,7 @@ public class BannersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin,staff")]
     public async Task<ActionResult<BannerDto>> Create([FromBody] CreateBannerDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
@@ -52,6 +54,7 @@ public class BannersController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<ActionResult<BannerDto>> Update(Guid id, [FromBody] UpdateBannerDto dto, CancellationToken cancellationToken)
     {
         var banner = await _service.UpdateAsync(id, dto, cancellationToken);
@@ -59,6 +62,7 @@ public class BannersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         if (!await _service.DeleteAsync(id, cancellationToken)) return NotFound(new { message = "Không tìm thấy banner" });

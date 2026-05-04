@@ -1,69 +1,126 @@
-<div class="max-w-6xl mx-auto py-12 px-4">
-  <div class="flex items-center justify-between mb-10">
-    <div class="flex items-center gap-4">
-      <div class="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shadow-sm">
-        <span class="material-symbols-outlined text-2xl animate-pulse">favorite</span>
+<div class="max-w-7xl mx-auto py-12 px-6">
+  <!-- Header Section -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div>
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-1 bg-primary rounded-full"></div>
+        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Bộ sưu tập cá nhân</span>
+      </div>
+      <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+        Sản phẩm <span class="text-primary italic">Yêu thích</span>
+      </h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-2 font-medium">
+        Lưu trữ những món đồ công nghệ bạn quan tâm để dễ dàng theo dõi và mua sắm sau này.
+      </p>
+    </div>
+    
+    <div class="flex items-center gap-4 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 rounded-3xl shadow-sm">
+      <div class="size-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
+        <span class="material-symbols-outlined text-2xl filled">favorite</span>
       </div>
       <div>
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Sản phẩm yêu thích</h1>
-        <p class="text-slate-500 font-medium">Bạn đang có {{ wishlistItems.length }} sản phẩm trong danh sách</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tổng cộng</p>
+        <p class="text-xl font-bold text-slate-900 dark:text-white">{{ wishlistItems.length }} sản phẩm</p>
       </div>
     </div>
-    <button class="text-slate-400 hover:text-red-500 font-bold text-sm transition-colors">
-      Xóa tất cả
-    </button>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    @for (item of wishlistItems; track item.id) {
-      <div class="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all group">
-        <!-- Product Image -->
-        <div class="relative overflow-hidden aspect-square">
-          <img [src]="item.image" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="">
-          <div class="absolute top-4 right-4">
-            <button (click)="removeItem(item.id)" class="w-10 h-10 bg-white/80 backdrop-blur-md text-slate-400 hover:text-red-500 rounded-xl shadow-lg flex items-center justify-center transition-all">
-              <span class="material-symbols-outlined text-sm">delete</span>
-            </button>
-          </div>
-          @if (!item.inStock) {
-            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center">
-              <span class="bg-white/90 px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest text-slate-900">Hết hàng</span>
+  @if (isLoading) {
+    <div class="flex flex-col items-center justify-center py-40 space-y-4">
+      <div class="animate-spin size-14 border-4 border-primary border-t-transparent rounded-full"></div>
+      <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Đang tải bộ sưu tập...</p>
+    </div>
+  } @else {
+    @if (wishlistItems.length > 0) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10">
+        @for (item of wishlistItems; track item.wishlistId) {
+          <div class="bg-white dark:bg-surface-dark rounded-[3rem] p-8 border border-slate-100 dark:border-white/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 group flex flex-col relative animate-in zoom-in-95 duration-500">
+            
+            <!-- Top Actions -->
+            <div class="absolute top-10 right-10 z-20 flex flex-col gap-3">
+              <app-wishlist-toggle [productId]="item.productId" [isLiked]="true"></app-wishlist-toggle>
             </div>
-          }
-        </div>
 
-        <!-- Product Info -->
-        <div class="p-6">
-          <h3 class="font-bold text-slate-900 mb-2 line-clamp-2 h-12">{{ item.name }}</h3>
-          <div class="flex items-end gap-3 mb-6">
-            <span class="text-2xl font-black text-primary">{{ item.price | currency:'VND' }}</span>
-            <span class="text-sm text-slate-400 line-through mb-1">{{ item.oldPrice | currency:'VND' }}</span>
+            <!-- Image Container -->
+            <div 
+              class="aspect-square bg-slate-50 dark:bg-white/5 rounded-[2rem] mb-6 overflow-hidden relative cursor-pointer"
+              [routerLink]="['/product', item.productSlug]"
+            >
+              <img 
+                [src]="item.productImage" 
+                class="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-700" 
+                alt="{{ item.productName }}"
+              >
+              
+              @if (item.stockQuantity <= 0) {
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
+                  <span class="bg-white text-slate-900 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest">Hết hàng</span>
+                </div>
+              }
+
+              @if (item.discountPrice && item.price > item.discountPrice) {
+                <div class="absolute bottom-4 left-4 bg-red-500 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+                  -{{ ((item.price - item.discountPrice) / item.price * 100) | number:'1.0-0' }}%
+                </div>
+              }
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 flex flex-col px-2">
+              <h3 
+                class="text-slate-900 dark:text-white font-bold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-relaxed mb-4 flex-1 cursor-pointer"
+                [routerLink]="['/product', item.productSlug]"
+              >
+                {{ item.productName }}
+              </h3>
+
+              <div class="flex flex-col mb-6">
+                <span class="text-primary font-black text-xl leading-none">
+                  {{ (item.discountPrice || item.price) | number:'1.0-0' }}đ
+                </span>
+                @if (item.discountPrice) {
+                  <span class="text-[10px] text-slate-400 line-through mt-1">
+                    {{ item.price | number:'1.0-0' }}đ
+                  </span>
+                }
+              </div>
+
+              <!-- Cart Action -->
+              <button 
+                (click)="addToCart(item)" 
+                [disabled]="item.stockQuantity <= 0"
+                class="w-full py-2 rounded-2xl bg-slate-900 dark:bg-white/5 text-white dark:text-white font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-primary hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none group/btn"
+              >
+                <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:-translate-y-1">add_shopping_cart</span>
+                Thêm vào giỏ
+              </button>
+            </div>
           </div>
-
-          <button (click)="addToCart(item)" 
-                  [disabled]="!item.inStock"
-                  [class.opacity-50]="!item.inStock"
-                  [class.cursor-not-allowed]="!item.inStock"
-                  class="w-full bg-slate-900 hover:bg-primary text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 group/btn shadow-lg shadow-slate-200">
-            <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:-translate-y-1">shopping_cart</span>
-            <span>Thêm vào giỏ hàng</span>
-          </button>
+        }
+      </div>
+    } @else {
+      <!-- Empty State - Premium Design -->
+      <div class="py-24 text-center animate-in fade-in duration-1000">
+        <div class="relative inline-block mb-8">
+          <div class="size-32 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-200 dark:text-slate-700">
+            <span class="material-symbols-outlined text-6xl">favorite</span>
+          </div>
+          <div class="absolute -bottom-2 -right-2 size-12 bg-white dark:bg-surface-dark border-4 border-[#f4f6f8] dark:border-background-dark rounded-full flex items-center justify-center text-primary shadow-lg">
+            <span class="material-symbols-outlined text-xl">add</span>
+          </div>
         </div>
+        <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-3">BỘ SƯU TẬP ĐANG TRỐNG</h2>
+        <p class="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-10 font-medium">
+          Hãy dạo quanh cửa hàng và chọn cho mình những món đồ công nghệ ưng ý nhất bằng cách nhấn vào biểu tượng ❤️ nhé!
+        </p>
+        <button 
+          routerLink="/product/list" 
+          class="inline-flex items-center gap-3 bg-primary text-white font-black py-4 px-10 rounded-2xl shadow-2xl shadow-primary/30 hover:scale-105 transition-transform uppercase tracking-widest text-[10px]"
+        >
+          <span class="material-symbols-outlined text-sm">explore</span>
+          Khám phá sản phẩm
+        </button>
       </div>
     }
-  </div>
-
-  <!-- Empty State -->
-  @if (wishlistItems.length === 0) {
-    <div class="py-32 text-center">
-      <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
-        <span class="material-symbols-outlined text-4xl">heart_broken</span>
-      </div>
-      <h2 class="text-2xl font-bold text-slate-900 mb-2">Chưa có sản phẩm nào</h2>
-      <p class="text-slate-500 mb-8">Hãy ❤️ sản phẩm bạn thích để lưu lại đây nhé!</p>
-      <button class="bg-primary text-white font-bold py-4 px-10 rounded-2xl shadow-xl shadow-primary/20">
-        Khám phá ngay
-      </button>
-    </div>
   }
 </div>

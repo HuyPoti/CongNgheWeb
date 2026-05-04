@@ -2,7 +2,12 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners, LOCALE_ID } from
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, registerLocaleData } from '@angular/common';
+import localeVi from '@angular/common/locales/vi';
+
+// Đăng ký dữ liệu locale Tiếng Việt
+registerLocaleData(localeVi);
+
 // --- PHẦN THÊM MỚI TỪ AUTH.TXT ---
 import {
   GoogleLoginProvider,

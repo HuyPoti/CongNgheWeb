@@ -226,6 +226,13 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
         if (product == null) throw new NotFoundException("Product not found");
         var user = await uow.Users.GetByIdAsync<User>(userGuid, ct);
         if (user == null) throw new NotFoundException("User not found");
+        // Kiểm tra xem user đã mua SP này chưa (Status 5 = Delivered)
+        var isVerified = await uow.Orders.Query()
+            .Include(o => o.OrderItems)
+            .AnyAsync(o => o.UserId == userGuid && 
+                          o.Status == 5 && 
+                          o.OrderItems.Any(oi => oi.ProductId == productGuid), ct);
+
         var review = new Review
         {
             ReviewId = Guid.NewGuid(),
@@ -234,7 +241,7 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
             Rating = dto.Rating,
             Comment = dto.Comment,
             IsActive = 1,
-            IsVerifiedPurchase = dto.IsVerifiedPurchase,
+            IsVerifiedPurchase = isVerified,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

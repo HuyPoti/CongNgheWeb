@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using backend.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -68,6 +69,7 @@ public class ProductController : ControllerBase
 
     // POST: api/product
     [HttpPost]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -80,6 +82,7 @@ public class ProductController : ControllerBase
 
     // PUT: api/product/{id}
     [HttpPut("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto, CancellationToken cancellationToken)
     {
         var product = await _service.UpdateAsync(id, dto, cancellationToken);
@@ -89,6 +92,7 @@ public class ProductController : ControllerBase
 
     // DELETE: api/product/{id}
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await _service.DeleteAsync(id, cancellationToken);
