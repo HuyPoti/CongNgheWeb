@@ -8,6 +8,11 @@ import { Router } from '@angular/router';
 let isRefreshing = false;
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
+  // Skip interceptor in SSR - check if we're in browser
+  if (typeof window === 'undefined') {
+    return next(req);
+  }
+
   const authService = inject(AuthService);
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);

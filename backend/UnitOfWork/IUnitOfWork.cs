@@ -19,7 +19,7 @@ public interface IUnitOfWork
     IRepository<ReviewImage> ReviewImages { get; }
     IRepository<ReviewReply> ReviewReplies { get; }
     IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; }
+    IRepository<Payment> Payments { get; }
 
-    
     Task<int> SaveAsync(CancellationToken cancellationToken);
 }
