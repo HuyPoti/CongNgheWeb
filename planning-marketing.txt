@@ -131,3 +131,86 @@ DTOs tương ứng cho CRUD + Dashboard DTOs (OverviewDto, RevenueChartDto, TopP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 7. ƯỚC LƯỢNG: ~34-47 giờ (5-7 ngày)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. TODO THỰC THI PHASE MARKETING (THEO HIỆN TRẠNG CODEBASE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[A] BACKEND FOUNDATION
+  [x] A1. Tạo DTOs marketing (CouponDto/Create/Update, FlashSaleDto/Create/Update, ActivityLogDto, Dashboard DTOs)
+  [x] A2. Hoàn thiện interface + implementation cho:
+      - ICouponService/CouponService: CreateAsync, ValidateAsync, ApplyAsync, DeactivateAsync
+      - IFlashSaleService/FlashSaleService: CreateAsync, GetActiveAsync, GetFlashPriceAsync, AddItemAsync, RemoveItemAsync
+      - IActivityLogService/ActivityLogService: LogAsync, GetLogsAsync
+      - IDashboardService/DashboardService: GetOverviewAsync, GetRevenueChartAsync, GetTopProductsAsync, GetTopCustomersAsync
+  [x] A3. Thêm validation business rules [M1]-[M7] vào service layer (không nhét vào controller)
+  [x] A4. Bổ sung logging activity tự động khi tạo/sửa/xóa coupon, flash sale, flash sale item
+  [x] A5. Đăng ký AutoMapper profiles cho toàn bộ DTO marketing
+
+[B] BACKEND API (CONTROLLERS)
+  [ ] B1. Tạo CouponsController:
+      - POST /api/coupons
+      - GET /api/coupons
+      - PUT /api/coupons/{id}
+      - DELETE /api/coupons/{id}
+      - POST /api/coupons/validate
+  [ ] B2. Tạo FlashSalesController:
+      - POST /api/flash-sales
+      - GET /api/flash-sales
+      - GET /api/flash-sales/active
+      - POST /api/flash-sales/{id}/items
+      - DELETE /api/flash-sales/{id}/items/{pid}
+  [ ] B3. Tạo DashboardController:
+      - GET /api/dashboard/overview
+      - GET /api/dashboard/revenue
+      - GET /api/dashboard/top-products
+      - GET /api/dashboard/top-customers
+  [ ] B4. Tạo ActivityLogsController:
+      - GET /api/activity-logs
+  [ ] B5. Gắn [Authorize] + role admin cho toàn bộ endpoint quản trị marketing
+
+[C] PHỐI HỢP LIÊN LUỒNG (KHÔNG VI PHẠM RANH GIỚI)
+  [ ] C1. Chốt contract cho Kho & VC dùng trong OrderService:
+      - ValidateAsync(code, totalAmount, userId)
+      - ApplyAsync(couponId, orderId, userId)
+      - GetFlashPriceAsync(productId)
+  [ ] C2. Chốt input/output DTO cho Thanh toán để import coupon-input vào Checkout
+  [ ] C3. Chốt input/output cho Sau bán hàng để gắn flash-sale-badge vào ProductCard/ProductDetail
+
+[D] FRONTEND ADMIN
+  [ ] D1. Tạo marketing API services ở frontend (coupon/flash-sale/dashboard/activity-log service)
+  [ ] D2. Thay mockCoupons trong admin coupons bằng dữ liệu API thật
+  [ ] D3. Thêm form tạo/sửa coupon + validate client-side + hiển thị lỗi từ API
+  [ ] D4. Thay mockFlashSales trong admin flash sales bằng dữ liệu API thật
+  [ ] D5. Thêm tạo flash sale + thêm/xóa item + progress bar sold/stock
+  [ ] D6. Thay Activity Logs stub bằng timeline + filter user/entity/time + paging
+  [ ] D7. Nối Admin Dashboard với API thật (overview/revenue/top-products/top-customers), bỏ số liệu hardcode
+
+[E] FRONTEND STORE/SHOP COMPONENTS RIÊNG
+  [ ] E1. Hoàn thiện coupon-input component:
+      - gọi POST /api/coupons/validate
+      - emit coupon hợp lệ cho Checkout owner
+      - cho remove/re-apply và trạng thái loading/error
+  [ ] E2. Hoàn thiện flash-sale-badge component:
+      - nhận flash price + endTime từ API data
+      - đồng bộ trạng thái hết giờ/hết stock
+  [ ] E3. Tạo flash-sale-section component trên homepage:
+      - countdown + grid sản phẩm flash sale
+      - lấy dữ liệu từ GET /api/flash-sales/active
+
+[F] QUALITY, TEST, & ACCEPTANCE
+  [ ] F1. Viết test cho service-level rules [M1]-[M7] (ưu tiên coupon + flash sale)
+  [ ] F2. Viết API integration test cho endpoint validate coupon, active flash sale, dashboard overview
+  [ ] F3. Kiểm thử timezone cho Start/End (UTC) để tránh lệch countdown
+  [ ] F4. Kiểm thử race condition khi nhiều đơn cùng dùng coupon/flash stock (transaction + concurrency)
+  [ ] F5. Smoke test end-to-end luồng:
+      - tạo coupon -> validate tại checkout -> apply vào order
+      - tạo flash sale -> hiện badge/section -> hết stock thì ẩn/đánh dấu sold out
+      - thao tác admin -> có activity log tương ứng
+
+[G] DONE CRITERIA (CHO PHASE MARKETING)
+  [ ] G1. Không còn dữ liệu mock/stub ở 4 màn admin marketing chính
+  [ ] G2. Có đầy đủ 4 controller marketing + đầy đủ endpoint theo mục 4
+  [ ] G3. Service interfaces đủ để team Kho & VC và Thanh toán tích hợp không sửa file owner của nhau
+  [ ] G4. Các rule [M1]-[M7] được enforce ở backend và có test xác nhận
+  [ ] G5. Dashboard admin hiển thị data thực từ DB, không hardcode

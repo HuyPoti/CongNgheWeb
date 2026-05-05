@@ -100,7 +100,7 @@ export interface CreateOrderDto {
   shippingAddress?: CreateOrderShippingAddressDto;
   paymentMethod: string;
   couponCode?: string;
-  shippingFee: number;
+  shippingFee?: number;
   notes?: string;
   items: CreateOrderItemDto[];
 }
