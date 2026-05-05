@@ -148,26 +148,26 @@ DTOs tương ứng cho CRUD + Dashboard DTOs (OverviewDto, RevenueChartDto, TopP
   [x] A5. Đăng ký AutoMapper profiles cho toàn bộ DTO marketing
 
 [B] BACKEND API (CONTROLLERS)
-  [ ] B1. Tạo CouponsController:
+  [x] B1. Tạo CouponsController:
       - POST /api/coupons
       - GET /api/coupons
       - PUT /api/coupons/{id}
       - DELETE /api/coupons/{id}
       - POST /api/coupons/validate
-  [ ] B2. Tạo FlashSalesController:
+  [x] B2. Tạo FlashSalesController:
       - POST /api/flash-sales
       - GET /api/flash-sales
       - GET /api/flash-sales/active
       - POST /api/flash-sales/{id}/items
       - DELETE /api/flash-sales/{id}/items/{pid}
-  [ ] B3. Tạo DashboardController:
+  [x] B3. Tạo DashboardController:
       - GET /api/dashboard/overview
       - GET /api/dashboard/revenue
       - GET /api/dashboard/top-products
       - GET /api/dashboard/top-customers
-  [ ] B4. Tạo ActivityLogsController:
+  [x] B4. Tạo ActivityLogsController:
       - GET /api/activity-logs
-  [ ] B5. Gắn [Authorize] + role admin cho toàn bộ endpoint quản trị marketing
+  [x] B5. Gắn [Authorize] + role admin cho toàn bộ endpoint quản trị marketing
 
 [C] PHỐI HỢP LIÊN LUỒNG (KHÔNG VI PHẠM RANH GIỚI)
   [ ] C1. Chốt contract cho Kho & VC dùng trong OrderService:

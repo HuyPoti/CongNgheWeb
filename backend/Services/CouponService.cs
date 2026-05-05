@@ -15,6 +15,7 @@ public interface ICouponService
 	Task<CouponValidationResultDto> ValidateAsync(string code, decimal totalAmount, Guid? userId, CancellationToken cancellationToken = default);
 	Task<CouponUsageDto> ApplyAsync(Guid couponId, Guid orderId, Guid? userId, CancellationToken cancellationToken = default);
 	Task<CouponDto> DeactivateAsync(Guid couponId, CancellationToken cancellationToken = default);
+	Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default);
 }
 
 public class CouponService(AppDbContext context, IMapper mapper, IActivityLogService activityLogService) : ICouponService
@@ -258,6 +259,40 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 			old,
 			new { coupon.CouponId, coupon.Code, coupon.IsActive },
 			cancellationToken);
+
+		return mapper.Map<CouponDto>(coupon);
+	}
+
+	public async Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default)
+	{
+		var coupon = await context.Coupons.FirstOrDefaultAsync(x => x.CouponId == id, cancellationToken);
+		if (coupon == null) throw new NotFoundException("Coupon not found");
+
+		var oldVal = new { coupon.CouponId, coupon.Code, coupon.IsActive, coupon.DiscountValue, coupon.DiscountType };
+
+		if (!string.IsNullOrWhiteSpace(dto.DiscountType))
+			coupon.DiscountType = NormalizeDiscountType(dto.DiscountType!);
+		if (dto.DiscountValue.HasValue)
+			coupon.DiscountValue = dto.DiscountValue.Value;
+		if (dto.MinOrderAmount.HasValue)
+			coupon.MinOrderAmount = dto.MinOrderAmount.Value;
+		if (dto.MaxDiscount.HasValue)
+			coupon.MaxDiscount = dto.MaxDiscount.Value;
+		if (dto.UsageLimit.HasValue)
+			coupon.UsageLimit = dto.UsageLimit.Value;
+		if (dto.PerUserLimit.HasValue)
+			coupon.PerUserLimit = dto.PerUserLimit.Value;
+		if (dto.StartDate.HasValue)
+			coupon.StartDate = dto.StartDate.Value;
+		if (dto.EndDate.HasValue)
+			coupon.EndDate = dto.EndDate.Value;
+		if (dto.IsActive.HasValue)
+			coupon.IsActive = dto.IsActive.Value;
+
+		// Coupon model does not have UpdatedAt column; skip setting it here.
+		await context.SaveChangesAsync(cancellationToken);
+
+		await LogIfHasUserAsync(coupon.CreatedBy, "coupon.update", "coupon", coupon.CouponId, oldVal, coupon, cancellationToken);
 
 		return mapper.Map<CouponDto>(coupon);
 	}
