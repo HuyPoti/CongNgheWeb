@@ -170,21 +170,31 @@ DTOs tương ứng cho CRUD + Dashboard DTOs (OverviewDto, RevenueChartDto, TopP
   [x] B5. Gắn [Authorize] + role admin cho toàn bộ endpoint quản trị marketing
 
 [C] PHỐI HỢP LIÊN LUỒNG (KHÔNG VI PHẠM RANH GIỚI)
-  [ ] C1. Chốt contract cho Kho & VC dùng trong OrderService:
+  [x] C1. Chốt contract cho Kho & VC dùng trong OrderService:
       - ValidateAsync(code, totalAmount, userId)
       - ApplyAsync(couponId, orderId, userId)
       - GetFlashPriceAsync(productId)
-  [ ] C2. Chốt input/output DTO cho Thanh toán để import coupon-input vào Checkout
-  [ ] C3. Chốt input/output cho Sau bán hàng để gắn flash-sale-badge vào ProductCard/ProductDetail
+  [x] C2. Chốt input/output DTO cho Thanh toán để import coupon-input vào Checkout
+  [x] C3. Chốt input/output cho Sau bán hàng để gắn flash-sale-badge vào ProductCard/ProductDetail
 
 [D] FRONTEND ADMIN
-  [ ] D1. Tạo marketing API services ở frontend (coupon/flash-sale/dashboard/activity-log service)
-  [ ] D2. Thay mockCoupons trong admin coupons bằng dữ liệu API thật
-  [ ] D3. Thêm form tạo/sửa coupon + validate client-side + hiển thị lỗi từ API
-  [ ] D4. Thay mockFlashSales trong admin flash sales bằng dữ liệu API thật
-  [ ] D5. Thêm tạo flash sale + thêm/xóa item + progress bar sold/stock
-  [ ] D6. Thay Activity Logs stub bằng timeline + filter user/entity/time + paging
-  [ ] D7. Nối Admin Dashboard với API thật (overview/revenue/top-products/top-customers), bỏ số liệu hardcode
+  [x] D1. Tạo marketing API services ở frontend (coupon/flash-sale/dashboard/activity-log service)
+      - CouponService, FlashSaleService, DashboardService, ActivityLogService created in `frontend/src/app/core/services`
+  [x] D2. Thay mockCoupons trong admin coupons bằng dữ liệu API thật
+      - Wired CouponListComponent to use CouponService.getAll() + pagination/filtering
+  [x] D3. Thêm form tạo/sửa coupon + validate client-side + hiển thị lỗi từ API
+      - CouponFormComponent: reactive form with full validation, create/edit modes, API error display
+      - Integrated into coupon-list with modal, triggered by "Tạo mã mới" button and edit row button
+  [x] D4. Thay mockFlashSales trong admin flash sales bằng dữ liệu API thật
+      - Wired FlashSaleListComponent to use FlashSaleService.getAll()
+  [x] D5. Thêm tạo flash sale + thêm/xóa item + progress bar sold/stock
+      - FlashSaleFormComponent: create/edit flash sales with reactive forms
+      - FlashSaleItemsComponent: add/remove products, progress bars (sold/stockLimit)
+      - Integrated into flash-sale-list with modals, triggered by create/edit/manage buttons
+  [x] D6. Thay Activity Logs stub bằng timeline + filter user/entity/time + paging
+      - Fully implemented ActivityLogsComponent with filtering, sorting, pagination
+  [x] D7. Nối Admin Dashboard với API thật (overview/revenue/top-products/top-customers), bỏ số liệu hardcode
+      - DashboardComponent loads real data: totalRevenue, totalOrders, totalCustomers, activePromotions
 
 [E] FRONTEND STORE/SHOP COMPONENTS RIÊNG
   [ ] E1. Hoàn thiện coupon-input component:
