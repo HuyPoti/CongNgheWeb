@@ -16,4 +16,5 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'coupons', loadComponent: () => import('./coupons/coupon-list').then(m => m.CouponListComponent) },
   { path: 'flash-sales', loadComponent: () => import('./flash-sales/flash-sale-list').then(m => m.FlashSaleListComponent) },
   { path: 'activity-logs', loadComponent: () => import('./activity-logs/activity-logs').then(m => m.ActivityLogsComponent) },
+  { path: 'return-requests', loadComponent: () => import('./return-requests/return-requests').then(m => m.AdminReturnRequestsComponent) },
 ];

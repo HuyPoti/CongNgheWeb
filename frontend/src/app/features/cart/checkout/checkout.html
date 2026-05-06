@@ -45,7 +45,40 @@
                             <label for="address" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Địa chỉ nhận hàng *</label>
                             <input type="text" id="address" name="address" [(ngModel)]="addressLine" required
                                 class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
-                                placeholder="Ví dụ: 123 Đường ABC, Quận X, TP. Y">
+                                placeholder="Ví dụ: 123 Đường ABC">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="province" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tỉnh/TP *</label>
+                                <select id="province" name="province" [(ngModel)]="selectedProvince" (ngModelChange)="onProvinceChange()" required
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors">
+                                    <option value="" class="text-slate-900">Chọn Tỉnh/TP</option>
+                                    @for (province of provinces; track province.code) {
+                                        <option [value]="province.code" class="text-slate-900">{{ province.name }}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label for="district" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Quận/Huyện *</label>
+                                <select id="district" name="district" [(ngModel)]="selectedDistrict" (ngModelChange)="onDistrictChange()" [disabled]="!selectedProvince || districts.length === 0" required
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <option value="" class="text-slate-900">{{ selectedProvince ? (districts.length > 0 ? 'Chọn Quận/Huyện' : 'Không có dữ liệu') : 'Chọn Tỉnh/TP trước' }}</option>
+                                    @for (district of districts; track district.code) {
+                                        <option [value]="district.code" class="text-slate-900">{{ district.name }}</option>
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label for="ward" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phường/Xã *</label>
+                                <select id="ward" name="ward" [(ngModel)]="selectedWard" [disabled]="!selectedDistrict || wards.length === 0" required
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <option value="" class="text-slate-900">{{ selectedDistrict ? (wards.length > 0 ? 'Chọn Phường/Xã' : 'Không có dữ liệu') : 'Chọn Quận/Huyện trước' }}</option>
+                                    @for (ward of wards; track ward.code) {
+                                        <option [value]="ward.code" class="text-slate-900">{{ ward.name }}</option>
+                                    }
+                                </select>
+                            </div>
                         </div>
 
                         <div class="pt-6 border-t border-slate-100 dark:border-white/10 flex justify-end">
@@ -103,4 +136,4 @@
             </div>
         </div>
     </div>
-</div>
+</div>

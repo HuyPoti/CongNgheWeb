@@ -84,6 +84,11 @@
                 Giảm {{ ((regularPrice() - (salePrice() ?? 0)) / regularPrice() * 100) | number:'1.0-0' }}%
               </div>
             }
+
+            <!-- Wishlist Toggle for Product Detail -->
+            <div class="absolute top-5 right-5 z-10">
+              <app-wishlist-toggle [productId]="product().id"></app-wishlist-toggle>
+            </div>
           </div>
 
           <!-- Thumbnails - Professional Grid -->
@@ -333,7 +338,7 @@
                           <div class="flex items-center gap-2">
                             <span class="font-bold text-slate-900 dark:text-white">{{ review.userName }}</span>
                             @if (review.isVerifiedPurchase) {
-                              <span class="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded font-bold">Đã mua hàng</span>
+                              <app-verified-badge></app-verified-badge>
                             }
                           </div>
                           <p class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{{ review.createdAt | date:'dd/MM/yyyy' }}</p>

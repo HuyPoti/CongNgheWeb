@@ -44,9 +44,9 @@ public class UploadController(
     {
         try
         {
-            var allowedFolders = new[] { "products", "banners", "news","reviews"};
+            var allowedFolders = new[] { "products", "banners", "news", "reviews", "returns" };
             if (!allowedFolders.Contains(folder.ToLower()))
-                return BadRequest(new {message = $"Folder '{folder}' khong hop le. "});
+                return BadRequest(new { message = $"Folder '{folder}' khong hop le. " });
 
             var imageUrl = await cloudinaryService.UploadImageAsync(file, folder);
 
@@ -60,7 +60,7 @@ public class UploadController(
     /// <summary>
     /// Xoa anh khoi Cloudinary (dung cho Admin hoac khi xoa product).
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "admin,staff")]
     [HttpDelete]
     public async Task<ActionResult> DeleteImage([FromQuery] string publicId)
     {

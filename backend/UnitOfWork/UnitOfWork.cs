@@ -21,6 +21,7 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
     public IRepository<ReviewImage> ReviewImages { get; } = new Repository<ReviewImage>(dbContext, mapper);
     public IRepository<ReviewReply> ReviewReplies { get; } = new Repository<ReviewReply>(dbContext, mapper);
     public IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; } = new Repository<ReviewHelpfulVote>(dbContext, mapper);
+    public IRepository<Payment> Payments { get; } = new Repository<Payment>(dbContext, mapper);
 
     public IRepository<Supplier> Suppliers { get; } = new Repository<Supplier>(dbContext, mapper);
     public IRepository<InventoryReceipt> InventoryReceipts { get; } = new Repository<InventoryReceipt>(dbContext, mapper);

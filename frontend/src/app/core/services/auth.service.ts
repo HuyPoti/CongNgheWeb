@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import {
@@ -22,6 +23,8 @@ export class AuthService {
   private socialAuthService = inject(SocialAuthService, { optional: true });
   private apiUrl = `${environment.apiUrl}/auth`;
   private profileUrl = `${environment.apiUrl}/profile`;
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
 
   private currentUserSubject = new BehaviorSubject<UserDto | null>(this.getUserFromStorage());
   currentUser$ = this.currentUserSubject.asObservable();
@@ -56,17 +59,17 @@ export class AuthService {
   }
 
   logout() {
-    const refreshToken =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    if (!this.isBrowser) return;
+
+    const refreshToken = localStorage.getItem('refreshToken');
     // Gọi API thu hồi refresh token phía server
     if (refreshToken) {
       this.http.post(`${this.apiUrl}/logout`, { refreshToken }).subscribe();
     }
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken'); // ← THÊM
-      localStorage.removeItem('user');
-    }
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken'); // ← THÊM
+    localStorage.removeItem('user');
     this.currentUserSubject.next(null);
     if (this.socialAuthService) {
       // Chỉ gọi signOut nếu chắc chắn socialAuthService đã sẵn sàng
@@ -83,7 +86,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+    return this.isBrowser ? localStorage.getItem('token') : null;
   }
   isLoggedIn(): boolean {
     return !!this.getToken();
@@ -93,7 +96,7 @@ export class AuthService {
   }
 
   private setSession(authResult: AuthResponse) {
-    if (typeof localStorage !== 'undefined') {
+    if (this.isBrowser) {
       localStorage.setItem('token', authResult.token);
       localStorage.setItem('refreshToken', authResult.refreshToken); // ← THÊM
       localStorage.setItem('user', JSON.stringify(authResult.user));
@@ -102,7 +105,7 @@ export class AuthService {
   }
 
   private getUserFromStorage(): UserDto | null {
-    if (typeof localStorage !== 'undefined') {
+    if (this.isBrowser) {
       const userStr = localStorage.getItem('user');
       return userStr ? JSON.parse(userStr) : null;
     }
@@ -110,7 +113,7 @@ export class AuthService {
   }
 
   getRefreshToken(): string | null {
-    return typeof localStorage !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    return this.isBrowser ? localStorage.getItem('refreshToken') : null;
   }
 
   refreshAccessToken(): Observable<AuthResponse> {
@@ -139,7 +142,7 @@ export class AuthService {
   updateProfile(data: UpdateProfileDto): Observable<UserDto> {
     return this.http.put<UserDto>(`${this.profileUrl}`, data).pipe(
       tap((user) => {
-        if (typeof localStorage !== 'undefined') {
+        if (this.isBrowser) {
           localStorage.setItem('user', JSON.stringify(user));
           this.currentUserSubject.next(user);
         }

@@ -23,13 +23,12 @@ public class Payment
     [Column("payment_method")]
     public string PaymentMethod { get; set; } = string.Empty;
 
-    [Required]
     [MaxLength(50)]
     [Column("transaction_id")]
     public string? TransactionId { get; set; }
 
     [Column("status")]
-    public string Status { get; set; } = "pending";
+    public int Status { get; set; } = 1;  // 1=pending, 2=success, 3=failed, 4=refunded
 
     [Column("gateway_response", TypeName = "jsonb")]
     public string? GatewayResponse { get; set; }
@@ -37,6 +36,9 @@ public class Payment
     [MaxLength(500)]
     [Column("return_url")]
     public string? ReturnUrl { get; set; }
+
+    [Column("paid_at")]
+    public DateTime? PaidAt { get; set; }
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

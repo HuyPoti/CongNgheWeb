@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 namespace backend.Controllers;
 
 [ApiController]
@@ -17,19 +18,25 @@ public class CategoriesController : ControllerBase
         return category == null ? NotFound(new { message = "Lỗi"}) : Ok(category);
     }
 
-    [HttpPost] public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryDto dto, CancellationToken ct){
+    [HttpPost] 
+    [Authorize(Roles = "admin,staff")]
+    public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryDto dto, CancellationToken ct){
         if (!ModelState.IsValid) return BadRequest();
         var category = await _service.CreateAsync(dto, ct);
         if (category == null) return Conflict(new {message = "Slug trùng Parent lỗi"});
         return CreatedAtAction(nameof(GetById), new { id = category.CategoryId}, category);
     }
 
-    [HttpPut("{id}")] public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] UpdateCategoryDto dto, CancellationToken ct) {
+    [HttpPut("{id}")] 
+    [Authorize(Roles = "admin,staff")]
+    public async Task<ActionResult<CategoryDto>> Update(Guid id, [FromBody] UpdateCategoryDto dto, CancellationToken ct) {
         var category = await _service.UpdateAsync(id, dto, ct);
         return category == null ? NotFound() : Ok(category);
     }
 
-    [HttpDelete("{id}")] public async Task<ActionResult> Delete(Guid id, CancellationToken ct) {
+    [HttpDelete("{id}")] 
+    [Authorize(Roles = "admin,staff")]
+    public async Task<ActionResult> Delete(Guid id, CancellationToken ct) {
         if (!await _service.DeleteAsync(id, ct)) return NotFound();
         return NoContent();  
     }

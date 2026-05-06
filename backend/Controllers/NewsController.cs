@@ -1,6 +1,7 @@
 using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -19,6 +20,7 @@ public class NewsController(INewsService service) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Create([FromBody] CreateNewsDto dto, CancellationToken ct)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -27,6 +29,7 @@ public class NewsController(INewsService service) : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateNewsDto dto, CancellationToken ct)
     {
         var updated = await service.UpdateAsync(id, dto, ct);
@@ -34,6 +37,7 @@ public class NewsController(INewsService service) : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var result = await service.DeleteAsync(id, ct);

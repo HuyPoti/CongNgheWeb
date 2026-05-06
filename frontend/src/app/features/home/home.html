@@ -247,9 +247,12 @@
                   -{{ savingPercent(item) }}%
                 </div>
               }
-              <!-- Add Compare button for Flash Sale -->
+              <div class="absolute top-4 right-4 z-20">
+                <app-wishlist-toggle [productId]="item.id"></app-wishlist-toggle>
+              </div>
+
               <div
-                class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                class="absolute top-16 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
                 [class.!opacity-100]="isProductSelected(item.id)"
               >
                 <button
@@ -364,8 +367,12 @@
                     -{{ savingPercent(prod) }}%
                   </div>
                 }
+                <div class="absolute top-3 right-3 z-20">
+                  <app-wishlist-toggle [productId]="prod.id" size="sm"></app-wishlist-toggle>
+                </div>
+
                 <div
-                  class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="absolute top-14 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   [class.!opacity-100]="isProductSelected(prod.id)"
                 >
                   <button

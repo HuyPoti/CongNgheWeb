@@ -1,5 +1,393 @@
+using AutoMapper;
+using backend.Data;
+using backend.DTOs;
+using backend.Exceptions;
+using backend.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+
 namespace backend.Services;
 
-public interface ICouponService { }
+public interface ICouponService
+{
+	Task<CouponDto> CreateAsync(CreateCouponDto dto, CancellationToken cancellationToken = default);
+	Task<PagedResult<CouponDto>> GetAllAsync(int page, int pageSize, bool? isActive, string? keyword, CancellationToken cancellationToken = default);
+	Task<CouponValidationResultDto> ValidateAsync(string code, decimal totalAmount, Guid? userId, CancellationToken cancellationToken = default);
+	Task<CouponUsageDto> ApplyAsync(Guid couponId, Guid orderId, Guid? userId, CancellationToken cancellationToken = default);
+	Task<CouponDto> DeactivateAsync(Guid couponId, CancellationToken cancellationToken = default);
+	Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default);
+}
 
-public class CouponService : ICouponService { }
+public class CouponService(AppDbContext context, IMapper mapper, IActivityLogService activityLogService) : ICouponService
+{
+	public async Task<CouponDto> CreateAsync(CreateCouponDto dto, CancellationToken cancellationToken = default)
+	{
+		ValidateCouponInput(
+			dto.DiscountType,
+			dto.DiscountValue,
+			dto.MinOrderAmount,
+			dto.MaxDiscount,
+			dto.UsageLimit,
+			dto.PerUserLimit,
+			dto.StartDate,
+			dto.EndDate);
+
+		if (string.IsNullOrWhiteSpace(dto.Code))
+			throw new BadRequestException("Coupon code is required");
+
+		var normalizedCode = dto.Code.Trim().ToUpperInvariant();
+		var existed = await context.Coupons
+			.AnyAsync(x => x.Code == normalizedCode, cancellationToken);
+
+		if (existed)
+			throw new BadRequestException("Coupon code already exists");
+
+		var coupon = new Coupon
+		{
+			CouponId = Guid.NewGuid(),
+			Code = normalizedCode,
+			Description = dto.Description,
+			DiscountType = NormalizeDiscountType(dto.DiscountType),
+			DiscountValue = dto.DiscountValue,
+			MinOrderAmount = dto.MinOrderAmount,
+			MaxDiscount = dto.MaxDiscount,
+			UsageLimit = dto.UsageLimit,
+			PerUserLimit = dto.PerUserLimit,
+			StartDate = dto.StartDate,
+			EndDate = dto.EndDate,
+			IsActive = dto.IsActive,
+			CreatedBy = dto.CreatedBy,
+			CreatedAt = DateTime.UtcNow,
+			UsedCount = 0
+		};
+
+		context.Coupons.Add(coupon);
+		await context.SaveChangesAsync(cancellationToken);
+
+		await LogIfHasUserAsync(
+			dto.CreatedBy,
+			"coupon.create",
+			"coupon",
+			coupon.CouponId,
+			null,
+			coupon,
+			cancellationToken);
+
+		return mapper.Map<CouponDto>(coupon);
+	}
+
+	public async Task<PagedResult<CouponDto>> GetAllAsync(
+		int page,
+		int pageSize,
+		bool? isActive,
+		string? keyword,
+		CancellationToken cancellationToken = default)
+	{
+		page = page <= 0 ? 1 : page;
+		pageSize = Math.Clamp(pageSize, 1, 50);
+
+		var query = context.Coupons.AsQueryable();
+
+		if (isActive.HasValue)
+			query = query.Where(x => x.IsActive == isActive.Value);
+
+		if (!string.IsNullOrWhiteSpace(keyword))
+		{
+			var kw = keyword.Trim();
+			query = query.Where(x =>
+				EF.Functions.ILike(x.Code, $"%{kw}%") ||
+				(x.Description != null && EF.Functions.ILike(x.Description, $"%{kw}%")));
+		}
+
+		var totalCount = await query.CountAsync(cancellationToken);
+		var items = await query
+			.OrderByDescending(x => x.CreatedAt)
+			.Skip((page - 1) * pageSize)
+			.Take(pageSize)
+			.ToListAsync(cancellationToken);
+
+		return new PagedResult<CouponDto>
+		{
+			Items = mapper.Map<List<CouponDto>>(items),
+			TotalCount = totalCount,
+			Page = page,
+			PageSize = pageSize
+		};
+	}
+
+	public async Task<CouponValidationResultDto> ValidateAsync(
+		string code,
+		decimal totalAmount,
+		Guid? userId,
+		CancellationToken cancellationToken = default)
+	{
+		if (string.IsNullOrWhiteSpace(code))
+		{
+			return new CouponValidationResultDto
+			{
+				IsValid = false,
+				Message = "Coupon code is required",
+				FinalAmount = totalAmount
+			};
+		}
+
+		if (totalAmount <= 0)
+		{
+			return new CouponValidationResultDto
+			{
+				IsValid = false,
+				Message = "Order amount must be greater than zero",
+				FinalAmount = totalAmount
+			};
+		}
+
+		var normalizedCode = code.Trim().ToUpperInvariant();
+		var now = DateTime.UtcNow;
+		var coupon = await context.Coupons
+			.FirstOrDefaultAsync(x => x.Code == normalizedCode, cancellationToken);
+
+		if (coupon == null)
+			return InvalidResult("Coupon not found", totalAmount);
+
+		if (!coupon.IsActive)
+			return InvalidResult("Coupon is inactive", totalAmount);
+
+		if (now < coupon.StartDate || now > coupon.EndDate)
+			return InvalidResult("Coupon is out of date", totalAmount);
+
+		if (totalAmount < coupon.MinOrderAmount)
+			return InvalidResult("Order does not meet minimum amount", totalAmount);
+
+		if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit.Value)
+			return InvalidResult("Coupon usage limit reached", totalAmount);
+
+		if (userId.HasValue && userId.Value != Guid.Empty)
+		{
+			var usedByUser = await context.CouponUsages
+				.CountAsync(x => x.CouponId == coupon.CouponId && x.UserId == userId.Value, cancellationToken);
+			if (usedByUser >= coupon.PerUserLimit)
+				return InvalidResult("You have reached usage limit for this coupon", totalAmount);
+		}
+
+		var discountAmount = CalculateDiscount(coupon, totalAmount);
+		return new CouponValidationResultDto
+		{
+			IsValid = true,
+			CouponId = coupon.CouponId,
+			Code = coupon.Code,
+			DiscountAmount = discountAmount,
+			FinalAmount = Math.Max(totalAmount - discountAmount, 0),
+			Message = "Coupon is valid"
+		};
+	}
+
+	public async Task<CouponUsageDto> ApplyAsync(
+		Guid couponId,
+		Guid orderId,
+		Guid? userId,
+		CancellationToken cancellationToken = default)
+	{
+		var coupon = await context.Coupons
+			.FirstOrDefaultAsync(x => x.CouponId == couponId, cancellationToken)
+			?? throw new NotFoundException("Coupon not found");
+
+		var order = await context.Orders
+			.FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken)
+			?? throw new NotFoundException("Order not found");
+
+		// M1: mỗi đơn chỉ được áp dụng 1 coupon.
+		if (order.CouponId.HasValue)
+			throw new BadRequestException("This order already has a coupon applied");
+
+		var applyUserId = userId.HasValue && userId.Value != Guid.Empty
+			? userId.Value
+			: order.UserId;
+
+		var validation = await ValidateAsync(coupon.Code, order.TotalAmount, applyUserId, cancellationToken);
+		if (!validation.IsValid || !validation.CouponId.HasValue)
+			throw new BadRequestException(validation.Message);
+
+		var usage = new CouponUsage
+		{
+			Id = Guid.NewGuid(),
+			CouponId = coupon.CouponId,
+			UserId = applyUserId,
+			OrderId = order.OrderId,
+			DiscountAmount = validation.DiscountAmount,
+			UsedAt = DateTime.UtcNow
+		};
+
+		coupon.UsedCount += 1;
+		order.CouponId = coupon.CouponId;
+		order.DiscountAmount = validation.DiscountAmount;
+		order.UpdatedAt = DateTime.UtcNow;
+
+		context.CouponUsages.Add(usage);
+		await context.SaveChangesAsync(cancellationToken);
+
+		await LogIfHasUserAsync(
+			applyUserId,
+			"coupon.apply",
+			"order",
+			order.OrderId,
+			null,
+			new { order.OrderId, coupon.CouponId, validation.DiscountAmount },
+			cancellationToken);
+
+		return mapper.Map<CouponUsageDto>(usage);
+	}
+
+	public async Task<CouponDto> DeactivateAsync(Guid couponId, CancellationToken cancellationToken = default)
+	{
+		var coupon = await context.Coupons
+			.FirstOrDefaultAsync(x => x.CouponId == couponId, cancellationToken)
+			?? throw new NotFoundException("Coupon not found");
+
+		if (!coupon.IsActive)
+			return mapper.Map<CouponDto>(coupon);
+
+		var old = new { coupon.CouponId, coupon.Code, coupon.IsActive };
+
+		coupon.IsActive = false;
+		await context.SaveChangesAsync(cancellationToken);
+
+		await LogIfHasUserAsync(
+			coupon.CreatedBy,
+			"coupon.deactivate",
+			"coupon",
+			coupon.CouponId,
+			old,
+			new { coupon.CouponId, coupon.Code, coupon.IsActive },
+			cancellationToken);
+
+		return mapper.Map<CouponDto>(coupon);
+	}
+
+	public async Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default)
+	{
+		var coupon = await context.Coupons.FirstOrDefaultAsync(x => x.CouponId == id, cancellationToken);
+		if (coupon == null) throw new NotFoundException("Coupon not found");
+
+		var oldVal = new { coupon.CouponId, coupon.Code, coupon.IsActive, coupon.DiscountValue, coupon.DiscountType };
+
+		if (!string.IsNullOrWhiteSpace(dto.DiscountType))
+			coupon.DiscountType = NormalizeDiscountType(dto.DiscountType!);
+		if (dto.DiscountValue.HasValue)
+			coupon.DiscountValue = dto.DiscountValue.Value;
+		if (dto.MinOrderAmount.HasValue)
+			coupon.MinOrderAmount = dto.MinOrderAmount.Value;
+		if (dto.MaxDiscount.HasValue)
+			coupon.MaxDiscount = dto.MaxDiscount.Value;
+		if (dto.UsageLimit.HasValue)
+			coupon.UsageLimit = dto.UsageLimit.Value;
+		if (dto.PerUserLimit.HasValue)
+			coupon.PerUserLimit = dto.PerUserLimit.Value;
+		if (dto.StartDate.HasValue)
+			coupon.StartDate = dto.StartDate.Value;
+		if (dto.EndDate.HasValue)
+			coupon.EndDate = dto.EndDate.Value;
+		if (dto.IsActive.HasValue)
+			coupon.IsActive = dto.IsActive.Value;
+
+		// Coupon model does not have UpdatedAt column; skip setting it here.
+		await context.SaveChangesAsync(cancellationToken);
+
+		await LogIfHasUserAsync(coupon.CreatedBy, "coupon.update", "coupon", coupon.CouponId, oldVal, coupon, cancellationToken);
+
+		return mapper.Map<CouponDto>(coupon);
+	}
+
+	private static CouponValidationResultDto InvalidResult(string message, decimal totalAmount) =>
+		new()
+		{
+			IsValid = false,
+			Message = message,
+			FinalAmount = totalAmount
+		};
+
+	private static string NormalizeDiscountType(string discountType)
+	{
+		var value = discountType.Trim().ToLowerInvariant();
+		return value switch
+		{
+			"percent" or "percentage" => "percentage",
+			"fixed" or "amount" => "fixed",
+			_ => throw new BadRequestException("DiscountType must be 'percentage' or 'fixed'")
+		};
+	}
+
+	private static void ValidateCouponInput(
+		string discountType,
+		decimal discountValue,
+		decimal minOrderAmount,
+		decimal? maxDiscount,
+		int? usageLimit,
+		int perUserLimit,
+		DateTime startDate,
+		DateTime endDate)
+	{
+		var normalizedType = NormalizeDiscountType(discountType);
+
+		if (discountValue <= 0)
+			throw new BadRequestException("DiscountValue must be greater than zero");
+
+		if (normalizedType == "percentage" && discountValue > 100)
+			throw new BadRequestException("Percentage discount cannot exceed 100");
+
+		if (minOrderAmount < 0)
+			throw new BadRequestException("MinOrderAmount cannot be negative");
+
+		if (maxDiscount.HasValue && maxDiscount.Value <= 0)
+			throw new BadRequestException("MaxDiscount must be greater than zero");
+
+		if (usageLimit.HasValue && usageLimit.Value <= 0)
+			throw new BadRequestException("UsageLimit must be greater than zero");
+
+		if (perUserLimit <= 0)
+			throw new BadRequestException("PerUserLimit must be greater than zero");
+
+		if (endDate <= startDate)
+			throw new BadRequestException("EndDate must be greater than StartDate");
+	}
+
+	private static decimal CalculateDiscount(Coupon coupon, decimal totalAmount)
+	{
+		// M2: discount amount không được vượt maxDiscount với coupon dạng phần trăm.
+		if (coupon.DiscountType == "percentage")
+		{
+			var percentageDiscount = totalAmount * (coupon.DiscountValue / 100m);
+			var cappedDiscount = coupon.MaxDiscount.HasValue
+				? Math.Min(percentageDiscount, coupon.MaxDiscount.Value)
+				: percentageDiscount;
+
+			return Math.Min(cappedDiscount, totalAmount);
+		}
+
+		return Math.Min(coupon.DiscountValue, totalAmount);
+	}
+
+	private async Task LogIfHasUserAsync(
+		Guid? userId,
+		string action,
+		string entityType,
+		Guid entityId,
+		object? oldValue,
+		object? newValue,
+		CancellationToken cancellationToken)
+	{
+		if (!userId.HasValue || userId.Value == Guid.Empty)
+			return;
+
+		await activityLogService.LogAsync(
+			new CreateActivityLogDto
+			{
+				UserId = userId.Value,
+				Action = action,
+				EntityType = entityType,
+				EntityId = entityId,
+				OldValue = oldValue == null ? null : JsonSerializer.Serialize(oldValue),
+				NewValue = newValue == null ? null : JsonSerializer.Serialize(newValue)
+			},
+			cancellationToken);
+	}
+}

@@ -112,6 +112,7 @@ export class UserLayout {
 
   sidebarItems = [
     { id: 'profile', label: 'user.sidebar_overview', icon: 'person', route: '/user/profile' },
+    { id: 'wishlist', label: 'user.sidebar_wishlist', icon: 'favorite', route: '/user/wishlist' },
     { id: 'orders', label: 'user.sidebar_orders', icon: 'receipt_long', route: '/user/orders' },
     { id: 'settings', label: 'user.sidebar_settings', icon: 'settings', route: '/user/settings' },
   ];

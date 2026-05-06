@@ -11,6 +11,7 @@ import { ComparisonService } from '../../core/services/comparison';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { CategoryService } from '../../core/services/category.service';
 import { Category } from '../../core/models/category.model';
+import { WishlistToggleComponent } from '../../shared/components/wishlist-toggle/wishlist-toggle';
 
 export interface ClientBanner {
   id: string;
@@ -26,7 +27,7 @@ export interface ClientBanner {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, CommonModule, TranslatePipe],
+  imports: [RouterLink, CommonModule, TranslatePipe, WishlistToggleComponent],
   templateUrl: './home.html',
 })
 export class HomeComponent implements OnInit {

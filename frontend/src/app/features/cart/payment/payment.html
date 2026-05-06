@@ -71,24 +71,41 @@
                             </div>
                         </label>
 
-                        <!-- Credit Card / VNPAY -->
-                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
-                            [class.border-primary]="paymentMethod === 'vnpay'"
-                            [class.bg-primary]="paymentMethod === 'vnpay'"
-                            [class.bg-opacity-5]="paymentMethod === 'vnpay'"
+                        <!-- VNPay (Disabled for now) -->
+                        <label class="flex items-center p-4 border rounded-xl cursor-not-allowed opacity-50"
                             [class.border-slate-200]="paymentMethod !== 'vnpay'"
-                            [class.dark:border-white]="paymentMethod !== 'vnpay'"
-                            style="--tw-border-opacity: 0.1;">
-                            <input type="radio" name="paymentMethod" value="vnpay" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
+                            [class.dark:border-white]="paymentMethod !== 'vnpay'">
+                            <input type="radio" name="paymentMethod" value="vnpay" [(ngModel)]="paymentMethod" disabled class="w-5 h-5 text-primary focus:ring-primary">
                             <div class="ml-4 flex items-center gap-3">
                                 <span class="material-symbols-outlined text-2xl text-slate-500">credit_card</span>
                                 <div>
                                     <p class="font-medium text-slate-900 dark:text-white">Thanh toán qua VNPAY / Thẻ Visa, Master</p>
-                                    <p class="text-sm text-slate-500">Chuyển hướng đến cổng thanh toán an toàn.</p>
+                                    <p class="text-sm text-slate-500">Chuyển hướng đến cổng thanh toán an toàn. (Tạm dừng)</p>
                                 </div>
                             </div>
                         </label>
                     </div>
+
+                    <!-- Bank Info Display -->
+                    @if (showBankInfo && paymentResult?.bankInfo) {
+                        <div class="mt-6 p-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                            <h3 class="text-lg font-bold text-emerald-800 dark:text-emerald-400 mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined">info</span>
+                                Thông tin chuyển khoản
+                            </h3>
+                            <div class="bg-white dark:bg-surface-dark p-4 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
+                                <pre class="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-medium">{{ paymentResult?.bankInfo }}</pre>
+                            </div>
+                            <p class="mt-4 text-sm text-emerald-700 dark:text-emerald-400">
+                                <span class="material-symbols-outlined text-sm align-middle">info</span>
+                                Sau khi chuyển khoản, đơn hàng sẽ được xác nhận trong vòng 24-48 giờ.
+                            </p>
+                            <button (click)="goHome()" 
+                                class="mt-4 px-6 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+                                Về trang chủ
+                            </button>
+                        </div>
+                    }
 
                     <div class="mt-8 pt-6 border-t border-slate-100 dark:border-white/10 hidden md:block">
                         <button (click)="placeOrder()" [disabled]="isPlacingOrder"
@@ -155,4 +172,4 @@
             </div>
         </div>
     </div>
-</div>
+</div>

@@ -19,6 +19,7 @@ public interface IUnitOfWork
     IRepository<ReviewImage> ReviewImages { get; }
     IRepository<ReviewReply> ReviewReplies { get; }
     IRepository<ReviewHelpfulVote> ReviewHelpfulVotes { get; }
+    IRepository<Payment> Payments { get; }
 
     IRepository<Supplier> Suppliers { get; }
     IRepository<InventoryReceipt> InventoryReceipts { get; }
