@@ -1,23 +1,94 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { CouponService, CouponDto, PagedResult } from '../../../core/services/coupon.service';
+import { CouponFormComponent } from './coupon-form';
 
 @Component({
   selector: 'app-coupon-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, CouponFormComponent],
   templateUrl: './coupon-list.html'
 })
 export class CouponListComponent {
-  mockCoupons = [
-    { id: 1, code: 'HELLOSUMMER', type: 'Phần trăm', value: '10%', minOrder: 1000000, used: 15, limit: 100, expiry: '30/06/2026', active: true },
-    { id: 2, code: 'GEARVNVIP', type: 'Cố định', value: '500,000đ', minOrder: 5000000, used: 5, limit: 20, expiry: '31/12/2026', active: true },
-    { id: 3, code: 'FREETICKET', type: 'Phần trăm', value: '100%', minOrder: 0, used: 50, limit: 50, expiry: '20/04/2026', active: false }
-  ];
+  private couponService = inject(CouponService);
 
-  deleteCoupon(id: number) {
+  coupons = signal<CouponDto[]>([]);
+  loading = signal(false);
+  error = signal<string | null>(null);
+  page = signal(1);
+  pageSize = signal(10);
+  totalCount = signal(0);
+  keyword = signal('');
+
+  isFormOpen = signal(false);
+  isEditMode = signal(false);
+  selectedCoupon = signal<CouponDto | null>(null);
+
+  Math = Math; // expose Math for template
+
+  constructor() {
+    effect(() => {
+      this.loadCoupons();
+    });
+  }
+
+  ngOnInit() {
+    this.loadCoupons();
+  }
+
+  loadCoupons() {
+    this.loading.set(true);
+    this.error.set(null);
+    
+    this.couponService.getAll({
+      page: this.page(),
+      pageSize: this.pageSize(),
+      keyword: this.keyword() || undefined
+    }).subscribe({
+      next: (res: PagedResult<CouponDto>) => {
+        this.coupons.set(res.items);
+        this.totalCount.set(res.totalCount);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set('Lỗi tải dữ liệu: ' + (err?.message || 'Unknown error'));
+        this.loading.set(false);
+      }
+    });
+  }
+
+  openCreateForm() {
+    this.isEditMode.set(false);
+    this.selectedCoupon.set(null);
+    this.isFormOpen.set(true);
+  }
+
+  openEditForm(coupon: CouponDto) {
+    this.isEditMode.set(true);
+    this.selectedCoupon.set(coupon);
+    this.isFormOpen.set(true);
+  }
+
+  closeForm() {
+    this.isFormOpen.set(false);
+    this.selectedCoupon.set(null);
+  }
+
+  onFormSave() {
+    this.loadCoupons();
+  }
+
+  deactivateCoupon(id: string, coupon: CouponDto) {
     if(confirm('Bạn có chắc muốn vô hiệu hóa mã này?')) {
-      const c = this.mockCoupons.find(x => x.id === id);
-      if(c) c.active = false;
+      this.couponService.deactivate(id).subscribe({
+        next: () => {
+          this.loadCoupons();
+        },
+        error: (err) => {
+          alert('Lỗi: ' + (err?.message || 'Cannot deactivate coupon'));
+        }
+      });
     }
   }
 }
