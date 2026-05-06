@@ -8,8 +8,6 @@ namespace backend.Models;
 public class Product
 {
 
-
-    // Tam thoi chua them brand_id
     [Key]
     [Column("product_id")]
     public Guid ProductId { get; set; }
@@ -39,7 +37,7 @@ public class Product
     [Column("sale_price")]
     public decimal? SalePrice { get; set; }
 
-
+    // ---------------------------------------------------
     [Column("stock_quantity")]
     public int StockQuantity { get; set; } = 0;
 
@@ -85,4 +83,6 @@ public class Product
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
     public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
     public ICollection<FlashSaleItem> FlashSaleItems { get; set; } = new List<FlashSaleItem>();
-}
+    public ICollection<InventoryReceiptItem> InventoryReceiptItems { get; set; } = new List<InventoryReceiptItem>();
+    public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
+}

@@ -58,4 +58,8 @@ public class User
 
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    public ICollection<InventoryReceipt> InventoryReceipts { get; set; } = new List<InventoryReceipt>();
+    public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
 }

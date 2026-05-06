@@ -413,6 +413,62 @@ CREATE TABLE password_reset_tokens (
 );
 
 
+-- 32. Bảng suppliers
+CREATE TABLE suppliers (
+    supplier_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    contact_name VARCHAR(100),
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    address TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 33. Bảng inventory_receipts
+CREATE TABLE inventory_receipts (
+    receipt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    receipt_code VARCHAR(50) UNIQUE NOT NULL,
+    supplier_id UUID,
+    created_by UUID NOT NULL,
+    total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    notes TEXT,
+    status INT DEFAULT 1, -- 1: Draft, 2: Completed, 3: Cancelled
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id),
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
+);
+
+-- 34. Bảng inventory_receipt_items
+CREATE TABLE inventory_receipt_items (
+    item_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    receipt_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    quantity INT NOT NULL CHECK (quantity > 0),
+    unit_price DECIMAL(15,2) NOT NULL,
+    total_price DECIMAL(15,2) NOT NULL,
+    FOREIGN KEY (receipt_id) REFERENCES inventory_receipts(receipt_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+-- 35. Bảng inventory_transactions
+CREATE TABLE inventory_transactions (
+    transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL,
+    transaction_type INT NOT NULL, -- 1: Nhập kho, 2: Xuất bán, 3: Hoàn hàng, 4: Xuất hủy
+    reference_id UUID, -- receipt_id hoặc order_id
+    quantity_changed INT NOT NULL,
+    stock_after INT NOT NULL,
+    created_by UUID,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
+);
+
+
 -- ===========================================
 -- SEED DATA
 -- ===========================================
