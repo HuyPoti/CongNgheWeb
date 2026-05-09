@@ -24,7 +24,7 @@ export class VerifyEmail implements OnInit, OnDestroy {
   
   // Logic đếm ngược cho nút gửi lại mã
   countdown = signal(0);
-  private timer: any;
+  private timer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     // Lấy email từ query params: /auth/verify-email?email=abc@gmail.com
@@ -48,7 +48,7 @@ export class VerifyEmail implements OnInit, OnDestroy {
     if (this.timer) clearInterval(this.timer);
     this.timer = setInterval(() => {
       this.countdown.update(val => val > 0 ? val - 1 : 0);
-      if (this.countdown() === 0) clearInterval(this.timer);
+      if (this.countdown() === 0) clearInterval(this.timer!);
     }, 1000);
   }
 
@@ -57,7 +57,7 @@ export class VerifyEmail implements OnInit, OnDestroy {
 
     this.loading = true;
     this.authService.verifyEmail({ email: this.email, otpCode: this.otpCode }).subscribe({
-      next: (res) => {
+      next: () => {
         this.loading = false;
         this.toastService.success('Xác thực email thành công! Đang chuyển hướng...');
         setTimeout(() => this.router.navigate(['/auth/login']), 1500);
@@ -73,8 +73,8 @@ export class VerifyEmail implements OnInit, OnDestroy {
     if (this.countdown() > 0) return;
 
     this.resendLoading = true;
-    this.authService.resendVerification({ email: this.email }).subscribe({
-      next: (res) => {
+    this.authService.resendEmail({ email: this.email, type: 'verify' }).subscribe({
+      next: () => {
         this.resendLoading = false;
         this.toastService.success('Mã OTP mới đã được gửi vào email của bạn.');
         this.startCountdown(); // Reset lại bộ đếm

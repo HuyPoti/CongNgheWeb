@@ -28,6 +28,9 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
     public IRepository<InventoryReceiptItem> InventoryReceiptItems { get; } = new Repository<InventoryReceiptItem>(dbContext, mapper);
     public IRepository<InventoryTransaction> InventoryTransactions { get; } = new Repository<InventoryTransaction>(dbContext, mapper);
 
+    public IRepository<Shipment> Shipments { get; } = new Repository<Shipment>(dbContext, mapper);
+    public IRepository<OrderStatusHistory> OrderStatusHistories { get; } = new Repository<OrderStatusHistory>(dbContext, mapper);
+
     public async Task<int> SaveAsync(CancellationToken cancellationToken)
     {
         return await dbContext.SaveChangesAsync(cancellationToken);

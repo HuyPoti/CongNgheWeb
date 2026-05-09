@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FlashSaleService, FlashSaleDto, PagedResult } from '../../../core/services/flash-sale.service';
@@ -11,7 +11,7 @@ import { FlashSaleItemsComponent } from './flash-sale-items';
   imports: [CommonModule, FormsModule, FlashSaleFormComponent, FlashSaleItemsComponent],
   templateUrl: './flash-sale-list.html'
 })
-export class FlashSaleListComponent {
+export class FlashSaleListComponent implements OnInit {
   private flashSaleService = inject(FlashSaleService);
 
   flashSales = signal<FlashSaleDto[]>([]);

@@ -32,4 +32,18 @@ public interface IOrderService
         UpdateOrderDto dto,
         CancellationToken cancellationToken
     );
+
+    // POST: Cancel Order
+    Task<bool> CancelAsync(
+        Guid id,
+        CancelOrderDto dto,
+        Guid? userId,
+        CancellationToken cancellationToken
+    );
+
+    // GET: Status History
+    Task<List<OrderStatusHistoryDto>> GetStatusHistoryAsync(
+        Guid id,
+        CancellationToken cancellationToken
+    );
 }

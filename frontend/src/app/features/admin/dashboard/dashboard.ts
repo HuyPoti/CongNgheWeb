@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { DashboardService, OverviewDto, RevenueChartDto, TopProductDto, TopCustomerDto } from '../../../core/services/dashboard.service';
@@ -9,7 +9,7 @@ import { DashboardService, OverviewDto, RevenueChartDto, TopProductDto, TopCusto
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   private dashboardService = inject(DashboardService);
 
   overview = signal<OverviewDto | null>(null);

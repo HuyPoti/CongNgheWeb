@@ -1,14 +1,13 @@
 import { Component, OnInit, OnDestroy, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FlashSaleService, FlashSaleDto, FlashSaleItemDto } from '../../core/services/flash-sale.service';
-import { FlashSaleBadgeComponent } from './flash-sale-badge';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-flash-sale-section',
   standalone: true,
-  imports: [CommonModule, FlashSaleBadgeComponent],
+  imports: [CommonModule],
   template: `
     <div class="flash-sale-section" *ngIf="flashSale() && isWithinTimeframe()">
       <div class="section-container">

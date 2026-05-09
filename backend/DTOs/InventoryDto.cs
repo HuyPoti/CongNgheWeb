@@ -81,5 +81,17 @@ public class AdjustStockDto
     public int QuantityChanged { get; set; } // Can be negative or positive
     
     [Required]
+    public int TransactionType { get; set; } // 4: Xuất hủy, 5: Điều chỉnh (hoặc type tùy ý)
+    
+    [Required]
     public string Notes { get; set; } = string.Empty;
+}
+
+public class StockStatusDto
+{
+    public Guid ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public string? ProductSku { get; set; }
+    public int CurrentStock { get; set; }
+    public DateTime LastUpdatedAt { get; set; }
 }

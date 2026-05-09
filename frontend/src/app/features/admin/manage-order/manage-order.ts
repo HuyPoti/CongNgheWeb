@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../../core/services/toast.service';
 import { OrderService } from '../../../core/services/order.service';
-import { OrderDto, OrderDetailDto, UpdateOrderDto } from '../../../core/models/order.model';
+import { OrderDto, OrderDetailDto, UpdateOrderDto, OrderStatusHistoryDto } from '../../../core/models/order.model';
+import { ShipmentService, ShipmentDto } from '../../../core/services/shipment.service';
 
 @Component({
   selector: 'app-manage-order',
@@ -14,6 +15,7 @@ import { OrderDto, OrderDetailDto, UpdateOrderDto } from '../../../core/models/o
 })
 export class ManageOrder implements OnInit {
   private orderService = inject(OrderService);
+  private shipmentService = inject(ShipmentService);
   private toast = inject(ToastService);
 
   // States
@@ -23,6 +25,14 @@ export class ManageOrder implements OnInit {
   selectedStatus = signal<string | undefined>(undefined);
   orders = signal<OrderDto[]>([]);
   showDetail = signal<OrderDetailDto | null>(null);
+  
+  // Shipment States
+  showShipmentModal = signal(false);
+  currentShipment = signal<ShipmentDto | null>(null);
+  shipmentForm = signal({ carrier: '', trackingCode: '' });
+  
+  // History
+  orderHistory = signal<OrderStatusHistoryDto[]>([]);
 
   // Options
   statusOptions = [
@@ -81,13 +91,110 @@ export class ManageOrder implements OnInit {
 
   openDetail(order: OrderDto) {
     this.orderService.getById(order.orderId).subscribe({
-      next: (detail) => this.showDetail.set(detail),
+      next: (detail) => {
+        this.showDetail.set(detail);
+        
+        // Load shipment
+        this.shipmentService.getByOrderId(order.orderId).subscribe({
+          next: (shipment) => this.currentShipment.set(shipment),
+          error: () => this.currentShipment.set(null)
+        });
+
+        // Load history
+        this.orderService.getHistory(order.orderId).subscribe({
+          next: (history) => this.orderHistory.set(history),
+          error: () => this.orderHistory.set([])
+        });
+      },
       error: () => this.toast.error('Không thể tải chi tiết đơn hàng'),
     });
   }
 
   closeDetail() {
     this.showDetail.set(null);
+    this.currentShipment.set(null);
+    this.orderHistory.set([]);
+  }
+
+  // Shipment functions
+  openShipmentModal() {
+    this.shipmentForm.set({ carrier: '', trackingCode: '' });
+    this.showShipmentModal.set(true);
+  }
+
+  closeShipmentModal() {
+    this.showShipmentModal.set(false);
+  }
+
+  createShipment() {
+    const order = this.showDetail();
+    if (!order) return;
+    
+    if (!this.shipmentForm().carrier) {
+      this.toast.error('Vui lòng nhập hãng vận chuyển');
+      return;
+    }
+
+    this.shipmentService.create({
+      orderId: order.orderId,
+      carrier: this.shipmentForm().carrier,
+      trackingCode: this.shipmentForm().trackingCode
+    }).subscribe({
+      next: (shipment) => {
+        this.currentShipment.set(shipment);
+        this.closeShipmentModal();
+        this.toast.success('Tạo phiếu giao hàng thành công');
+        // Refresh order to get new status
+        this.openDetail(order);
+        this.loadOrders();
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Lỗi tạo phiếu giao hàng')
+    });
+  }
+
+  markQc() {
+    const shipment = this.currentShipment();
+    if (!shipment) return;
+
+    this.shipmentService.markQcPassed(shipment.shipmentId, true, 'Đã kiểm tra').subscribe({
+      next: (s) => {
+        this.currentShipment.set(s);
+        this.toast.success('Xác nhận QC thành công');
+      },
+      error: () => this.toast.error('Lỗi QC')
+    });
+  }
+
+  markPacked() {
+    const shipment = this.currentShipment();
+    if (!shipment) return;
+
+    this.shipmentService.markPacked(shipment.shipmentId).subscribe({
+      next: (s) => {
+        this.currentShipment.set(s);
+        this.toast.success('Đã đóng gói thành công');
+      },
+      error: () => this.toast.error('Lỗi đóng gói')
+    });
+  }
+
+  updateTracking(code: string) {
+    const shipment = this.currentShipment();
+    if (!shipment) return;
+
+    this.shipmentService.update(shipment.shipmentId, { trackingCode: code }).subscribe({
+      next: (s) => {
+        this.currentShipment.set(s);
+        this.toast.success('Cập nhật mã vận đơn thành công');
+        
+        // Refresh if order status changed to shipping
+        if (this.showDetail()) {
+            this.openDetail(this.showDetail()!);
+            this.loadOrders();
+        }
+      },
+      error: () => this.toast.error('Lỗi cập nhật mã vận đơn')
+    });
   }
 
   updateOrderStatus(order: OrderDto, newStatus: UpdateOrderDto['status']) {

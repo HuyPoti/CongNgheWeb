@@ -2,6 +2,7 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
+import { InventoryService } from '../../../core/services/inventory.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ProductDto } from '../../../core/models/product.model';
 
@@ -13,6 +14,7 @@ import { ProductDto } from '../../../core/models/product.model';
 })
 export class Inventory implements OnInit {
   private productService = inject(ProductService);
+  private inventoryService = inject(InventoryService);
   private toast = inject(ToastService);
 
   items = signal<ProductDto[]>([]);
@@ -54,8 +56,18 @@ export class Inventory implements OnInit {
   }
 
   updateStock(product: ProductDto, delta: number) {
-    const newQty = Math.max(0, product.stockQuantity + delta);
-    this.productService.update(product.productId, { stockQuantity: newQty }).subscribe({
+    const newQty = product.stockQuantity + delta;
+    if (newQty < 0) {
+      this.toast.error('Số lượng tồn kho không thể nhỏ hơn 0');
+      return;
+    }
+
+    this.inventoryService.adjustStock({
+      productId: product.productId,
+      quantityChanged: delta,
+      transactionType: 5, // 5: Điều chỉnh
+      notes: 'Điều chỉnh nhanh từ quản lý kho'
+    }).subscribe({
       next: () => {
         this.toast.success(`Cập nhật tồn kho sản phẩm "${product.name}" thành công`);
         this.items.update((list) =>

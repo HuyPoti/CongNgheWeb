@@ -17,4 +17,8 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'flash-sales', loadComponent: () => import('./flash-sales/flash-sale-list').then(m => m.FlashSaleListComponent) },
   { path: 'activity-logs', loadComponent: () => import('./activity-logs/activity-logs').then(m => m.ActivityLogsComponent) },
   { path: 'return-requests', loadComponent: () => import('./return-requests/return-requests').then(m => m.AdminReturnRequestsComponent) },
+  { path: 'suppliers', loadComponent: () => import('./supplier-management/supplier-management').then(m => m.SupplierManagement) },
+  { path: 'inventory-receipts', loadComponent: () => import('./inventory-receipts/inventory-receipt-list/inventory-receipt-list').then(m => m.InventoryReceiptList) },
+  { path: 'inventory-receipts/new', loadComponent: () => import('./inventory-receipts/inventory-receipt-form/inventory-receipt-form').then(m => m.InventoryReceiptForm) },
+  { path: 'inventory-receipts/:id', loadComponent: () => import('./inventory-receipts/inventory-receipt-detail/inventory-receipt-detail').then(m => m.InventoryReceiptDetail) },
 ];

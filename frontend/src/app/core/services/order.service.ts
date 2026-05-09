@@ -9,6 +9,7 @@ import {
   OrderDto,
   PagedResult,
   UpdateOrderDto,
+  OrderStatusHistoryDto,
 } from '../models/order.model';
 
 @Injectable({ providedIn: 'root' })
@@ -49,5 +50,15 @@ export class OrderService {
   }
   updatePaymentStatus(id: string, paymentStatus: UpdateOrderDto['paymentStatus']) {
     return this.update(id, { paymentStatus });
+  }
+
+  // POST: /api/orders/{id}/cancel
+  cancel(id: string, reason: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.baseUrl}/${id}/cancel`, { reason });
+  }
+
+  // GET: /api/orders/{id}/history
+  getHistory(id: string): Observable<OrderStatusHistoryDto[]> {
+    return this.http.get<OrderStatusHistoryDto[]>(`${this.baseUrl}/${id}/history`);
   }
 }

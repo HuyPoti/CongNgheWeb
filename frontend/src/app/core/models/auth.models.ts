@@ -42,8 +42,10 @@ export interface VerifyEmailDto {
   otpCode: string;
 }
 
-export interface ResendVerificationDto {
+export interface ResendEmailDto {
   email: string;
+  /** "verify" | "forgot-password" */
+  type: 'verify' | 'forgot-password';
 }
 
 export interface ChangePasswordDto {

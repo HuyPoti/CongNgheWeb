@@ -41,21 +41,21 @@ export class DashboardService {
   }
 
   getRevenue(opts?: { days?: number }): Observable<RevenueChartDto[]> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('days', String(opts?.days ?? 30));
 
     return this.http.get<RevenueChartDto[]>(`${this.baseUrl}/revenue`, { params });
   }
 
   getTopProducts(opts?: { take?: number }): Observable<TopProductDto[]> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('take', String(opts?.take ?? 10));
 
     return this.http.get<TopProductDto[]>(`${this.baseUrl}/top-products`, { params });
   }
 
   getTopCustomers(opts?: { take?: number }): Observable<TopCustomerDto[]> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('take', String(opts?.take ?? 10));
 
     return this.http.get<TopCustomerDto[]>(`${this.baseUrl}/top-customers`, { params });

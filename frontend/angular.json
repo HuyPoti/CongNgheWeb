@@ -82,9 +82,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"],
-            "_comment": "Dòng ở dưới để chạy được trên wsl2",
-            "allowedHosts": ["all"]
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
           }
         }
       }

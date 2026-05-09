@@ -79,11 +79,19 @@ public class VerifyEmailDto
     public string OtpCode {get; set; } = string.Empty;
 }
 
-public class ResendVerificationDto
+/// <summary>
+/// Dùng để gửi lại email OTP.
+/// Type: "verify" = gửi lại mã xác thực email, "forgot-password" = gửi lại mã đặt lại mật khẩu.
+/// </summary>
+public class ResendEmailDto
 {
     [Required]
     [EmailAddress]
-    public string Email {get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>"verify" hoặc "forgot-password"</summary>
+    [Required]
+    public string Type { get; set; } = "verify";
 }
 
 public class ChangePasswordDto

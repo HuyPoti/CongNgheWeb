@@ -310,25 +310,62 @@ public class AuthService(AppDbContext context, IConfiguration config, IMapper ma
         await context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task ResendVerificationAsync(ResendVerificationDto dto, CancellationToken cancellationToken)
+    public async Task ResendEmailAsync(ResendEmailDto dto, CancellationToken cancellationToken)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken);
         if (user == null) throw new Exception("Email không tồn tại.");
-        if (user.IsEmailVerified) throw new Exception("Email đã được xác nhận.");
+        if (!user.IsActive) throw new Exception("Tài khoản đã bị khóa.");
 
-        var otpCode = Random.Shared.Next(100000, 999999).ToString();
-        user.EmailVerificationOtp = otpCode;
-        user.OtpExpiresAt = DateTime.UtcNow.AddMinutes(10);
-        await context.SaveChangesAsync(cancellationToken);
+        if (dto.Type == "forgot-password")
+        {
+            // Gửi lại OTP đặt lại mật khẩu
+            if (string.IsNullOrEmpty(user.PasswordHash))
+                throw new Exception("Tài khoản Google không hỗ trợ đặt lại mật khẩu.");
 
-        var emailBody = $@"
-            <h2>Mã xác nhận mới</h2>
-            <p>Xin chào <strong>{user.FullName}</strong>,</p>
-            <p>Mã OTP mới của bạn:</p>
-            <h1 style='color: #0066ff; letter-spacing: 8px;'>{otpCode}</h1>
-            <p>Mã có hiệu lực trong <strong>10 phút</strong>.</p>
-        ";
-        await emailService.SendEmailAsync(user.Email, "Mã xác nhận mới - TechShop", emailBody);
+            var oldTokens = await context.PasswordResetTokens
+                .Where(t => t.UserId == user.UserId && !t.IsUsed)
+                .ToListAsync(cancellationToken);
+            foreach (var t in oldTokens) t.IsUsed = true;
+
+            var otpCode = Random.Shared.Next(100000, 999999).ToString();
+            context.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.UserId,
+                OtpCode = otpCode,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsUsed = false
+            });
+            await context.SaveChangesAsync(cancellationToken);
+
+            var emailBody = $@"
+                <h2>Gửi lại mã đặt lại mật khẩu</h2>
+                <p>Xin chào <strong>{user.FullName}</strong>,</p>
+                <p>Mã OTP mới của bạn:</p>
+                <h1 style='color: #0066ff; letter-spacing: 8px; font-size: 36px;'>{otpCode}</h1>
+                <p>Mã có hiệu lực trong <strong>10 phút</strong>.</p>
+                <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
+            ";
+            await emailService.SendEmailAsync(user.Email, "Mã OTP đặt lại mật khẩu (Gửi lại) - TechShop", emailBody);
+        }
+        else // mặc định: "verify"
+        {
+            if (user.IsEmailVerified) throw new Exception("Email đã được xác nhận trước đó.");
+
+            var otpCode = Random.Shared.Next(100000, 999999).ToString();
+            user.EmailVerificationOtp = otpCode;
+            user.OtpExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            await context.SaveChangesAsync(cancellationToken);
+
+            var emailBody = $@"
+                <h2>Gửi lại mã xác nhận</h2>
+                <p>Xin chào <strong>{user.FullName}</strong>,</p>
+                <p>Mã OTP xác nhận email mới của bạn:</p>
+                <h1 style='color: #0066ff; letter-spacing: 8px; font-size: 36px;'>{otpCode}</h1>
+                <p>Mã có hiệu lực trong <strong>10 phút</strong>.</p>
+            ";
+            await emailService.SendEmailAsync(user.Email, "Mã xác nhận mới - TechShop", emailBody);
+        }
     }
 
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordDto dto, CancellationToken cancellationToken)

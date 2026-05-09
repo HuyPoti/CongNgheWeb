@@ -88,6 +88,18 @@ public class OrderService(
         };
 
         uow.Orders.Insert(order);
+
+        uow.OrderStatusHistories.Insert(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.OrderId,
+            OldStatus = null,
+            NewStatus = 1,
+            ChangedBy = userId,
+            Note = "Đơn hàng mới tạo",
+            CreatedAt = DateTime.UtcNow
+        });
+
         await uow.SaveAsync(cancellationToken);
 
         // Gửi email xác nhận đơn hàng
@@ -234,7 +246,24 @@ public class OrderService(
         // Update status if provided
         if (!string.IsNullOrEmpty(dto.Status))
         {
-            order.Status = MapStatusToInt(dto.Status);
+            var newStatus = MapStatusToInt(dto.Status);
+            if (newStatus != order.Status)
+            {
+                var oldStatus = order.Status;
+                order.Status = newStatus;
+
+                // Create history
+                uow.OrderStatusHistories.Insert(new OrderStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.OrderId,
+                    OldStatus = oldStatus,
+                    NewStatus = newStatus,
+                    ChangedBy = Guid.Empty, // Will ideally come from current user context, but missing here. We can assume system/admin for now unless passed. 
+                    Note = "Trạng thái cập nhật từ quản trị",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
         }
 
         // Update payment status if provided
@@ -259,6 +288,89 @@ public class OrderService(
         }
 
         return true;
+    }
+
+    // CANCEL ORDER
+    public async Task<bool> CancelAsync(
+        Guid id,
+        CancelOrderDto dto,
+        Guid? userId,
+        CancellationToken cancellationToken)
+    {
+        var order = await uow.Orders.Query()
+            .Include(o => o.OrderItems)
+            .FirstOrDefaultAsync(o => o.OrderId == id, cancellationToken);
+
+        if (order == null)
+            throw new NotFoundException("Order not found");
+
+        if (order.Status == 5 || order.Status == 6)
+            throw new BadRequestException("Order is already delivered or cancelled.");
+
+        var oldStatus = order.Status;
+        order.Status = 6;
+        order.CancelledReason = dto.Reason;
+        order.CancelledBy = userId;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        // Hoàn lại stock [R5]
+        var productIds = order.OrderItems.Select(i => i.ProductId).ToList();
+        var products = await uow.Products.Query()
+            .Where(p => productIds.Contains(p.ProductId))
+            .ToDictionaryAsync(p => p.ProductId, cancellationToken);
+
+        foreach (var item in order.OrderItems)
+        {
+            if (products.TryGetValue(item.ProductId, out var product))
+            {
+                product.StockQuantity += item.Quantity;
+                product.UpdatedAt = DateTime.UtcNow;
+                uow.Products.Update(product);
+            }
+        }
+
+        // Add History
+        uow.OrderStatusHistories.Insert(new OrderStatusHistory
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.OrderId,
+            OldStatus = oldStatus,
+            NewStatus = 6,
+            ChangedBy = userId ?? Guid.Empty,
+            Note = $"Đã hủy đơn hàng. Lý do: {dto.Reason}",
+            CreatedAt = DateTime.UtcNow
+        });
+
+        uow.Orders.Update(order);
+        await uow.SaveAsync(cancellationToken);
+
+        return true;
+    }
+
+    // GET STATUS HISTORY
+    public async Task<List<OrderStatusHistoryDto>> GetStatusHistoryAsync(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var history = await uow.OrderStatusHistories.Query()
+            .Include(h => h.ChangedByUser)
+            .Where(h => h.OrderId == id)
+            .OrderByDescending(h => h.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return history.Select(h => new OrderStatusHistoryDto
+        {
+            Id = h.Id,
+            OrderId = h.OrderId,
+            OldStatus = h.OldStatus,
+            OldStatusLabel = h.OldStatus.HasValue ? MapStatusToString(h.OldStatus.Value) : null,
+            NewStatus = h.NewStatus,
+            NewStatusLabel = MapStatusToString(h.NewStatus),
+            ChangedBy = h.ChangedBy,
+            ChangedByName = h.ChangedByUser?.FullName ?? "Hệ thống",
+            Note = h.Note,
+            CreatedAt = h.CreatedAt
+        }).ToList();
     }
 
     // Helper: Map int → string
