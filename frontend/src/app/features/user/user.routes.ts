@@ -7,7 +7,7 @@ export const USER_ROUTES: Routes = [
     children: [
       { path: 'profile', loadComponent: () => import('./profile/profile').then(m => m.Profile) },
       { path: 'orders', loadComponent: () => import('./orders/orders').then(m => m.Orders) },
-      { path: 'order-tracking', loadComponent: () => import('./order-tracking/order-tracking').then(m => m.OrderTrackingComponent) },
+      { path: 'order-tracking/:id', loadComponent: () => import('./order-tracking/order-tracking').then(m => m.OrderTrackingComponent) },
       { path: 'return-request', loadComponent: () => import('./return-request/return-request').then(m => m.ReturnRequestComponent) },
       { path: 'return-request/:id', loadComponent: () => import('./return-request/return-request').then(m => m.ReturnRequestComponent) },
       { path: 'wishlist', loadComponent: () => import('./wishlist/wishlist').then(m => m.WishlistComponent) },

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FlashSaleService } from '../../core/services/flash-sale.service';
+import { FlashSaleService } from '../../../core/services/flash-sale.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -387,8 +387,8 @@ export class FlashSaleItemsComponent implements OnInit, OnDestroy {
 
     const { productId, flashPrice, stockLimit } = this.addItemForm.value;
 
-    this.flashSaleService.addItem(this.flashSaleData.flashSaleId, {
-      productId,
+    this.flashSaleService.addItem(this.flashSaleData.flashSaleId.toString(), {
+      productId: productId.toString(),
       flashPrice,
       stockLimit
     }).pipe(takeUntil(this.destroy$)).subscribe({
@@ -410,7 +410,7 @@ export class FlashSaleItemsComponent implements OnInit, OnDestroy {
 
     this.removeLoading = true;
 
-    this.flashSaleService.removeItem(this.flashSaleData.flashSaleId, productId)
+    this.flashSaleService.removeItem(this.flashSaleData.flashSaleId.toString(), productId.toString())
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.removeLoading = false;

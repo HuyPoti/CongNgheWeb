@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FlashSaleService } from '../../core/services/flash-sale.service';
+import { FlashSaleService } from '../../../core/services/flash-sale.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 

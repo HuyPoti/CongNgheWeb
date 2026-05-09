@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivityLogService, ActivityLogDto, PagedResult } from '../../../core/services/activity-log.service';
@@ -72,7 +72,7 @@ import { ActivityLogService, ActivityLogDto, PagedResult } from '../../../core/s
     </div>
   `
 })
-export class ActivityLogsComponent {
+export class ActivityLogsComponent implements OnInit {
   private activityLogService = inject(ActivityLogService);
 
   logs = signal<ActivityLogDto[]>([]);
@@ -134,5 +134,5 @@ export class ActivityLogsComponent {
       this.page.set(this.page() + 1);
     }
   }
-}`
+}
 

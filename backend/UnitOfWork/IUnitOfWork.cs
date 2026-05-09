@@ -26,5 +26,8 @@ public interface IUnitOfWork
     IRepository<InventoryReceiptItem> InventoryReceiptItems { get; }
     IRepository<InventoryTransaction> InventoryTransactions { get; }
     
+    IRepository<Shipment> Shipments { get; }
+    IRepository<OrderStatusHistory> OrderStatusHistories { get; }
+    
     Task<int> SaveAsync(CancellationToken cancellationToken);
 }

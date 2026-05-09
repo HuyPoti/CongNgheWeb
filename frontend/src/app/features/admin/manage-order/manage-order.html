@@ -124,6 +124,120 @@
           <span class="text-slate-400 font-bold uppercase text-xs tracking-widest">Tổng cộng</span>
           <span class="text-2xl font-bold text-primary">${{ showDetail()!.totalAmount | number:'1.2-2' }}</span>
         </div>
+
+        <!-- Shipment / Fulfillment Section -->
+        <div class="mt-6 border-t border-primary/10 pt-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Giao nhận & Vận chuyển</h4>
+            @if (!currentShipment() && showDetail()!.status === 'confirmed') {
+              <button (click)="openShipmentModal()" class="px-3 py-1 bg-primary text-slate-900 rounded-lg text-xs font-bold hover:bg-primary/90">
+                Tạo phiếu giao hàng
+              </button>
+            }
+          </div>
+
+          @if (currentShipment()) {
+            <div class="bg-surface-light rounded-xl p-4 border border-primary/10 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-sm font-bold text-slate-200">{{ currentShipment()!.carrier }}</span>
+                  <div class="text-xs text-slate-500 mt-1">Trạng thái: {{ currentShipment()!.status }}</div>
+                </div>
+                <div class="flex gap-2">
+                  @if (!currentShipment()!.qcPassed) {
+                    <button (click)="markQc()" class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-500/30 print:hidden">
+                      Xác nhận QC
+                    </button>
+                  } @else {
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-bold flex items-center gap-1 print:hidden">
+                      <span class="material-symbols-outlined text-[14px]">check_circle</span> Đã QC
+                    </span>
+                  }
+                  
+                  @if (!currentShipment()!.packedAt && currentShipment()!.qcPassed) {
+                    <button (click)="markPacked()" class="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-bold hover:bg-purple-500/30 print:hidden">
+                      Đóng gói
+                    </button>
+                  } @else if (currentShipment()!.packedAt) {
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-bold flex items-center gap-1 print:hidden">
+                      <span class="material-symbols-outlined text-[14px]">check_circle</span> Đã đóng gói
+                    </span>
+                    <button onclick="window.print()" class="px-3 py-1 bg-primary text-slate-900 rounded-lg text-xs font-bold hover:bg-primary/90 flex items-center gap-1 print:hidden ml-2">
+                      <span class="material-symbols-outlined text-[14px]">print</span> In phiếu
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Tracking input -->
+              <div class="flex items-end gap-3 pt-3 border-t border-primary/10 print:hidden">
+                <div class="flex-1">
+                  <label class="block text-xs text-slate-500 mb-1">Mã vận đơn (Tracking Code)</label>
+                  <input type="text" #trackingInput [value]="currentShipment()!.trackingCode || ''" placeholder="Nhập mã vận đơn..." class="w-full bg-slate-800 text-sm text-slate-200 px-3 py-2 rounded-lg border border-primary/20 focus:border-primary outline-none">
+                </div>
+                <button (click)="updateTracking(trackingInput.value)" class="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg text-sm font-bold hover:bg-slate-600">
+                  Cập nhật
+                </button>
+              </div>
+            </div>
+          } @else if (showDetail()!.status !== 'confirmed') {
+            <p class="text-sm text-slate-500 italic">Đơn hàng cần ở trạng thái "Đã xác nhận" để tạo phiếu giao hàng.</p>
+          }
+        </div>
+
+        <!-- History Timeline -->
+        <div class="mt-6 border-t border-primary/10 pt-6">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Lịch sử trạng thái</h4>
+          <div class="space-y-4">
+            @for (h of orderHistory(); track h.id) {
+              <div class="flex gap-4">
+                <div class="flex flex-col items-center">
+                  <div class="w-2 h-2 rounded-full bg-primary mt-1.5"></div>
+                  <div class="w-0.5 h-full bg-primary/20 mt-1 rounded-full"></div>
+                </div>
+                <div class="pb-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-200">{{ h.newStatusLabel }}</span>
+                    <span class="text-xs text-slate-500">{{ h.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <div class="text-sm text-slate-400 mt-1">{{ h.note }}</div>
+                  <div class="text-xs text-slate-500 mt-0.5">Bởi: {{ h.changedByName }}</div>
+                </div>
+              </div>
+            }
+            @if (orderHistory().length === 0) {
+              <p class="text-sm text-slate-500 italic">Chưa có lịch sử.</p>
+            }
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Create Shipment Modal -->
+@if (showShipmentModal()) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-md p-6">
+      <h3 class="text-lg font-bold text-slate-100 mb-4">Tạo phiếu giao hàng</h3>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Hãng vận chuyển (*)</label>
+          <input type="text" [(ngModel)]="shipmentForm().carrier" class="w-full bg-slate-800 text-sm text-slate-200 px-3 py-2 rounded-lg border border-primary/20 focus:border-primary outline-none">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Mã vận đơn (Tùy chọn)</label>
+          <input type="text" [(ngModel)]="shipmentForm().trackingCode" class="w-full bg-slate-800 text-sm text-slate-200 px-3 py-2 rounded-lg border border-primary/20 focus:border-primary outline-none">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button (click)="closeShipmentModal()" class="px-4 py-2 text-sm font-bold text-slate-400 hover:text-white">Hủy</button>
+        <button (click)="createShipment()" class="px-4 py-2 bg-primary text-slate-900 rounded-lg text-sm font-bold hover:bg-primary/90">
+          Xác nhận
+        </button>
       </div>
     </div>
   </div>

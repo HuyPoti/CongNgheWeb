@@ -1,94 +1,126 @@
 <div class="max-w-4xl mx-auto py-12 px-4">
-  <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-    <!-- Order Header -->
-    <div class="bg-slate-900 p-8 text-white relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-      <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 class="text-3xl font-black italic uppercase tracking-tight">Theo dõi đơn hàng</h1>
-          <p class="opacity-60 mt-1 font-medium">Mã đơn: #{{ orderId }} • Ngày đặt: 25/04/2026</p>
-        </div>
-        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-          <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1 font-black">Mã vận đơn ({{carrier}})</p>
-          <div class="flex items-center gap-3">
-            <span class="text-xl font-mono font-black text-primary tracking-wider">{{ trackingCode }}</span>
-            <button (click)="copyTrackingCode()" class="hover:text-primary transition-colors flex items-center">
-              <span class="material-symbols-outlined text-sm">content_copy</span>
-            </button>
-          </div>
-        </div>
-      </div>
+  @if (isLoading()) {
+    <div class="flex flex-col items-center justify-center py-24">
+      <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <p class="mt-4 text-slate-500 font-medium">Đang tải thông tin đơn hàng...</p>
     </div>
-
-    <!-- Timeline Content -->
-    <div class="p-8 md:p-12">
-      <div class="relative">
-        <!-- Vertical Line -->
-        <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-1 bg-slate-50 -translate-x-1/2 hidden md:block"></div>
-        
-        <div class="space-y-12">
-          @for (step of timeline; track step; let i = $index) {
-            <div class="relative flex flex-col md:flex-row items-start md:items-center">
-              <!-- Icon Circle -->
-              <div [class]="step.done ? 'bg-primary text-slate-900' : step.active ? 'bg-primary text-slate-900 ring-8 ring-primary/10' : 'bg-slate-50 text-slate-300'"
-                   class="w-12 h-12 rounded-2xl flex items-center justify-center z-10 md:absolute md:left-1/2 md:-translate-x-1/2 shadow-lg transition-all duration-500">
-                <span class="material-symbols-outlined text-lg">{{ step.icon }}</span>
-              </div>
-
-              <!-- Content Left (Desktop Only) -->
-              @if (i % 2 === 0) {
-                <div class="hidden md:block w-1/2 pr-16 text-right">
-                  <h3 class="text-lg font-black uppercase tracking-tight" [class.text-primary]="step.done || step.active">{{ step.statusName }}</h3>
-                  <p class="text-xs font-bold text-slate-400 mt-1">{{ step.time | date:'HH:mm • dd/MM/yyyy' }}</p>
-                  @if (step.note) {
-                    <div class="mt-3 bg-slate-50 inline-block p-4 rounded-2xl text-xs font-medium italic text-slate-500 border border-slate-100">
-                      {{ step.note }}
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="hidden md:block w-1/2"></div>
-              }
-
-              <!-- Content Right (Desktop Only) -->
-              @if (i % 2 !== 0) {
-                <div class="hidden md:block w-1/2 pl-16 text-left">
-                  <h3 class="text-lg font-black uppercase tracking-tight" [class.text-primary]="step.done || step.active">{{ step.statusName }}</h3>
-                  <p class="text-xs font-bold text-slate-400 mt-1">{{ step.time | date:'HH:mm • dd/MM/yyyy' }}</p>
-                  @if (step.note) {
-                    <div class="mt-3 bg-slate-50 inline-block p-4 rounded-2xl text-xs font-medium italic text-slate-500 border border-slate-100">
-                      {{ step.note }}
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="hidden md:block w-1/2"></div>
-              }
-
-              <!-- Mobile Layout (Always Visible) -->
-              <div class="md:hidden ml-16 pt-1">
-                <h3 class="text-lg font-black uppercase tracking-tight" [class.text-primary]="step.done || step.active">{{ step.statusName }}</h3>
-                <p class="text-xs font-bold text-slate-400 mt-1">{{ step.time | date:'HH:mm • dd/MM/yyyy' }}</p>
-                @if (step.note) {
-                  <div class="mt-3 bg-slate-50 p-4 rounded-2xl text-xs font-medium italic text-slate-500 border border-slate-100">
-                    {{ step.note }}
-                  </div>
+  } @else if (order()) {
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+      <!-- Order Header -->
+      <div class="bg-slate-900 p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 class="text-3xl font-black italic uppercase tracking-tight">Theo dõi đơn hàng</h1>
+            <p class="opacity-60 mt-1 font-medium">Mã đơn: #{{ order()!.orderCode }} • Ngày đặt: {{ order()!.createdAt | date:'dd/MM/yyyy' }}</p>
+          </div>
+          @if (order()!.shipment) {
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+              <p class="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1 font-black">Mã vận đơn ({{ order()!.shipment!.carrier }})</p>
+              <div class="flex items-center gap-3">
+                <span class="text-xl font-mono font-black text-primary tracking-wider">{{ order()!.shipment!.trackingCode || 'Chưa có mã' }}</span>
+                @if (order()!.shipment!.trackingCode) {
+                  <button (click)="copyTrackingCode()" class="hover:text-primary transition-colors flex items-center">
+                    <span class="material-symbols-outlined text-sm">content_copy</span>
+                  </button>
                 }
               </div>
+            </div>
+          } @else {
+             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+              <p class="text-xs font-bold text-primary italic">Đang chuẩn bị hàng...</p>
             </div>
           }
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="mt-16 pt-10 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-center">
-        <button class="bg-primary hover:bg-primary/90 text-slate-900 font-black uppercase tracking-widest text-xs py-5 px-10 rounded-2xl transition-all shadow-lg shadow-primary/20">
-          Xác nhận đã nhận hàng
-        </button>
-        <button class="bg-slate-50 hover:bg-slate-100 text-slate-500 font-black uppercase tracking-widest text-xs py-5 px-10 rounded-2xl transition-all">
-          Yêu cầu đổi trả
-        </button>
+      <!-- Timeline Content -->
+      <div class="p-8 md:p-12">
+        <div class="relative">
+          <!-- Vertical Line -->
+          <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-1 bg-slate-50 -translate-x-1/2 hidden md:block"></div>
+          
+          <div class="space-y-12">
+            @for (step of timeline(); track step; let i = $index) {
+              <div class="relative flex flex-col md:flex-row items-start md:items-center">
+                <!-- Icon Circle -->
+                <div [class]="step.done ? 'bg-primary text-slate-900' : step.active ? 'bg-primary text-slate-900 ring-8 ring-primary/10' : 'bg-slate-50 text-slate-300'"
+                     class="w-12 h-12 rounded-2xl flex items-center justify-center z-10 md:absolute md:left-1/2 md:-translate-x-1/2 shadow-lg transition-all duration-500">
+                  <span class="material-symbols-outlined text-lg">{{ step.icon }}</span>
+                </div>
+
+                <!-- Content Left (Desktop Only) -->
+                @if (i % 2 === 0) {
+                  <div class="hidden md:block w-1/2 pr-16 text-right">
+                    <h3 class="text-lg font-black uppercase tracking-tight" [class.text-primary]="step.done || step.active">{{ step.statusName }}</h3>
+                    @if (step.time) {
+                      <p class="text-xs font-bold text-slate-400 mt-1">{{ step.time | date:'HH:mm • dd/MM/yyyy' }}</p>
+                    }
+                    @if (step.note) {
+                      <div class="mt-3 bg-slate-50 inline-block p-4 rounded-2xl text-xs font-medium italic text-slate-500 border border-slate-100">
+                        {{ step.note }}
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="hidden md:block w-1/2"></div>
+                }
+
+                <!-- Content Right (Desktop Only) -->
+                @if (i % 2 !== 0) {
+                  <div class="hidden md:block w-1/2 pl-16 text-left">
+                    <h3 class="text-lg font-black uppercase tracking-tight" [class.text-primary]="step.done || step.active">{{ step.statusName }}</h3>
+                    @if (step.time) {
+                      <p class="text-xs font-bold text-slate-400 mt-1">{{ step.time | date:'HH:mm • dd/MM/yyyy' }}</p>
+                    }
+                    @if (step.note) {
+                      <div class="mt-3 bg-slate-50 inline-block p-4 rounded-2xl text-xs font-medium italic text-slate-500 border border-slate-100">
+                        {{ step.note }}
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="hidden md:block w-1/2"></div>
+                }
+
+                <!-- Mobile Layout (Always Visible) -->
+                <div class="md:hidden ml-16 pt-1">
+                  <h3 class="text-lg font-black uppercase tracking-tight" [class.text-primary]="step.done || step.active">{{ step.statusName }}</h3>
+                  @if (step.time) {
+                    <p class="text-xs font-bold text-slate-400 mt-1">{{ step.time | date:'HH:mm • dd/MM/yyyy' }}</p>
+                  }
+                  @if (step.note) {
+                    <div class="mt-3 bg-slate-50 p-4 rounded-2xl text-xs font-medium italic text-slate-500 border border-slate-100">
+                      {{ step.note }}
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-16 pt-10 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-center">
+          @if (order()!.status === 'shipping') {
+            <button class="bg-primary hover:bg-primary/90 text-slate-900 font-black uppercase tracking-widest text-xs py-5 px-10 rounded-2xl transition-all shadow-lg shadow-primary/20">
+              Xác nhận đã nhận hàng
+            </button>
+          }
+          @if (order()!.status === 'delivered') {
+            <button class="bg-slate-50 hover:bg-slate-100 text-slate-500 font-black uppercase tracking-widest text-xs py-5 px-10 rounded-2xl transition-all">
+              Yêu cầu đổi trả
+            </button>
+          }
+        </div>
       </div>
     </div>
-  </div>
+  } @else {
+    <div class="bg-white rounded-3xl p-12 text-center shadow-xl border border-slate-100">
+      <span class="material-symbols-outlined text-6xl text-slate-200">sentiment_dissatisfied</span>
+      <h2 class="text-2xl font-black mt-4 text-slate-900">Không tìm thấy đơn hàng</h2>
+      <p class="text-slate-500 mt-2">Vui lòng kiểm tra lại mã đơn hàng của bạn.</p>
+    </div>
+  }
 </div>
+

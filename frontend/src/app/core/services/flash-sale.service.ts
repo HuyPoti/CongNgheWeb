@@ -63,7 +63,7 @@ export class FlashSaleService {
     page?: number;
     pageSize?: number;
   }): Observable<PagedResult<FlashSaleDto>> {
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('page', String(opts?.page ?? 1))
       .set('pageSize', String(opts?.pageSize ?? 10));
 

@@ -61,10 +61,19 @@ export interface ShipmentDto {
 
 export interface OrderStatusHistoryDto {
   id: string;
-  oldStatus: number;
+  orderId: string;
+  oldStatus?: number;
+  oldStatusLabel?: string;
   newStatus: number;
+  newStatusLabel: string;
+  changedBy: string;
+  changedByName?: string;
   note?: string;
   createdAt: string;
+}
+
+export interface CancelOrderDto {
+  reason: string;
 }
 
 export interface ReturnRequestDto {

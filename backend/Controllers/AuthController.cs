@@ -101,13 +101,13 @@ public class AuthController(IAuthService authServices) : ControllerBase
         }
     }                                                       
 
-    [HttpPost("resend-verification")]
-    public async Task<ActionResult> ResendVerification([FromBody] ResendVerificationDto dto, CancellationToken cancellationToken)
+    [HttpPost("resend-email")]
+    public async Task<ActionResult> ResendEmail([FromBody] ResendEmailDto dto, CancellationToken cancellationToken)
     {
         try
         {
-            await authServices.ResendVerificationAsync(dto, cancellationToken);
-            return Ok(new { message = "Mã OTP mới đã được gửi." });
+            await authServices.ResendEmailAsync(dto, cancellationToken);
+            return Ok(new { message = "Mã OTP mới đã được gửi đến email của bạn." });
         }
         catch (Exception ex)
         {

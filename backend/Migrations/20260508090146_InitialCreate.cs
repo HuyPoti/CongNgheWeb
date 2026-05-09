@@ -788,10 +788,11 @@ namespace backend.Migrations
                     order_id = table.Column<Guid>(type: "uuid", nullable: false),
                     amount = table.Column<decimal>(type: "numeric", nullable: false),
                     payment_method = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    transaction_id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
+                    transaction_id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    status = table.Column<int>(type: "integer", nullable: false),
                     gateway_response = table.Column<string>(type: "jsonb", nullable: true),
                     return_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

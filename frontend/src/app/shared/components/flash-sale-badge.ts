@@ -168,10 +168,10 @@ export interface FlashSaleInfo {
   `]
 })
 export class FlashSaleBadgeComponent implements OnInit, OnDestroy {
-  @Input() flashPrice: number = 0;
-  @Input() regularPrice: number = 0;
-  @Input() endTime: string = '';
-  @Input() isSoldOut: boolean = false;
+  @Input() flashPrice = 0;
+  @Input() regularPrice = 0;
+  @Input() endTime = '';
+  @Input() isSoldOut = false;
 
   discountPercent = signal(0);
   countdownDisplay = signal('');

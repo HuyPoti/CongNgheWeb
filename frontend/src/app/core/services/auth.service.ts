@@ -8,7 +8,7 @@ import {
   LoginDto,
   RegisterDto,
   VerifyEmailDto,
-  ResendVerificationDto,
+  ResendEmailDto,
   UpdateProfileDto,
 } from '../models/auth.models';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
@@ -131,8 +131,8 @@ export class AuthService {
     return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, data);
   }
 
-  resendVerification(data: ResendVerificationDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-verification`, data);
+  resendEmail(data: ResendEmailDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-email`, data);
   }
 
   changePassword(data: ChangePasswordDto): Observable<{ message: string }> {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CouponService, CouponDto, PagedResult } from '../../../core/services/coupon.service';
@@ -10,7 +10,7 @@ import { CouponFormComponent } from './coupon-form';
   imports: [CommonModule, FormsModule, CouponFormComponent],
   templateUrl: './coupon-list.html'
 })
-export class CouponListComponent {
+export class CouponListComponent implements OnInit {
   private couponService = inject(CouponService);
 
   coupons = signal<CouponDto[]>([]);

@@ -112,4 +112,46 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    // POST: api/orders/{id}/cancel
+    [HttpPost("{id}/cancel")]
+    [Authorize]
+    public async Task<IActionResult> Cancel(
+        Guid id,
+        [FromBody] CancelOrderDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var currentUserId = GetCurrentUserId();
+
+        try
+        {
+            var result = await _service.CancelAsync(id, dto, currentUserId, cancellationToken);
+            return Ok(new { message = "Order cancelled successfully" });
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // GET: api/orders/{id}/history
+    [HttpGet("{id}/history")]
+    public async Task<IActionResult> GetStatusHistory(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var history = await _service.GetStatusHistoryAsync(id, cancellationToken);
+        return Ok(history);
+    }
 }
