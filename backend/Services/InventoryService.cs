@@ -158,7 +158,7 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
 
     public async Task<InventoryTransactionDto> AdjustStockAsync(AdjustStockDto dto, Guid userId, CancellationToken cancellationToken)
     {
-        var product = await uow.Products.GetByIdAsync<Product>(dto.ProductId, cancellationToken);
+        var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == dto.ProductId, cancellationToken);
         if (product == null) throw new Exception("Product not found");
 
         product.StockQuantity += dto.QuantityChanged;

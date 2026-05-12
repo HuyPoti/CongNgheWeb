@@ -7,13 +7,15 @@ using backend.UnitOfWork;
 using FluentAssertions;
 using MockQueryable.Moq;
 using Moq;
+using Microsoft.Extensions.DependencyInjection;
+using backend.MapperProfiles;
 
 namespace backend.Tests.Services;
 
 public class ReviewServiceTests
 {
     private readonly Mock<IUnitOfWork> _mockUow;
-    private readonly Mock<IMapper> _mockMapper;
+    private readonly IMapper _mapper;
     private readonly ReviewService _service;
     private readonly Mock<IRepository<Review>> _mockReviewRepo;
     private readonly Mock<IRepository<ReviewImage>> _mockImageRepo;
@@ -26,7 +28,13 @@ public class ReviewServiceTests
     public ReviewServiceTests()
     {
         _mockUow = new Mock<IUnitOfWork>();
-        _mockMapper = new Mock<IMapper>();
+        
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddAutoMapper(cfg => { cfg.AddMaps(typeof(ReviewProfile).Assembly); });
+        var provider = services.BuildServiceProvider();
+        _mapper = provider.GetRequiredService<IMapper>();
+
         _mockReviewRepo = new Mock<IRepository<Review>>();
         _mockImageRepo = new Mock<IRepository<ReviewImage>>();
         _mockReplyRepo = new Mock<IRepository<ReviewReply>>();
@@ -43,7 +51,7 @@ public class ReviewServiceTests
         _mockUow.Setup(u => u.Users).Returns(_mockUserRepo.Object);
         _mockUow.Setup(u => u.Orders).Returns(_mockOrderRepo.Object);
 
-        _service = new ReviewService(_mockUow.Object, _mockMapper.Object);
+        _service = new ReviewService(_mockUow.Object, _mapper);
     }
 
     // ============================================================
@@ -299,5 +307,110 @@ public class ReviewServiceTests
 
         var result = await _service.HasUserVotedAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
         result.Should().BeFalse();
+    }
+
+    // ============================================================
+    // GetAllAsync / GetByIdAsync / GetByProductIdAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsAll()
+    {
+        var reviews = new List<Review>
+        {
+            new() { ReviewId = Guid.NewGuid(), CreatedAt = DateTime.UtcNow, Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() },
+            new() { ReviewId = Guid.NewGuid(), CreatedAt = DateTime.UtcNow.AddHours(-1), Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() }
+        }.AsQueryable().BuildMock();
+        _mockReviewRepo.Setup(r => r.Query()).Returns(reviews);
+
+        var result = await _service.GetAllAsync(CancellationToken.None);
+
+        result.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_Found_ReturnsDto()
+    {
+        var reviewId = Guid.NewGuid();
+        var reviews = new List<Review> { new() { ReviewId = reviewId, Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() } }.AsQueryable().BuildMock();
+        _mockReviewRepo.Setup(r => r.Query()).Returns(reviews);
+
+        var result = await _service.GetByIdAsync(reviewId, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.ReviewId.Should().Be(reviewId);
+    }
+
+    [Fact]
+    public async Task GetByProductIdAsync_Found_ReturnsList()
+    {
+        var productId = Guid.NewGuid();
+        var reviews = new List<Review>
+        {
+            new() { ReviewId = Guid.NewGuid(), ProductId = productId, IsActive = 1, Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() },
+            new() { ReviewId = Guid.NewGuid(), ProductId = productId, IsActive = 1, Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() },
+            new() { ReviewId = Guid.NewGuid(), ProductId = Guid.NewGuid(), IsActive = 1, Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() }
+        }.AsQueryable().BuildMock();
+        _mockReviewRepo.Setup(r => r.Query()).Returns(reviews);
+
+        var result = await _service.GetByProductIdAsync(productId, CancellationToken.None);
+
+        result.Should().HaveCount(2);
+    }
+
+    // ============================================================
+    // UpdateActiveAsync / UpdateReplyAsync
+    // ============================================================
+
+    [Fact]
+    public async Task UpdateActiveAsync_ValidInput_UpdatesAndReturnsDto()
+    {
+        var reviewId = Guid.NewGuid();
+        var review = new Review { ReviewId = reviewId, IsActive = 0, Product = new Product { Name = "P" }, User = new User { FullName = "U" }, HelpfulVotes = new List<ReviewHelpfulVote>() };
+        var reviews = new List<Review> { review }.AsQueryable().BuildMock();
+        _mockReviewRepo.Setup(r => r.Query()).Returns(reviews);
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var dto = new UpdateReviewActiveDto { IsActive = 1 };
+        var result = await _service.UpdateActiveAsync(reviewId, dto, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        review.IsActive.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task UpdateReplyAsync_ValidInput_UpdatesAndReturnsDto()
+    {
+        var replyId = Guid.NewGuid();
+        var reply = new ReviewReply { ReplyId = replyId, Content = "Old", User = new User { FullName = "U" } };
+        var replies = new List<ReviewReply> { reply }.AsQueryable().BuildMock();
+        _mockReplyRepo.Setup(r => r.Query()).Returns(replies);
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var dto = new UpdateReviewReplyDto { Content = "New" };
+        var result = await _service.UpdateReplyAsync(replyId, dto, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        reply.Content.Should().Be("New");
+    }
+
+    // ============================================================
+    // GetImagesByReviewIdAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetImagesByReviewIdAsync_ReturnsList()
+    {
+        var reviewId = Guid.NewGuid();
+        var images = new List<ReviewImage>
+        {
+            new() { ImageId = Guid.NewGuid(), ReviewId = reviewId },
+            new() { ImageId = Guid.NewGuid(), ReviewId = reviewId }
+        }.AsQueryable().BuildMock();
+        _mockImageRepo.Setup(r => r.Query()).Returns(images);
+
+        var result = await _service.GetImagesByReviewIdAsync(reviewId, CancellationToken.None);
+
+        result.Should().HaveCount(2);
     }
 }

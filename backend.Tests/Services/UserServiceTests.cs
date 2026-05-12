@@ -93,4 +93,20 @@ public class UserServiceTests : IDisposable
         result.Should().NotBeNull();
         result!.UserId.Should().Be(id);
     }
+
+    [Fact]
+    public async Task UpdateAsync_ValidInput_UpdatesUser()
+    {
+        var userId = Guid.NewGuid();
+        _context.Users.Add(new User { UserId = userId, FullName = "Old", Email = "old@a.com", IsActive = true });
+        await _context.SaveChangesAsync();
+
+        var dto = new UpdateUserDto { FullName = "Updated" };
+        var result = await _service.UpdateAsync(userId, dto, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.FullName.Should().Be("Updated");
+        var entity = await _context.Users.FindAsync(userId);
+        entity!.FullName.Should().Be("Updated");
+    }
 }

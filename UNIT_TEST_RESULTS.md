@@ -1,6 +1,6 @@
 # 📊 BÁO CÁO KẾT QUẢ KIỂM THỬ (UNIT TEST RESULTS) - CẬP NHẬT CHÍNH XÁC
 
-*Ngày báo cáo: 00:04:03 13/5/2026*
+*Ngày báo cáo: 00:21:47 13/5/2026*
 
 > [!NOTE]
 > Báo cáo này được tổng hợp dựa trên các hàm kiểm thử thực tế tìm thấy trong mã nguồn (`backend.Tests/Services`).
@@ -10,9 +10,9 @@
 | Chỉ số | Giá trị |
 | :--- | :--- |
 | **Tổng số hàm cần test** | 134 |
-| **Đã hoàn thành (Done)** | 111 |
-| **Chưa thực hiện (Pending)** | 23 |
-| **Tỷ lệ hoàn thành** | 82.84% |
+| **Đã hoàn thành (Done)** | 132 |
+| **Chưa thực hiện (Pending)** | 2 |
+| **Tỷ lệ hoàn thành** | 98.51% |
 
 ## 📑 Chi tiết theo Service
 
@@ -130,13 +130,13 @@
 | Hàm (Method) | Trạng thái | Số lượng Test Case |
 | :--- | :--- | :--- |
 | `CreateReceiptAsync` | ✅ Done | 1 |
-| `GetReceiptByIdAsync` | ⏳ Pending | 0 |
-| `GetReceiptsAsync` | ⏳ Pending | 0 |
-| `CompleteReceiptAsync` | ⏳ Pending | 0 |
-| `CancelReceiptAsync` | ⏳ Pending | 0 |
-| `AdjustStockAsync` | ⏳ Pending | 0 |
-| `GetTransactionsAsync` | ⏳ Pending | 0 |
-| `GetStockStatusAsync` | ⏳ Pending | 0 |
+| `GetReceiptByIdAsync` | ✅ Done | 1 |
+| `GetReceiptsAsync` | ✅ Done | 1 |
+| `CompleteReceiptAsync` | ✅ Done | 1 |
+| `CancelReceiptAsync` | ✅ Done | 1 |
+| `AdjustStockAsync` | ✅ Done | 1 |
+| `GetTransactionsAsync` | ✅ Done | 1 |
+| `GetStockStatusAsync` | ✅ Done | 1 |
 
 ### 📦 NewsCategoryService
 
@@ -221,17 +221,17 @@
 
 | Hàm (Method) | Trạng thái | Số lượng Test Case |
 | :--- | :--- | :--- |
-| `GetAllAsync` | ⏳ Pending | 0 |
-| `GetByIdAsync` | ⏳ Pending | 0 |
-| `GetByProductIdAsync` | ⏳ Pending | 0 |
-| `UpdateActiveAsync` | ⏳ Pending | 0 |
+| `GetAllAsync` | ✅ Done | 1 |
+| `GetByIdAsync` | ✅ Done | 1 |
+| `GetByProductIdAsync` | ✅ Done | 1 |
+| `UpdateActiveAsync` | ✅ Done | 1 |
 | `DeleteAsync` | ✅ Done | 2 |
 | `CreateReplyAsync` | ✅ Done | 1 |
-| `UpdateReplyAsync` | ⏳ Pending | 0 |
+| `UpdateReplyAsync` | ✅ Done | 1 |
 | `DeleteReplyAsync` | ✅ Done | 1 |
 | `AddImageAsync` | ✅ Done | 1 |
 | `DeleteImageAsync` | ✅ Done | 1 |
-| `GetImagesByReviewIdAsync` | ⏳ Pending | 0 |
+| `GetImagesByReviewIdAsync` | ✅ Done | 1 |
 | `ToggleVoteAsync` | ✅ Done | 3 |
 | `GetVoteCountAsync` | ✅ Done | 1 |
 | `HasUserVotedAsync` | ✅ Done | 2 |
@@ -252,10 +252,10 @@
 | Hàm (Method) | Trạng thái | Số lượng Test Case |
 | :--- | :--- | :--- |
 | `GetAllAsync` | ✅ Done | 1 |
-| `GetByIdAsync` | ⏳ Pending | 0 |
-| `CreateAsync` | ⏳ Pending | 0 |
-| `UpdateAsync` | ⏳ Pending | 0 |
-| `DeleteAsync` | ⏳ Pending | 0 |
+| `GetByIdAsync` | ✅ Done | 1 |
+| `CreateAsync` | ✅ Done | 1 |
+| `UpdateAsync` | ✅ Done | 1 |
+| `DeleteAsync` | ✅ Done | 1 |
 
 ### 📦 UserService
 
@@ -264,7 +264,7 @@
 | `GetAllAsync` | ✅ Done | 1 |
 | `GetByIdAsync` | ✅ Done | 1 |
 | `CreateAsync` | ✅ Done | 1 |
-| `UpdateAsync` | ⏳ Pending | 0 |
+| `UpdateAsync` | ✅ Done | 1 |
 | `DeleteAsync` | ✅ Done | 1 |
 
 ### 📦 WishlistService
@@ -272,9 +272,9 @@
 | Hàm (Method) | Trạng thái | Số lượng Test Case |
 | :--- | :--- | :--- |
 | `GetByUserAsync` | ✅ Done | 1 |
-| `ToggleAsync` | ⏳ Pending | 0 |
-| `IsInWishlistAsync` | ⏳ Pending | 0 |
-| `CountAsync` | ⏳ Pending | 0 |
+| `ToggleAsync` | ✅ Done | 2 |
+| `IsInWishlistAsync` | ✅ Done | 1 |
+| `CountAsync` | ✅ Done | 1 |
 
 ## 🧪 Chi tiết các Test Case đã viết
 
@@ -497,6 +497,27 @@
 ### 🔹 InventoryService.CreateReceiptAsync
 - `CreateReceiptAsync_Success_ReturnsReceipt`
 
+### 🔹 InventoryService.GetReceiptByIdAsync
+- `GetReceiptByIdAsync_Found_ReturnsReceipt`
+
+### 🔹 InventoryService.GetReceiptsAsync
+- `GetReceiptsAsync_ReturnsAll`
+
+### 🔹 InventoryService.CompleteReceiptAsync
+- `CompleteReceiptAsync_ValidDraft_UpdatesStockAndCreatesTransactions`
+
+### 🔹 InventoryService.CancelReceiptAsync
+- `CancelReceiptAsync_CompletedReceipt_RollbacksStock`
+
+### 🔹 InventoryService.AdjustStockAsync
+- `AdjustStockAsync_IncrementsStock`
+
+### 🔹 InventoryService.GetTransactionsAsync
+- `GetTransactionsAsync_ReturnsProductTransactions`
+
+### 🔹 InventoryService.GetStockStatusAsync
+- `GetStockStatusAsync_ReturnsAllProducts`
+
 ### 🔹 NewsCategoryService.GetAllAsync
 - `GetAllAsync_ReturnsAll`
 
@@ -631,12 +652,27 @@
 ### 🔹 ReturnRequestService.ProcessAsync
 - `ProcessAsync_Approve_UpdatesStatusAndRestoresStock`
 
+### 🔹 ReviewService.GetAllAsync
+- `GetAllAsync_ReturnsAll`
+
+### 🔹 ReviewService.GetByIdAsync
+- `GetByIdAsync_Found_ReturnsDto`
+
+### 🔹 ReviewService.GetByProductIdAsync
+- `GetByProductIdAsync_Found_ReturnsList`
+
+### 🔹 ReviewService.UpdateActiveAsync
+- `UpdateActiveAsync_ValidInput_UpdatesAndReturnsDto`
+
 ### 🔹 ReviewService.DeleteAsync
 - `DeleteAsync_NotFound_ReturnsFalse`
 - `DeleteAsync_Found_DeletesAndReturnsTrue`
 
 ### 🔹 ReviewService.CreateReplyAsync
 - `CreateReplyAsync_ReviewNotFound_ReturnsNull`
+
+### 🔹 ReviewService.UpdateReplyAsync
+- `UpdateReplyAsync_ValidInput_UpdatesAndReturnsDto`
 
 ### 🔹 ReviewService.DeleteReplyAsync
 - `DeleteReplyAsync_NotFound_ReturnsFalse`
@@ -646,6 +682,9 @@
 
 ### 🔹 ReviewService.DeleteImageAsync
 - `DeleteImageAsync_NotFound_ReturnsFalse`
+
+### 🔹 ReviewService.GetImagesByReviewIdAsync
+- `GetImagesByReviewIdAsync_ReturnsList`
 
 ### 🔹 ReviewService.ToggleVoteAsync
 - `ToggleVoteAsync_ReviewNotFound_ReturnsFalse`
@@ -688,6 +727,18 @@
 ### 🔹 SupplierService.GetAllAsync
 - `GetAllAsync_ReturnsAll`
 
+### 🔹 SupplierService.GetByIdAsync
+- `GetByIdAsync_Found_ReturnsSupplier`
+
+### 🔹 SupplierService.CreateAsync
+- `CreateAsync_ValidInput_ReturnsCreatedSupplier`
+
+### 🔹 SupplierService.UpdateAsync
+- `UpdateAsync_ValidInput_UpdatesSupplier`
+
+### 🔹 SupplierService.DeleteAsync
+- `DeleteAsync_Found_MarksInactive`
+
 ### 🔹 UserService.GetAllAsync
 - `GetAllAsync_ReturnsActiveUsersOnly`
 
@@ -697,9 +748,22 @@
 ### 🔹 UserService.CreateAsync
 - `CreateAsync_ValidInput_CreatesUser`
 
+### 🔹 UserService.UpdateAsync
+- `UpdateAsync_ValidInput_UpdatesUser`
+
 ### 🔹 UserService.DeleteAsync
 - `DeleteAsync_ExistingUser_MarksAsInactive`
 
 ### 🔹 WishlistService.GetByUserAsync
 - `GetByUserAsync_ReturnsUserWishlistItems`
+
+### 🔹 WishlistService.ToggleAsync
+- `ToggleAsync_NewItem_AddsToWishlist`
+- `ToggleAsync_ExistingItem_RemovesFromWishlist`
+
+### 🔹 WishlistService.IsInWishlistAsync
+- `IsInWishlistAsync_Exists_ReturnsTrue`
+
+### 🔹 WishlistService.CountAsync
+- `CountAsync_ReturnsCorrectCount`
 
