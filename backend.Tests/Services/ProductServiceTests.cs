@@ -114,4 +114,114 @@ public class ProductServiceTests : IDisposable
         product.Should().NotBeNull();
         product!.Status.Should().Be(3); // 3: deleted
     }
+
+    // ============================================================
+    // GetFull...
+    // ============================================================
+
+    [Fact]
+    public async Task GetFullByIdAsync_ValidId_ReturnsFullProduct()
+    {
+        var productId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var brandId = Guid.NewGuid();
+        _context.Categories.Add(new Category { CategoryId = categoryId, Name = "Cat", Slug = "cat" });
+        _context.Brands.Add(new Brand { BrandId = brandId, Name = "Brand", Slug = "brand" });
+        _context.Products.Add(new Product { ProductId = productId, Name = "P", Slug = "p", Sku = "S", Status = 2, CategoryId = categoryId, BrandId = brandId });
+        await _context.SaveChangesAsync();
+
+        _imageServiceMock.Setup(s => s.GetByProductIdAsync(productId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ProductImageDto> { new() { ImageUrl = "url" } });
+
+        var result = await _service.GetFullByIdAsync(productId, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Product.ProductId.Should().Be(productId);
+        result.Images.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetFullBySlugAsync_ValidSlug_ReturnsFullProduct()
+    {
+        var productId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var brandId = Guid.NewGuid();
+        _context.Categories.Add(new Category { CategoryId = categoryId, Name = "Cat", Slug = "cat" });
+        _context.Brands.Add(new Brand { BrandId = brandId, Name = "Brand", Slug = "brand" });
+        _context.Products.Add(new Product { ProductId = productId, Name = "P", Slug = "slug-x", Sku = "S", Status = 2, CategoryId = categoryId, BrandId = brandId });
+        await _context.SaveChangesAsync();
+
+        _imageServiceMock.Setup(s => s.GetByProductIdAsync(productId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ProductImageDto>());
+
+        var result = await _service.GetFullBySlugAsync("slug-x", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Product.Slug.Should().Be("slug-x");
+    }
+
+    // ============================================================
+    // GetBySlugAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetBySlugAsync_ValidSlug_ReturnsProduct()
+    {
+        var categoryId = Guid.NewGuid();
+        var brandId = Guid.NewGuid();
+        _context.Categories.Add(new Category { CategoryId = categoryId, Name = "Cat", Slug = "cat" });
+        _context.Brands.Add(new Brand { BrandId = brandId, Name = "Brand", Slug = "brand" });
+        _context.Products.Add(new Product { ProductId = Guid.NewGuid(), Name = "P", Slug = "target-slug", Sku = "S", Status = 2, CategoryId = categoryId, BrandId = brandId });
+        await _context.SaveChangesAsync();
+
+        var result = await _service.GetBySlugAsync("target-slug", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Slug.Should().Be("target-slug");
+    }
+
+    // ============================================================
+    // UpdateAsync
+    // ============================================================
+
+    [Fact]
+    public async Task UpdateAsync_ValidInput_UpdatesProduct()
+    {
+        var productId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var brandId = Guid.NewGuid();
+        _context.Categories.Add(new Category { CategoryId = categoryId, Name = "Cat", Slug = "cat" });
+        _context.Brands.Add(new Brand { BrandId = brandId, Name = "Brand", Slug = "brand" });
+        _context.Products.Add(new Product { ProductId = productId, Name = "Old", Slug = "old", Sku = "S", Status = 2, CategoryId = categoryId, BrandId = brandId });
+        await _context.SaveChangesAsync();
+
+        var dto = new UpdateProductDto { Name = "Updated" };
+        var result = await _service.UpdateAsync(productId, dto, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Updated");
+        var entity = await _context.Products.FindAsync(productId);
+        entity!.Name.Should().Be("Updated");
+    }
+
+    // ============================================================
+    // GetProductListAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetProductListAsync_NoFilters_ReturnsPublishedProducts()
+    {
+        var categoryId = Guid.NewGuid();
+        var brandId = Guid.NewGuid();
+        _context.Categories.Add(new Category { CategoryId = categoryId, Name = "Cat", Slug = "cat" });
+        _context.Brands.Add(new Brand { BrandId = brandId, Name = "Brand", Slug = "brand" });
+        _context.Products.Add(new Product { ProductId = Guid.NewGuid(), Name = "P1", Slug = "p1", Sku = "S1", Status = 2, RegularPrice = 100, CategoryId = categoryId, BrandId = brandId });
+        _context.Products.Add(new Product { ProductId = Guid.NewGuid(), Name = "P2", Slug = "p2", Sku = "S2", Status = 1, RegularPrice = 200, CategoryId = categoryId, BrandId = brandId }); // Status 1 (draft) shouldn't show
+        await _context.SaveChangesAsync();
+
+        var result = await _service.GetProductListAsync(CancellationToken.None, 1, 10);
+
+        result.Items.Should().HaveCount(1);
+        result.Items.First().Name.Should().Be("P1");
+    }
 }

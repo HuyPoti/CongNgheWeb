@@ -11,13 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace backend.Tests.Services;
 
-public class CategoryServiceTests : IDisposable
+public class BannerServiceTests : IDisposable
 {
     private readonly AppDbContext _context;
-    private readonly ICategoryService _service;
+    private readonly BannerService _service;
     private readonly IMapper _mapper;
 
-    public CategoryServiceTests()
+    public BannerServiceTests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -26,12 +26,12 @@ public class CategoryServiceTests : IDisposable
 
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddAutoMapper(cfg => { cfg.AddMaps(typeof(CategoryProfile).Assembly); });
+        services.AddAutoMapper(cfg => { cfg.AddMaps(typeof(BannerProfile).Assembly); });
         var provider = services.BuildServiceProvider();
         _mapper = provider.GetRequiredService<IMapper>();
 
         var uow = new backend.UnitOfWork.UnitOfWork(_context, _mapper);
-        _service = new CategoryService(uow, _mapper);
+        _service = new BannerService(uow, _mapper);
     }
 
     public void Dispose()
@@ -45,19 +45,41 @@ public class CategoryServiceTests : IDisposable
     // ============================================================
 
     [Fact]
-    public async Task GetAllAsync_ReturnsActiveCategories()
+    public async Task GetAllAsync_ReturnsAllBanners()
     {
         // Arrange
-        _context.Categories.Add(new Category { CategoryId = Guid.NewGuid(), Name = "C1", Slug = "c1", IsActive = true });
-        _context.Categories.Add(new Category { CategoryId = Guid.NewGuid(), Name = "C2", Slug = "c2", IsActive = false });
+        _context.Banners.Add(new Banner { BannerId = Guid.NewGuid(), Title = "B1", ImageUrl = "img1" });
+        _context.Banners.Add(new Banner { BannerId = Guid.NewGuid(), Title = "B2", ImageUrl = "img2" });
         await _context.SaveChangesAsync();
 
         // Act
         var result = await _service.GetAllAsync(CancellationToken.None);
 
         // Assert
+        result.Should().HaveCount(2);
+    }
+
+    // ============================================================
+    // GetPublicAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetPublicAsync_ValidBanners_ReturnsActiveAndInDateRange()
+    {
+        // Arrange
+        var today = DateTime.UtcNow.Date;
+        _context.Banners.Add(new Banner { BannerId = Guid.NewGuid(), IsActive = true, StartDate = today.AddDays(-1), EndDate = today.AddDays(1), Title = "Valid", ImageUrl = "img" });
+        _context.Banners.Add(new Banner { BannerId = Guid.NewGuid(), IsActive = true, StartDate = today.AddDays(1), Title = "Future", ImageUrl = "img" });
+        _context.Banners.Add(new Banner { BannerId = Guid.NewGuid(), IsActive = true, EndDate = today.AddDays(-1), Title = "Expired", ImageUrl = "img" });
+        _context.Banners.Add(new Banner { BannerId = Guid.NewGuid(), IsActive = false, Title = "Inactive", ImageUrl = "img" });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetPublicAsync(CancellationToken.None);
+
+        // Assert
         result.Should().HaveCount(1);
-        result.First().Name.Should().Be("C1");
+        result.First().Title.Should().Be("Valid");
     }
 
     // ============================================================
@@ -65,11 +87,11 @@ public class CategoryServiceTests : IDisposable
     // ============================================================
 
     [Fact]
-    public async Task GetByIdAsync_Found_ReturnsCategory()
+    public async Task GetByIdAsync_Found_ReturnsBanner()
     {
         // Arrange
         var id = Guid.NewGuid();
-        _context.Categories.Add(new Category { CategoryId = id, Name = "Found", Slug = "found" });
+        _context.Banners.Add(new Banner { BannerId = id, Title = "Found", ImageUrl = "img" });
         await _context.SaveChangesAsync();
 
         // Act
@@ -77,27 +99,7 @@ public class CategoryServiceTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        result!.CategoryId.Should().Be(id);
-    }
-
-    // ============================================================
-    // GetBySlugAsync
-    // ============================================================
-
-    [Fact]
-    public async Task GetBySlugAsync_Found_ReturnsCategory()
-    {
-        // Arrange
-        var slug = "test-slug";
-        _context.Categories.Add(new Category { CategoryId = Guid.NewGuid(), Name = "Test", Slug = slug });
-        await _context.SaveChangesAsync();
-
-        // Act
-        var result = await _service.GetBySlugAsync(slug, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Slug.Should().Be(slug);
+        result!.Title.Should().Be("Found");
     }
 
     // ============================================================
@@ -105,13 +107,16 @@ public class CategoryServiceTests : IDisposable
     // ============================================================
 
     [Fact]
-    public async Task CreateAsync_DuplicateSlug_ReturnsNull()
+    public async Task CreateAsync_InvalidDates_ReturnsNull()
     {
         // Arrange
-        _context.Categories.Add(new Category { CategoryId = Guid.NewGuid(), Name = "Existing", Slug = "duplicate" });
-        await _context.SaveChangesAsync();
-
-        var dto = new CreateCategoryDto { Name = "New", Slug = "duplicate" };
+        var dto = new CreateBannerDto 
+        { 
+            Title = "Title", 
+            ImageUrl = "img", 
+            StartDate = DateTime.UtcNow.AddDays(1), 
+            EndDate = DateTime.UtcNow.AddDays(-1) 
+        };
 
         // Act
         var result = await _service.CreateAsync(dto, CancellationToken.None);
@@ -121,18 +126,19 @@ public class CategoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateAsync_ValidInput_ReturnsCreatedCategory()
+    public async Task CreateAsync_ValidInput_ReturnsCreatedBanner()
     {
         // Arrange
-        var dto = new CreateCategoryDto { Name = "Cat X", Slug = "cat-x" };
+        var dto = new CreateBannerDto { Title = "New", ImageUrl = "img" };
 
         // Act
         var result = await _service.CreateAsync(dto, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Name.Should().Be("Cat X");
-        _context.Categories.Count().Should().Be(1);
+        result!.Title.Should().Be("New");
+        
+        _context.Banners.Count().Should().Be(1);
     }
 
     // ============================================================
@@ -143,28 +149,28 @@ public class CategoryServiceTests : IDisposable
     public async Task UpdateAsync_NotFound_ReturnsNull()
     {
         // Act
-        var result = await _service.UpdateAsync(Guid.NewGuid(), new UpdateCategoryDto(), CancellationToken.None);
+        var result = await _service.UpdateAsync(Guid.NewGuid(), new UpdateBannerDto(), CancellationToken.None);
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public async Task UpdateAsync_ValidInput_UpdatesAndReturnsCategory()
+    public async Task UpdateAsync_ValidInput_UpdatesAndReturnsBanner()
     {
         // Arrange
         var id = Guid.NewGuid();
-        _context.Categories.Add(new Category { CategoryId = id, Name = "Old", Slug = "old" });
+        _context.Banners.Add(new Banner { BannerId = id, Title = "Old", ImageUrl = "img" });
         await _context.SaveChangesAsync();
 
-        var dto = new UpdateCategoryDto { Name = "New Name" };
+        var dto = new UpdateBannerDto { Title = "Updated" };
 
         // Act
         var result = await _service.UpdateAsync(id, dto, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
-        result!.Name.Should().Be("New Name");
+        result!.Title.Should().Be("Updated");
     }
 
     // ============================================================
@@ -186,7 +192,7 @@ public class CategoryServiceTests : IDisposable
     {
         // Arrange
         var id = Guid.NewGuid();
-        _context.Categories.Add(new Category { CategoryId = id, IsActive = true, Name = "To Delete", Slug = "del" });
+        _context.Banners.Add(new Banner { BannerId = id, IsActive = true, Title = "To Delete", ImageUrl = "img" });
         await _context.SaveChangesAsync();
 
         // Act
@@ -195,7 +201,7 @@ public class CategoryServiceTests : IDisposable
         // Assert
         result.Should().BeTrue();
         
-        var category = await _context.Categories.FindAsync(id);
-        category!.IsActive.Should().BeFalse();
+        var banner = await _context.Banners.FindAsync(id);
+        banner!.IsActive.Should().BeFalse();
     }
 }

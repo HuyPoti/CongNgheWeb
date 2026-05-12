@@ -173,6 +173,21 @@ public class AuthServiceTests : IDisposable
     }
 
     // ============================================================
+    // GoogleLoginAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GoogleLoginAsync_InvalidToken_ThrowsException()
+    {
+        // Act
+        var act = () => _service.GoogleLoginAsync("invalid-token", CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>()
+            .WithMessage("Lỗi xác thực Google: *");
+    }
+
+    // ============================================================
     // RegisterAsync
     // ============================================================
 

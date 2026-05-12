@@ -185,4 +185,92 @@ public class OrderServiceTests
         order.Status.Should().Be(6);
         product.StockQuantity.Should().Be(7); // 5 + 2 restored
     }
+
+    // ============================================================
+    // GetAllAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetAllAsync_NoFilters_ReturnsAll()
+    {
+        var userId = Guid.NewGuid();
+        var user = new User { UserId = userId, FullName = "Customer 1" };
+        var ordersList = new List<Order>
+        {
+            new() { OrderId = Guid.NewGuid(), OrderCode = "ORD-1", Status = 1, UserId = userId, User = user, CreatedAt = DateTime.UtcNow },
+            new() { OrderId = Guid.NewGuid(), OrderCode = "ORD-2", Status = 2, UserId = userId, User = user, CreatedAt = DateTime.UtcNow.AddHours(-1) }
+        };
+
+        var mockOrders = ordersList.AsQueryable().BuildMock();
+        _mockOrderRepo.Setup(r => r.Query()).Returns(mockOrders);
+
+        var result = await _service.GetAllAsync(null, null, 1, 10, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(2);
+        result.Items.First().OrderCode.Should().Be("ORD-1");
+    }
+
+    // ============================================================
+    // GetByIdAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetByIdAsync_Found_ReturnsOrderDetail()
+    {
+        var orderId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var user = new User { UserId = userId, FullName = "Customer 1" };
+        var address = new Address { AddressId = Guid.NewGuid(), UserId = userId, RecipientName = "R", Phone = "123", AddressLine = "A" };
+        var product = new Product { ProductId = Guid.NewGuid(), Name = "P1" };
+        
+        var order = new Order
+        {
+            OrderId = orderId,
+            OrderCode = "ORD-1",
+            UserId = userId,
+            User = user,
+            Address = address,
+            Status = 1,
+            PaymentStatus = 1,
+            OrderItems = new List<OrderItem>
+            {
+                new() { OrderItemId = Guid.NewGuid(), ProductId = product.ProductId, Product = product, Quantity = 1, UnitPrice = 100 }
+            }
+        };
+
+        var mockOrders = new List<Order> { order }.AsQueryable().BuildMock();
+        _mockOrderRepo.Setup(r => r.Query()).Returns(mockOrders);
+
+        var result = await _service.GetByIdAsync(orderId, userId, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.OrderCode.Should().Be("ORD-1");
+        result.CustomerName.Should().Be("Customer 1");
+        result.Items.Should().HaveCount(1);
+    }
+
+    // ============================================================
+    // GetStatusHistoryAsync
+    // ============================================================
+
+    [Fact]
+    public async Task GetStatusHistoryAsync_Found_ReturnsHistory()
+    {
+        var orderId = Guid.NewGuid();
+        var historyList = new List<OrderStatusHistory>
+        {
+            new() { Id = Guid.NewGuid(), OrderId = orderId, NewStatus = 1, Note = "Note 1", CreatedAt = DateTime.UtcNow }
+        };
+
+        var mockHistory = historyList.AsQueryable().BuildMock();
+        _mockHistoryRepo.Setup(r => r.Query()).Returns(mockHistory);
+
+        var result = await _service.GetStatusHistoryAsync(orderId, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        result.First().Note.Should().Be("Note 1");
+    }
 }
