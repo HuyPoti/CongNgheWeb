@@ -10,6 +10,7 @@ public class InventoryReceiptDto
     public decimal TotalAmount { get; set; }
     public Guid? CreatedBy { get; set; }
     public string? Notes { get; set; }
+    public int Status { get; set; }
     public DateTime CreatedAt { get; set; }
     
     // Optional: Include basic supplier info

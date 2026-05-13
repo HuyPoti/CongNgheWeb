@@ -29,7 +29,7 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
 
         foreach (var itemDto in dto.Items)
         {
-            var product = await uow.Products.GetByIdAsync<Product>(itemDto.ProductId, cancellationToken);
+            var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == itemDto.ProductId, cancellationToken);
             if (product == null) throw new Exception($"Product with id {itemDto.ProductId} not found");
 
             var receiptItem = new InventoryReceiptItem
@@ -158,7 +158,7 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
 
     public async Task<InventoryTransactionDto> AdjustStockAsync(AdjustStockDto dto, Guid userId, CancellationToken cancellationToken)
     {
-        var product = await uow.Products.GetByIdAsync<Product>(dto.ProductId, cancellationToken);
+        var product = await uow.Products.Query().FirstOrDefaultAsync(p => p.ProductId == dto.ProductId, cancellationToken);
         if (product == null) throw new Exception("Product not found");
 
         product.StockQuantity += dto.QuantityChanged;
