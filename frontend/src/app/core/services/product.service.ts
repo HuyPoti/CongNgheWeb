@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   ClientProductsQuery,
@@ -13,6 +14,7 @@ import {
   ProductImageDto,
   CreateProductImageDto,
 } from '../models/product.model';
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -32,7 +34,9 @@ export class ProductService {
     if (query.maxPrice != null) params = params.set('maxPrice', String(query.maxPrice));
     if (query.sortBy) params = params.set('sortBy', query.sortBy);
 
-    return this.http.get<ProductListResponse>(`${this.baseUrl}/client`, { params });
+    return this.http
+      .get<ApiResponse<ProductListResponse>>(`${this.baseUrl}/client`, { params })
+      .pipe(map((res) => res.data));
   }
 
   // ── Admin CRUD ─────────────────────────────────────────────────
@@ -54,31 +58,45 @@ export class ProductService {
     if (opts?.minPrice != null) params = params.set('minPrice', String(opts.minPrice));
     if (opts?.maxPrice != null) params = params.set('maxPrice', String(opts.maxPrice));
 
-    return this.http.get<PagedProductResponse>(this.baseUrl, { params });
+    return this.http
+      .get<ApiResponse<PagedProductResponse>>(this.baseUrl, { params })
+      .pipe(map((res) => res.data));
   }
 
   getById(id: string): Observable<ProductDto> {
-    return this.http.get<ProductDto>(`${this.baseUrl}/${id}`);
+    return this.http
+      .get<ApiResponse<ProductDto>>(`${this.baseUrl}/${id}`)
+      .pipe(map((res) => res.data));
   }
 
   getFullById(id: string): Observable<ProductFullDto> {
-    return this.http.get<ProductFullDto>(`${this.baseUrl}/${id}/full`);
+    return this.http
+      .get<ApiResponse<ProductFullDto>>(`${this.baseUrl}/${id}/full`)
+      .pipe(map((res) => res.data));
   }
 
   getBySlug(slug: string): Observable<ProductDto> {
-    return this.http.get<ProductDto>(`${this.baseUrl}/slug/${slug}`);
+    return this.http
+      .get<ApiResponse<ProductDto>>(`${this.baseUrl}/slug/${slug}`)
+      .pipe(map((res) => res.data));
   }
 
   getFullBySlug(slug: string): Observable<ProductFullDto> {
-    return this.http.get<ProductFullDto>(`${this.baseUrl}/slug/${slug}/full`);
+    return this.http
+      .get<ApiResponse<ProductFullDto>>(`${this.baseUrl}/slug/${slug}/full`)
+      .pipe(map((res) => res.data));
   }
 
   create(dto: CreateProductDto): Observable<ProductDto> {
-    return this.http.post<ProductDto>(this.baseUrl, dto);
+    return this.http
+      .post<ApiResponse<ProductDto>>(this.baseUrl, dto)
+      .pipe(map((res) => res.data));
   }
 
   update(id: string, dto: UpdateProductDto): Observable<ProductDto> {
-    return this.http.put<ProductDto>(`${this.baseUrl}/${id}`, dto);
+    return this.http
+      .put<ApiResponse<ProductDto>>(`${this.baseUrl}/${id}`, dto)
+      .pipe(map((res) => res.data));
   }
 
   delete(id: string): Observable<void> {
@@ -88,11 +106,15 @@ export class ProductService {
   // ── Product Images ─────────────────────────────────────────────
 
   getImages(productId: string): Observable<ProductImageDto[]> {
-    return this.http.get<ProductImageDto[]>(`${this.productsUrl}/${productId}/images`);
+    return this.http
+      .get<ApiResponse<ProductImageDto[]>>(`${this.productsUrl}/${productId}/images`)
+      .pipe(map((res) => res.data));
   }
 
   addImage(productId: string, dto: CreateProductImageDto): Observable<ProductImageDto> {
-    return this.http.post<ProductImageDto>(`${this.productsUrl}/${productId}/images`, dto);
+    return this.http
+      .post<ApiResponse<ProductImageDto>>(`${this.productsUrl}/${productId}/images`, dto)
+      .pipe(map((res) => res.data));
   }
 
   deleteImage(productId: string, imageId: string): Observable<void> {

@@ -17,25 +17,25 @@ public class ProductImagesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get(Guid productId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<List<ProductImageDto>>>> Get(Guid productId, CancellationToken ct)
     {
         var result = await _service.GetByProductIdAsync(productId, ct);
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpPost]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> Add(Guid productId, [FromBody] CreateProductImageDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ProductImageDto>>> Add(Guid productId, [FromBody] CreateProductImageDto dto, CancellationToken ct)
     {
         var result = await _service.AddAsync(productId, dto, ct);
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpDelete("{imageId}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> Delete(Guid imageId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid imageId, CancellationToken ct)
     {
         await _service.DeleteAsync(imageId, ct);
-        return NoContent();
+        return Ok(ApiResponse.Ok(new { message = "Image deleted successfully" }));
     }
 }

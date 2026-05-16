@@ -1,4 +1,4 @@
-using backend.Data;
+using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
@@ -6,17 +6,17 @@ namespace backend.Services;
 public class EmailNotificationService : IEmailNotificationService
 {
     private readonly IEmailService _emailService;
-    private readonly AppDbContext _context;
+    private readonly IUnitOfWork _uow;
 
-    public EmailNotificationService(IEmailService emailService, AppDbContext context)
+    public EmailNotificationService(IEmailService emailService, IUnitOfWork uow)
     {
         _emailService = emailService;
-        _context = context;
+        _uow = uow;
     }
 
     public async Task SendOrderConfirmedEmail(Guid orderId)
     {
-        var order = await _context.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderId == orderId);
+        var order = await _uow.Orders.Query().Include(o => o.User).FirstOrDefaultAsync(o => o.OrderId == orderId);
         if (order?.User != null)
         {
             string subject = $"Xác nhận đơn hàng #{order.OrderCode}";
@@ -27,7 +27,7 @@ public class EmailNotificationService : IEmailNotificationService
 
     public async Task SendOrderShippingEmail(Guid orderId)
     {
-        var order = await _context.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderId == orderId);
+        var order = await _uow.Orders.Query().Include(o => o.User).FirstOrDefaultAsync(o => o.OrderId == orderId);
         if (order?.User != null)
         {
             string subject = $"Đơn hàng #{order.OrderCode} đang được vận chuyển";
@@ -38,7 +38,7 @@ public class EmailNotificationService : IEmailNotificationService
 
     public async Task SendOrderDeliveredEmail(Guid orderId)
     {
-        var order = await _context.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.OrderId == orderId);
+        var order = await _uow.Orders.Query().Include(o => o.User).FirstOrDefaultAsync(o => o.OrderId == orderId);
         if (order?.User != null)
         {
             string subject = $"Đơn hàng #{order.OrderCode} đã giao thành công";
@@ -49,7 +49,7 @@ public class EmailNotificationService : IEmailNotificationService
 
     public async Task SendReturnProcessedEmail(Guid returnId)
     {
-        var request = await _context.ReturnRequests
+        var request = await _uow.ReturnRequests.Query()
             .Include(r => r.User)
             .Include(r => r.Order)
             .FirstOrDefaultAsync(r => r.ReturnId == returnId);

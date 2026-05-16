@@ -1,22 +1,33 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { ThemeService } from '../../core/services/theme';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../core/utils/theme.util';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-employee-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './employee-layout.html',
   styleUrl: './employee-layout.css',
 })
 export class EmployeeLayout implements OnInit, OnDestroy {
-  private themeService = inject(ThemeService);
+  readonly themeService = inject(ThemeService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   ngOnInit() {
-    this.themeService.setForcedTheme('dark');
+    // Switch to employee context — persists theme_employee key, defaults to 'light'
+    this.themeService.setContext('employee');
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/portal']);
   }
 
   ngOnDestroy() {
-    this.themeService.setForcedTheme(null);
+    // Revert to user context when leaving employee panel
+    this.themeService.setContext(null);
   }
 }

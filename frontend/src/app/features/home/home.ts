@@ -7,7 +7,7 @@ import { BannerService } from '../../core/services/banner.service';
 import { Banner } from '../../core/models/banner.model';
 import { ProductService } from '../../core/services/product.service';
 import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
-import { ComparisonService } from '../../core/services/comparison';
+import { ComparisonService } from '../../core/services/comparison.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { CategoryService } from '../../core/services/category.service';
 import { Category } from '../../core/models/category.model';
@@ -184,8 +184,16 @@ export class HomeComponent implements OnInit {
     return this.banners.find((b) => b.position === 'HOME_HERO' && b.status === 'Live');
   }
 
-  get midBanners(): ClientBanner[] {
-    return this.banners.filter((b) => b.position === 'HOME_MID' && b.status === 'Live');
+  get midTopBanner(): ClientBanner | undefined {
+    return this.banners.find((b) => b.position === 'HOME_MID_TR' && b.status === 'Live');
+  }
+
+  get midBottomBanner(): ClientBanner | undefined {
+    return this.banners.find((b) => b.position === 'HOME_MID_BR' && b.status === 'Live');
+  }
+
+  get wideBanner(): ClientBanner | undefined {
+    return this.banners.find((b) => b.position === 'HOME_MID_WIDE' && b.status === 'Live');
   }
 
   get rootCategories(): Category[] {
@@ -193,11 +201,17 @@ export class HomeComponent implements OnInit {
   }
 
   private toClientBanner(b: Banner): ClientBanner {
+    let imageUrl = b.imageUrl;
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      // Giả sử ảnh được lưu trong folder uploads của backend
+      imageUrl = `http://localhost:5000/${imageUrl}`;
+    }
+
     return {
       id: b.bannerId,
       title: b.title ?? '',
       subtitle: b.subtitle ?? '',
-      imageUrl: b.imageUrl,
+      imageUrl: imageUrl,
       linkUrl: b.linkUrl ?? '/product/list',
       targetAlt: b.subtitle ?? b.title ?? 'Banner',
       status: b.isActive ? 'Live' : 'Draft',
@@ -205,14 +219,20 @@ export class HomeComponent implements OnInit {
     };
   }
 
-  private mapPosition(pos: Banner['position']): string {
+  private mapPosition(pos: string | number): string {
+    if (pos === null || pos === undefined) return '';
+    const key = pos.toString().toLowerCase();
     const map: Record<string, string> = {
       homepage_slider: 'HOME_HERO',
-      homepage_mid: 'HOME_MID',
-      category_top: 'CAT_TOP',
-      news_top: 'NEWS_TOP',
+      homepage_mid_top_right: 'HOME_MID_TR',
+      homepage_mid_bottom_right: 'HOME_MID_BR',
+      homepage_mid_wide: 'HOME_MID_WIDE',
+      '0': 'HOME_HERO',
+      '1': 'HOME_MID_TR',
+      '2': 'HOME_MID_BR',
+      '3': 'HOME_MID_WIDE',
     };
-    return map[pos] ?? pos;
+    return map[key] ?? key.toUpperCase();
   }
 
   // ── Comparison ────────────────────────────────────────────────────

@@ -1,38 +1,31 @@
-using backend.Data;
+using backend.UnitOfWork;
 using backend.DTOs;
+using backend.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
-public interface IDashboardService
-{
-	Task<OverviewDto> GetOverviewAsync(CancellationToken cancellationToken = default);
-	Task<List<RevenueChartDto>> GetRevenueChartAsync(int days, CancellationToken cancellationToken = default);
-	Task<List<TopProductDto>> GetTopProductsAsync(int limit, CancellationToken cancellationToken = default);
-	Task<List<TopCustomerDto>> GetTopCustomersAsync(int limit, CancellationToken cancellationToken = default);
-}
-
-public class DashboardService(AppDbContext context) : IDashboardService
+public class DashboardService(IUnitOfWork uow) : IDashboardService
 {
 	public async Task<OverviewDto> GetOverviewAsync(CancellationToken cancellationToken = default)
 	{
 		var now = DateTime.UtcNow;
-		var startOfMonth = new DateTime(now.Year, now.Month, 1);
+		var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-		var revenue = await context.Orders
-			.Where(x => x.Status != 6 && x.PaymentStatus == 2)
+		var revenue = await uow.Orders.Query()
+			.Where(x => x.Status != OrderStatus.Cancelled && x.PaymentStatus == PaymentStatus.Completed)
 			.SumAsync(x => (decimal?)x.TotalAmount, cancellationToken) ?? 0m;
 
-		var totalOrders = await context.Orders
+		var totalOrders = await uow.Orders.Query()
 			.CountAsync(x => x.CreatedAt >= startOfMonth, cancellationToken);
 
-		var totalCustomers = await context.Users
+		var totalCustomers = await uow.Users.Query()
 			.CountAsync(x => x.Role == Models.UserRole.customer, cancellationToken);
 
-		var activeCoupons = await context.Coupons
+		var activeCoupons = await uow.Coupons.Query()
 			.CountAsync(x => x.IsActive && x.StartDate <= now && x.EndDate >= now, cancellationToken);
 
-		var activeFlashSales = await context.FlashSales
+		var activeFlashSales = await uow.FlashSales.Query()
 			.CountAsync(x => x.IsActive && x.StartTime <= now && x.EndTime >= now, cancellationToken);
 
 		return new OverviewDto
@@ -50,15 +43,15 @@ public class DashboardService(AppDbContext context) : IDashboardService
 		CancellationToken cancellationToken = default)
 	{
 		days = Math.Clamp(days, 1, 365);
-		var fromDate = DateTime.UtcNow.Date.AddDays(-days + 1);
+		var fromDate = DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(-days + 1), DateTimeKind.Utc);
 
-		var grouped = await context.Orders
-			.Where(x => x.CreatedAt >= fromDate && x.Status != 6)
+		var grouped = await uow.Orders.Query()
+			.Where(x => x.CreatedAt >= fromDate && x.Status != OrderStatus.Cancelled)
 			.GroupBy(x => x.CreatedAt.Date)
 			.Select(g => new RevenueChartDto
 			{
 				Date = g.Key,
-				Revenue = g.Where(x => x.PaymentStatus == 2).Sum(x => x.TotalAmount),
+				Revenue = g.Where(x => x.PaymentStatus == PaymentStatus.Completed).Sum(x => x.TotalAmount),
 				OrderCount = g.Count()
 			})
 			.OrderBy(x => x.Date)
@@ -73,10 +66,10 @@ public class DashboardService(AppDbContext context) : IDashboardService
 	{
 		limit = Math.Clamp(limit, 1, 20);
 
-		var topProducts = await context.OrderItems
+		var topProducts = await uow.OrderItems.Query()
 			.Include(x => x.Order)
 			.Include(x => x.Product)
-			.Where(x => x.Order != null && x.Order.Status != 6)
+			.Where(x => x.Order != null && x.Order.Status != OrderStatus.Cancelled)
 			.GroupBy(x => new { x.ProductId, ProductName = x.Product != null ? x.Product.Name : string.Empty })
 			.Select(g => new TopProductDto
 			{
@@ -98,16 +91,16 @@ public class DashboardService(AppDbContext context) : IDashboardService
 	{
 		limit = Math.Clamp(limit, 1, 20);
 
-		var topCustomers = await context.Orders
+		var topCustomers = await uow.Orders.Query()
 			.Include(x => x.User)
-			.Where(x => x.Status != 6)
+			.Where(x => x.Status != OrderStatus.Cancelled)
 			.GroupBy(x => new { x.UserId, Name = x.User.FullName })
 			.Select(g => new TopCustomerDto
 			{
 				UserId = g.Key.UserId,
 				FullName = g.Key.Name,
 				TotalOrders = g.Count(),
-				TotalSpent = g.Where(x => x.PaymentStatus == 2).Sum(x => x.TotalAmount)
+				TotalSpent = g.Where(x => x.PaymentStatus == PaymentStatus.Completed).Sum(x => x.TotalAmount)
 			})
 			.OrderByDescending(x => x.TotalSpent)
 			.Take(limit)

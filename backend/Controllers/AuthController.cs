@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
 using backend.Services;
+using backend.Exceptions;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -14,127 +15,81 @@ public class AuthController(IAuthService authServices) : ControllerBase
 {
 
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login([FromBody] LoginDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await authServices.LoginAsync(dto, cancellationToken);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            return Unauthorized(new {message = ex.Message});
-        }
+        var response = await authServices.LoginAsync(dto, cancellationToken);
+        return Ok(ApiResponse.Ok(response));
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Register([FromBody] RegisterDto dto, CancellationToken cancellationToken)
     {
-        try { return Ok(await authServices.RegisterAsync(dto, cancellationToken)); }
-        catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+        var result = await authServices.RegisterAsync(dto, cancellationToken);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpPost("google-login")]
-    public async Task<ActionResult<AuthResponseDto>> GoogleLogin([FromBody] GoogleLoginDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> GoogleLogin([FromBody] GoogleLoginDto dto, CancellationToken cancellationToken)
     {
-        try { return Ok(await authServices.GoogleLoginAsync(dto.IdToken, cancellationToken)); }
-        catch (Exception ex) 
-        { 
-            var msg = ex.Message;
-            if (ex.InnerException != null) msg += " | Inner: " + ex.InnerException.Message;
-            return BadRequest(new { message = msg }); 
-        }
-    }   
+        var result = await authServices.GoogleLoginAsync(dto.IdToken, cancellationToken);
+        return Ok(ApiResponse.Ok(result));
+    }
 
     [HttpPost("forgot-password")]
-    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> ForgotPassword([FromBody] ForgotPasswordDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            await authServices.ForgotPasswordAsync(dto, cancellationToken);
-            return Ok(new {message = "Mã OTP đã được gửi đến email của bạn." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await authServices.ForgotPasswordAsync(dto, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Mã OTP đã được gửi đến email của bạn." }));
     }
 
     [HttpPost("reset-password")]
-    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> ResetPassword([FromBody] ResetPasswordDto dto, CancellationToken cancellationToken)
     {
-        try{
-            await authServices.ResetPasswordAsync(dto, cancellationToken);
-            return Ok(new {message = "Mật khẩu đã được thay đổi thành công." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await authServices.ResetPasswordAsync(dto, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Mật khẩu đã được thay đổi thành công." }));
     }
 
     [HttpPost("refresh-token")]
-    public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken([FromBody] RefreshTokenDto dto, CancellationToken ct)
     {
-        try { return Ok(await authServices.RefreshTokenAsync(dto.RefreshToken, ct)); }
-        catch (Exception ex) { return Unauthorized(new { message = ex.Message }); }
+        var result = await authServices.RefreshTokenAsync(dto.RefreshToken, ct);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpPost("logout")]
-    public async Task<ActionResult> Logout([FromBody] RefreshTokenDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> Logout([FromBody] RefreshTokenDto dto, CancellationToken ct)
     {
         await authServices.LogoutAsync(dto.RefreshToken, ct);
-        return Ok(new { message = "Đã đăng xuất." });
+        return Ok(ApiResponse.Ok(new { message = "Đã đăng xuất." }));
     }
 
     [HttpPost("verify-email")]
-    public async Task<ActionResult> VerifyEmail([FromBody] VerifyEmailDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> VerifyEmail([FromBody] VerifyEmailDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            await authServices.VerifyEmailAsync(dto, cancellationToken);
-            return Ok(new { message = "Email đã được xác nhận thành công!" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }                                                       
+        await authServices.VerifyEmailAsync(dto, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Email đã được xác nhận thành công!" }));
+    }
 
     [HttpPost("resend-email")]
-    public async Task<ActionResult> ResendEmail([FromBody] ResendEmailDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> ResendEmail([FromBody] ResendEmailDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            await authServices.ResendEmailAsync(dto, cancellationToken);
-            return Ok(new { message = "Mã OTP mới đã được gửi đến email của bạn." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await authServices.ResendEmailAsync(dto, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Mã OTP mới đã được gửi đến email của bạn." }));
     }
 
     [Authorize]
     [HttpPost("change-password")]
-    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> ChangePassword([FromBody] ChangePasswordDto dto, CancellationToken cancellationToken)
     {
-        try
-        {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
-            {
-                return Unauthorized(new { message = "Token không hợp lệ." });
-            }
-
-            await authServices.ChangePasswordAsync(userId, dto, cancellationToken);
-            return Ok(new { message = "Mật khẩu đã được thay đổi thành công." });
-        }
-        catch (Exception ex)
+        if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
         {
-            return BadRequest(new { message = ex.Message });
+            throw new UnauthorizedException("Token không hợp lệ.");
         }
+
+        await authServices.ChangePasswordAsync(userId, dto, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Mật khẩu đã được thay đổi thành công." }));
     }
 
 }

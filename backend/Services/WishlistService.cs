@@ -1,5 +1,5 @@
 using AutoMapper;
-using backend.Data;
+using backend.UnitOfWork;
 using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,41 +8,41 @@ namespace backend.Services;
 
 public class WishlistService : IWishlistService
 {
-    private readonly AppDbContext _context;
+    private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
 
-    public WishlistService(AppDbContext context, IMapper mapper)
+    public WishlistService(IUnitOfWork uow, IMapper mapper)
     {
-        _context = context;
+        _uow = uow;
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<WishlistItemDto>> GetByUserAsync(Guid userId)
+    public async Task<IEnumerable<WishlistItemDto>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var wishlists = await _context.Wishlists
+        var wishlists = await _uow.Wishlists.Query()
             .Include(w => w.Product)
                 .ThenInclude(p => p!.Images)
             .Where(w => w.UserId == userId)
             .OrderByDescending(w => w.CreatedAt)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return _mapper.Map<IEnumerable<WishlistItemDto>>(wishlists);
     }
 
-    public async Task<bool> ToggleAsync(Guid userId, Guid productId)
+    public async Task<bool> ToggleAsync(Guid userId, Guid productId, CancellationToken cancellationToken = default)
     {
-        var existing = await _context.Wishlists
-            .FirstOrDefaultAsync(w => w.UserId == userId && w.ProductId == productId);
+        var existing = await _uow.Wishlists.Query()
+            .FirstOrDefaultAsync(w => w.UserId == userId && w.ProductId == productId, cancellationToken);
 
         if (existing != null)
         {
-            _context.Wishlists.Remove(existing);
-            await _context.SaveChangesAsync();
+            _uow.Wishlists.Delete(existing);
+            await _uow.SaveAsync(cancellationToken);
             return false; // Removed
         }
 
         // Check limit
-        var count = await _context.Wishlists.CountAsync(w => w.UserId == userId);
+        var count = await _uow.Wishlists.Query().CountAsync(w => w.UserId == userId, cancellationToken);
         if (count >= 50)
         {
             throw new InvalidOperationException("Danh sách yêu thích đã đầy (tối đa 50 sản phẩm).");
@@ -56,20 +56,20 @@ public class WishlistService : IWishlistService
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Wishlists.Add(newItem);
-        await _context.SaveChangesAsync();
+        _uow.Wishlists.Insert(newItem);
+        await _uow.SaveAsync(cancellationToken);
         return true; // Added
     }
 
-    public async Task<bool> IsInWishlistAsync(Guid userId, Guid productId)
+    public async Task<bool> IsInWishlistAsync(Guid userId, Guid productId, CancellationToken cancellationToken = default)
     {
-        return await _context.Wishlists
-            .AnyAsync(w => w.UserId == userId && w.ProductId == productId);
+        return await _uow.Wishlists.Query()
+            .AnyAsync(w => w.UserId == userId && w.ProductId == productId, cancellationToken);
     }
 
-    public async Task<int> CountAsync(Guid userId)
+    public async Task<int> CountAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        return await _context.Wishlists
-            .CountAsync(w => w.UserId == userId);
+        return await _uow.Wishlists.Query()
+            .CountAsync(w => w.UserId == userId, cancellationToken);
     }
 }

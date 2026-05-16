@@ -4,7 +4,7 @@ namespace backend.Services;
 
 public interface IReviewService
 {
-    Task<List<ReviewDto>> GetAllAsync(CancellationToken ct);
+    Task<PagedResult<ReviewDto>> GetAllAsync(int page, int pageSize, CancellationToken ct);
     Task<ReviewDto?> GetByIdAsync(Guid id, CancellationToken ct);
     Task<ReviewDto?> UpdateActiveAsync(Guid id, UpdateReviewActiveDto dto, CancellationToken ct);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
@@ -12,7 +12,7 @@ public interface IReviewService
     Task<ReviewDto?> CreateAsync(CreateReviewDto dto, CancellationToken ct);
 
     // === Reviews by Product ===
-    Task<List<ReviewDto>> GetByProductIdAsync(Guid productId, CancellationToken ct);
+    Task<PagedResult<ReviewDto>> GetByProductIdAsync(Guid productId, int page, int pageSize, CancellationToken ct);
 
     // === Review Replies ===
     Task<ReviewReplyDto?> CreateReplyAsync(Guid reviewId, CreateReviewReplyDto dto, CancellationToken ct);

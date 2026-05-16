@@ -92,7 +92,7 @@ public class OrderServiceTests
         var orders = new List<Order>().AsQueryable().BuildMock();
         _mockOrderRepo.Setup(r => r.Query()).Returns(orders);
 
-        var act = () => _service.UpdateAsync(Guid.NewGuid(), new UpdateOrderDto { Status = "confirmed" }, CancellationToken.None);
+        var act = () => _service.UpdateAsync(Guid.NewGuid(), new UpdateOrderDto { Status = "confirmed" }, Guid.NewGuid(), CancellationToken.None);
         await act.Should().ThrowAsync<NotFoundException>().WithMessage("*Order not found*");
     }
 
@@ -111,7 +111,7 @@ public class OrderServiceTests
         _mockHistoryRepo.Setup(r => r.Insert(It.IsAny<OrderStatusHistory>())).Returns(new OrderStatusHistory());
         _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        var result = await _service.UpdateAsync(orderId, new UpdateOrderDto { Status = "confirmed" }, CancellationToken.None);
+        var result = await _service.UpdateAsync(orderId, new UpdateOrderDto { Status = "confirmed" }, Guid.NewGuid(), CancellationToken.None);
 
         result.Should().BeTrue();
         order.Status.Should().Be(2);

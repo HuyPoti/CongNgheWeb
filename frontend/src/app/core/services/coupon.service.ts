@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface CouponDto {
   couponId: string;
@@ -89,27 +91,33 @@ export class CouponService {
     if (opts?.isActive !== undefined) params = params.set('isActive', String(opts.isActive));
     if (opts?.keyword?.trim()) params = params.set('keyword', opts.keyword.trim());
 
-    return this.http.get<PagedResult<CouponDto>>(this.baseUrl, { params });
+    return this.http
+      .get<ApiResponse<PagedResult<CouponDto>>>(this.baseUrl, { params })
+      .pipe(map((res) => res.data));
   }
 
   getById(id: string): Observable<CouponDto> {
-    return this.http.get<CouponDto>(`${this.baseUrl}/${id}`);
+    return this.http.get<ApiResponse<CouponDto>>(`${this.baseUrl}/${id}`).pipe(map((res) => res.data));
   }
 
   create(dto: CreateCouponDto): Observable<CouponDto> {
-    return this.http.post<CouponDto>(this.baseUrl, dto);
+    return this.http.post<ApiResponse<CouponDto>>(this.baseUrl, dto).pipe(map((res) => res.data));
   }
 
   update(id: string, dto: UpdateCouponDto): Observable<CouponDto> {
-    return this.http.put<CouponDto>(`${this.baseUrl}/${id}`, dto);
+    return this.http
+      .put<ApiResponse<CouponDto>>(`${this.baseUrl}/${id}`, dto)
+      .pipe(map((res) => res.data));
   }
 
   deactivate(id: string): Observable<CouponDto> {
-    return this.http.delete<CouponDto>(`${this.baseUrl}/${id}`);
+    return this.http.delete<ApiResponse<CouponDto>>(`${this.baseUrl}/${id}`).pipe(map((res) => res.data));
   }
 
   // Public validation (used in checkout/store)
   validate(req: CouponValidationRequestDto): Observable<CouponValidationResultDto> {
-    return this.http.post<CouponValidationResultDto>(`${this.baseUrl}/validate`, req);
+    return this.http
+      .post<ApiResponse<CouponValidationResultDto>>(`${this.baseUrl}/validate`, req)
+      .pipe(map((res) => res.data));
   }
 }

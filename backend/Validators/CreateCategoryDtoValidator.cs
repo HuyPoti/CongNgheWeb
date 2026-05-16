@@ -1,0 +1,13 @@
+using FluentValidation;
+using backend.DTOs;
+
+namespace backend.Validators;
+
+public class CreateCategoryDtoValidator : AbstractValidator<CreateCategoryDto>
+{
+    public CreateCategoryDtoValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Slug).NotEmpty().MaximumLength(100);
+    }
+}

@@ -46,14 +46,14 @@
           <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">
             {{ 'user.profile_change_avatar' | translate }}
           </h3>
-          <p class="text-sm text-slate-400 dark:text-slate-500">JPG, PNG, WebP, GIF. Max 2MB.</p>
+          <p class="text-sm text-slate-400 dark:text-slate-500">{{ 'user.profile_avatar_hint' | translate }}</p>
         </div>
         <label
           for="avatarInput"
           class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-2xl cursor-pointer hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 hover:scale-105 active:scale-95"
         >
           <span class="material-symbols-outlined text-lg">upload</span>
-          Upload
+          {{ 'user.profile_upload_btn' | translate }}
         </label>
         <input
           id="avatarInput"

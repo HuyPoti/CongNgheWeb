@@ -1,4 +1,8 @@
-export type BannerPosition = 'homepage_slider' | 'homepage_mid' | 'category_top' | 'news_top';
+export type BannerPosition =
+  | 'homepage_slider'
+  | 'homepage_mid_top_right'
+  | 'homepage_mid_bottom_right'
+  | 'homepage_mid_wide';
 
 export interface Banner {
   bannerId: string;

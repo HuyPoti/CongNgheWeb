@@ -13,7 +13,9 @@ import {
   merge,
 } from 'rxjs';
 
-import { ComparisonService } from '../../../core/services/comparison';
+import { ComparisonService } from '../../../core/services/comparison.service';
+import { CartService } from '../../../core/services/cart.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { ProductCard, ProductListItemDto } from '../../../core/models/product.model';
 import { ProductService } from '../../../core/services/product.service';
 import { BrandService } from '../../../core/services/brand.service';
@@ -33,6 +35,8 @@ import { WishlistToggleComponent } from '../../../shared/components/wishlist-tog
 export class ProductList implements OnInit, OnDestroy {
   readonly comparisonService = inject(ComparisonService);
   readonly shopStateService = inject(ShopStateService);
+  private readonly cartService = inject(CartService);
+  private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly productService = inject(ProductService);
@@ -297,5 +301,12 @@ export class ProductList implements OnInit, OnDestroy {
 
   goToCompare(): void {
     this.router.navigate(['/comparison']);
+  }
+
+  addToCartFromCard(event: Event, p: ProductCard): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.cartService.addToCart(p);
+    this.toastService.success(`Đã thêm "${p.name}" vào giỏ hàng`);
   }
 }

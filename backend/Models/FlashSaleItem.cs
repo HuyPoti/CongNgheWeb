@@ -26,6 +26,7 @@ public class FlashSaleItem
     [Column("stock_limit")]
     public int StockLimit { get; set; }
 
+    [ConcurrencyCheck]
     [Column("sold_count")]
     public int SoldCount { get; set; } = 0;
 

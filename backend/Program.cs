@@ -10,6 +10,9 @@ using backend.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using backend.Validators;
 
 
 
@@ -24,6 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -76,6 +80,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Them Automapper
 builder.Services.AddAutoMapper(cfg => { }, Assembly.GetExecutingAssembly());
+builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderDtoValidator>();
+builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddAuthorization();
 
 
@@ -126,6 +132,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAngular");
+
+// Add COOP header for Google Login
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

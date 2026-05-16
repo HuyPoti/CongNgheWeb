@@ -21,18 +21,18 @@ public class ProfileController(IProfileService profileService) : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<UserDto>> GetProfileAsync(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<UserDto>>> GetProfileAsync(CancellationToken cancellationToken)
     {
         var profile = await profileService.GetProfileAsync(GetUserId(), cancellationToken);
-        if (profile == null) return NotFound(new { message = "Không tìm thấy user." });
-        return Ok(profile);
+        if (profile == null) return NotFound(ApiResponse.Fail("Không tìm thấy user."));
+        return Ok(ApiResponse.Ok(profile));
     }
 
     [HttpPut]
-    public async Task<ActionResult<UserDto>> UpdateProfile([FromBody] UpdateProfileDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<UserDto>>> UpdateProfile([FromBody] UpdateProfileDto dto, CancellationToken ct)
     {
         var profile = await profileService.UpdateProfileAsync(GetUserId(), dto, ct);
-        if (profile == null) return NotFound(new { message = "Không tìm thấy user." });
-        return Ok(profile);
+        if (profile == null) return NotFound(ApiResponse.Fail("Không tìm thấy user."));
+        return Ok(ApiResponse.Ok(profile));
     }
 }

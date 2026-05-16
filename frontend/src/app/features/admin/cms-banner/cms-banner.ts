@@ -22,11 +22,13 @@ export class CmsBanner implements OnInit {
   editingBanner = signal<Banner | null>(null);
 
   positionLabels: Record<string, string> = {
-    homepage_slider: 'Homepage Slider',
-    homepage_mid: 'Homepage Mid',
-    category_top: 'Category Top',
-    news_top: 'News Top',
+    homepage_slider: 'Slider chính (Trang chủ)',
+    homepage_mid_top_right: 'Quảng cáo phụ 1 (Trên cùng bên phải)',
+    homepage_mid_bottom_right: 'Quảng cáo phụ 2 (Dưới cùng bên phải)',
+    homepage_mid_wide: 'Banner ngang lớn (Cuối trang chủ)',
   };
+
+  showPositionMap = signal(false);
 
   form: Partial<Banner> = {};
   bannerImageError = signal<Record<string, boolean>>({});
@@ -37,8 +39,9 @@ export class CmsBanner implements OnInit {
 
   resetPreviewError() {
     this.bannerImageError.update((prev) => {
-      const { preview, ...rest } = prev;
-      return rest;
+      const newState = { ...prev };
+      delete newState['preview'];
+      return newState;
     });
   }
 

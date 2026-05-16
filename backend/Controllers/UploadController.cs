@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using backend.DTOs;
 
 namespace backend.Controllers;
 
@@ -15,46 +16,33 @@ public class UploadController(
 {
     [Authorize]
     [HttpPost("avatar")]
-    public async Task<ActionResult> UploadAvatar(IFormFile file, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> UploadAvatar(IFormFile file, CancellationToken cancellationToken)
     {
-        try
-        {
-            var  userId = GetUserId();
+        var  userId = GetUserId();
 
-            var imageUrl = await cloudinaryService.UploadImageAsync(file, folder: "avatars", publicId: $"user_{userId}");
+        var imageUrl = await cloudinaryService.UploadImageAsync(file, folder: "avatars", publicId: $"user_{userId}");
 
-            var dto = new DTOs.UpdateProfileDto {AvatarUrl = imageUrl};
-            var updatedUser = await profileService.UpdateProfileAsync(userId, dto, cancellationToken);
-            
-            return Ok(new
-            {
-                imageUrl,
-                user = updatedUser
-            });
-        }
-        catch (Exception ex)
+        var dto = new DTOs.UpdateProfileDto {AvatarUrl = imageUrl};
+        var updatedUser = await profileService.UpdateProfileAsync(userId, dto, cancellationToken);
+        
+        return Ok(ApiResponse.Ok(new
         {
-            return StatusCode(500, new { message = ex.Message });
-        }
+            imageUrl,
+            user = updatedUser
+        }));
     } 
 
     [Authorize]
     [HttpPost("{folder}")]
-    public async Task<ActionResult> UploadImage(string folder, IFormFile file)
+    public async Task<ActionResult<ApiResponse<object>>> UploadImage(string folder, IFormFile file)
     {
-        try
-        {
-            var allowedFolders = new[] { "products", "banners", "news", "reviews", "returns" };
-            if (!allowedFolders.Contains(folder.ToLower()))
-                return BadRequest(new { message = $"Folder '{folder}' khong hop le. " });
+        var allowedFolders = new[] { "products", "banners", "news", "reviews", "returns" };
+        if (!allowedFolders.Contains(folder.ToLower()))
+            return BadRequest(ApiResponse.Fail($"Folder '{folder}' khong hop le. "));
 
-            var imageUrl = await cloudinaryService.UploadImageAsync(file, folder);
+        var imageUrl = await cloudinaryService.UploadImageAsync(file, folder);
 
-            return Ok(new {imageUrl});
-        }
-        catch (Exception ex){
-            return BadRequest(new {message = ex.Message});
-        }
+        return Ok(ApiResponse.Ok(new {imageUrl}));
     }
 
     /// <summary>
@@ -62,19 +50,12 @@ public class UploadController(
     /// </summary>
     [Authorize(Roles = "admin,staff")]
     [HttpDelete]
-    public async Task<ActionResult> DeleteImage([FromQuery] string publicId)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteImage([FromQuery] string publicId)
     {
-        try
-        {
-            var success = await cloudinaryService.DeleteImageAsync(publicId);
-            if (!success)
-                return NotFound(new { message = "Khong tim thay anh de xoa." });
-            return Ok(new { message = "Da xoa anh thanh cong." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var success = await cloudinaryService.DeleteImageAsync(publicId);
+        if (!success)
+            return NotFound(ApiResponse.Fail("Khong tim thay anh de xoa."));
+        return Ok(ApiResponse.Ok(new { message = "Da xoa anh thanh cong." }));
     }
 
     private Guid GetUserId()

@@ -4,8 +4,8 @@ namespace backend.Services;
 
 public interface IWishlistService
 {
-    Task<IEnumerable<WishlistItemDto>> GetByUserAsync(Guid userId);
-    Task<bool> ToggleAsync(Guid userId, Guid productId);
-    Task<bool> IsInWishlistAsync(Guid userId, Guid productId);
-    Task<int> CountAsync(Guid userId);
+    Task<IEnumerable<WishlistItemDto>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<bool> ToggleAsync(Guid userId, Guid productId, CancellationToken cancellationToken = default);
+    Task<bool> IsInWishlistAsync(Guid userId, Guid productId, CancellationToken cancellationToken = default);
+    Task<int> CountAsync(Guid userId, CancellationToken cancellationToken = default);
 }

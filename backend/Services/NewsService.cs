@@ -5,18 +5,20 @@ using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 
+using backend.Extensions;
+
 namespace backend.Services;
 
 public class NewsService(IUnitOfWork uow, IMapper mapper) : INewsService
 {
-    public async Task<List<NewsDto>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<PagedResult<NewsDto>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
-        var items = await uow.News.Query()
+        return await uow.News.Query()
             .Include(n => n.Category)
             .Include(n => n.Author)
+            .OrderByDescending(n => n.CreatedAt)
             .ProjectTo<NewsDto>(mapper.ConfigurationProvider)
-            .ToListAsync(cancellationToken);
-        return items;
+            .ToPagedResultAsync(page, pageSize, cancellationToken);
     }
 
     public async Task<NewsDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)

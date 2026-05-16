@@ -18,39 +18,39 @@ public class FlashSalesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<FlashSaleDto>> Create([FromBody] CreateFlashSaleDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<FlashSaleDto>>> Create([FromBody] CreateFlashSaleDto dto, CancellationToken cancellationToken)
     {
         var res = await _flashSaleService.CreateAsync(dto, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<FlashSaleDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<ApiResponse<PagedResult<FlashSaleDto>>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var res = await _flashSaleService.GetAllAsync(page, pageSize, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [AllowAnonymous]
     [HttpGet("active")]
-    public async Task<ActionResult<FlashSaleDto?>> GetActive(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<FlashSaleDto>>> GetActive(CancellationToken cancellationToken)
     {
         var res = await _flashSaleService.GetActiveAsync(cancellationToken);
-        if (res == null) return NotFound(new { message = "No active flash sale" });
-        return Ok(res);
+        if (res == null) return NotFound(ApiResponse.Fail("No active flash sale"));
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpPost("{id}/items")]
-    public async Task<ActionResult<FlashSaleItemDto>> AddItem(Guid id, [FromBody] CreateFlashSaleItemDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<FlashSaleItemDto>>> AddItem(Guid id, [FromBody] CreateFlashSaleItemDto dto, CancellationToken cancellationToken)
     {
         var res = await _flashSaleService.AddItemAsync(id, dto, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpDelete("{id}/items/{productId}")]
-    public async Task<ActionResult> RemoveItem(Guid id, Guid productId, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> RemoveItem(Guid id, Guid productId, CancellationToken cancellationToken)
     {
         await _flashSaleService.RemoveItemAsync(id, productId, null, cancellationToken);
-        return NoContent();
+        return Ok(ApiResponse.Ok(new { message = "Đã xóa sản phẩm khỏi flash sale" }));
     }
 }

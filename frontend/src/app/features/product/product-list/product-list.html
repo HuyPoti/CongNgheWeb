@@ -428,7 +428,7 @@
                     <button
                       type="button"
                       class="size-9 bg-primary/10 text-primary rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all active:scale-90"
-                      (click)="$event.stopPropagation()"
+                      (click)="addToCartFromCard($event, p)"
                       [title]="'product.add_to_cart' | translate"
                     >
                       <span class="material-symbols-outlined text-sm">add_shopping_cart</span>

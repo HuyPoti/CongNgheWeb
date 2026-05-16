@@ -3,6 +3,7 @@ using backend.Exceptions;
 using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using backend.Constants;
 
 namespace backend.Services;
 
@@ -16,7 +17,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
             .FirstOrDefaultAsync(o => o.OrderId == dto.OrderId, cancellationToken)
             ?? throw new NotFoundException("Order not found");
 
-        if (order.Status != 2) // must be confirmed
+        if (order.Status != OrderStatus.Confirmed) // must be confirmed
             throw new BadRequestException("Order must be in 'confirmed' status before creating a shipment");
 
         // Check no active shipment already
@@ -33,7 +34,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
             TrackingCode = dto.TrackingCode?.Trim(),
             ShippingFee = dto.ShippingFee,
             EstimatedDelivery = dto.EstimatedDelivery,
-            Status = "packing",
+            Status = ShipmentStatus.Packing,
             QcPassed = false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -42,7 +43,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
         uow.Shipments.Insert(shipment);
 
         // Move order to processing [R2]
-        order.Status = 3;
+        order.Status = OrderStatus.Processing;
         order.UpdatedAt = DateTime.UtcNow;
         uow.Orders.Update(order);
 
@@ -51,8 +52,8 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
         {
             Id = Guid.NewGuid(),
             OrderId = order.OrderId,
-            OldStatus = 2,
-            NewStatus = 3,
+            OldStatus = OrderStatus.Confirmed,
+            NewStatus = OrderStatus.Processing,
             ChangedBy = createdByUserId,
             Note = $"Tạo phiếu giao hàng, hãng vận chuyển: {dto.Carrier}",
             CreatedAt = DateTime.UtcNow
@@ -79,16 +80,16 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
         // If tracking code provided AND QC passed → auto move to shipping [R3]
         if (!string.IsNullOrWhiteSpace(shipment.TrackingCode) && shipment.QcPassed)
         {
-            if (shipment.Status != "shipping")
+            if (shipment.Status != ShipmentStatus.Shipping)
             {
-                shipment.Status = "shipping";
+                shipment.Status = ShipmentStatus.Shipping;
 
                 var order = await uow.Orders.Query()
                     .FirstOrDefaultAsync(o => o.OrderId == shipment.OrderId, cancellationToken);
-                if (order != null && order.Status != 4 && order.Status != 5 && order.Status != 6) // Not delivered, cancelled or already shipping
+                if (order != null && order.Status != OrderStatus.Shipping && order.Status != OrderStatus.Delivered && order.Status != OrderStatus.Cancelled) // Not delivered, cancelled or already shipping
                 {
                     int oldStatus = order.Status;
-                    order.Status = 4; // Shipping
+                    order.Status = OrderStatus.Shipping; // Shipping
                     order.UpdatedAt = DateTime.UtcNow;
                     uow.Orders.Update(order);
 
@@ -98,7 +99,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
                         Id = Guid.NewGuid(),
                         OrderId = order.OrderId,
                         OldStatus = oldStatus,
-                        NewStatus = 4,
+                        NewStatus = OrderStatus.Shipping,
                         Note = $"Đã cập nhật mã vận đơn: {shipment.TrackingCode}. Đơn hàng chuyển sang 'Đang giao'.",
                         CreatedAt = DateTime.UtcNow
                     });
@@ -132,7 +133,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
 
         shipment.QcPassed = dto.QcPassed;
         shipment.QcNotes = dto.QcNotes;
-        if (dto.QcPassed) shipment.Status = "qc_passed";
+        if (dto.QcPassed) shipment.Status = ShipmentStatus.QcPassed;
         shipment.UpdatedAt = DateTime.UtcNow;
 
         uow.Shipments.Update(shipment);
@@ -149,7 +150,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
 
         shipment.PackedBy = userId;
         shipment.PackedAt = DateTime.UtcNow;
-        shipment.Status = "packed";
+        shipment.Status = ShipmentStatus.Packed;
         shipment.UpdatedAt = DateTime.UtcNow;
 
         uow.Shipments.Update(shipment);

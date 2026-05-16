@@ -1,19 +1,16 @@
 using AutoMapper;
-using backend.Data;
+using AutoMapper.QueryableExtensions;
+using backend.UnitOfWork;
 using backend.DTOs;
 using backend.Exceptions;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 
+using backend.Extensions;
+
 namespace backend.Services;
 
-public interface IActivityLogService
-{
-	Task<ActivityLogDto> LogAsync(CreateActivityLogDto dto, CancellationToken cancellationToken = default);
-	Task<PagedResult<ActivityLogDto>> GetLogsAsync(ActivityLogQueryDto query, CancellationToken cancellationToken = default);
-}
-
-public class ActivityLogService(AppDbContext context, IMapper mapper) : IActivityLogService
+public class ActivityLogService(IUnitOfWork uow, IMapper mapper) : IActivityLogService
 {
 	public async Task<ActivityLogDto> LogAsync(
 		CreateActivityLogDto dto,
@@ -38,10 +35,10 @@ public class ActivityLogService(AppDbContext context, IMapper mapper) : IActivit
 			CreatedAt = DateTime.UtcNow
 		};
 
-		context.ActivityLogs.Add(log);
-		await context.SaveChangesAsync(cancellationToken);
+		uow.ActivityLogs.Insert(log);
+		await uow.SaveAsync(cancellationToken);
 
-		var saved = await context.ActivityLogs
+		var saved = await uow.ActivityLogs.Query()
 			.Include(x => x.User)
 			.FirstAsync(x => x.LogId == log.LogId, cancellationToken);
 
@@ -55,7 +52,7 @@ public class ActivityLogService(AppDbContext context, IMapper mapper) : IActivit
 		var page = query.Page <= 0 ? 1 : query.Page;
 		var pageSize = Math.Clamp(query.PageSize, 1, 100);
 
-		var logsQuery = context.ActivityLogs
+		var logsQuery = uow.ActivityLogs.Query()
 			.Include(x => x.User)
 			.AsQueryable();
 
@@ -74,20 +71,9 @@ public class ActivityLogService(AppDbContext context, IMapper mapper) : IActivit
 		if (query.ToDate.HasValue)
 			logsQuery = logsQuery.Where(x => x.CreatedAt <= query.ToDate.Value);
 
-		var totalCount = await logsQuery.CountAsync(cancellationToken);
-
-		var items = await logsQuery
+		return await logsQuery
 			.OrderByDescending(x => x.CreatedAt)
-			.Skip((page - 1) * pageSize)
-			.Take(pageSize)
-			.ToListAsync(cancellationToken);
-
-		return new PagedResult<ActivityLogDto>
-		{
-			Items = mapper.Map<List<ActivityLogDto>>(items),
-			TotalCount = totalCount,
-			Page = page,
-			PageSize = pageSize
-		};
+			.ProjectTo<ActivityLogDto>(mapper.ConfigurationProvider)
+			.ToPagedResultAsync(page, pageSize, cancellationToken);
 	}
 }

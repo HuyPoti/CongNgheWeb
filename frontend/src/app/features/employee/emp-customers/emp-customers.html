@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="flex items-end justify-between mb-8">
     <div>
-      <h2 class="text-3xl font-black text-slate-100 mb-2">Tra cứu Khách hàng</h2>
+      <h2 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">Tra cứu Khách hàng</h2>
       <p class="text-slate-500">
         {{ customerStats.total }} khách hàng · {{ customerStats.thisMonth }} mới tháng này
       </p>
@@ -38,7 +38,7 @@
       track stat.label
     ) {
       <div
-        class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all"
+        class="bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all"
       >
         <div class="size-12 rounded-xl flex items-center justify-center" [ngClass]="stat.bg">
           <span class="material-symbols-outlined text-2xl" [ngClass]="stat.color">{{
@@ -46,7 +46,7 @@
           }}</span>
         </div>
         <div>
-          <p class="text-2xl font-bold text-slate-100">{{ stat.value }}</p>
+          <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ stat.value }}</p>
           <p class="text-xs text-slate-500">{{ stat.label }}</p>
         </div>
       </div>
@@ -65,7 +65,7 @@
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
         placeholder="Tìm tên, email, số điện thoại..."
-        class="w-full bg-surface-dark/40 border border-emerald-500/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40"
+        class="w-full bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40"
       />
     </div>
   </div>
@@ -76,27 +76,27 @@
       <div
         class="animate-spin size-8 border-2 border-emerald-500 border-t-transparent rounded-full"
       ></div>
-      <span class="ml-3 text-slate-400">Đang tải...</span>
+      <span class="ml-3 text-slate-500 dark:text-slate-400">Đang tải...</span>
     </div>
   } @else {
     <!-- Customers Table -->
-    <div class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl overflow-hidden">
+    <div class="bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-emerald-500/10 text-left">
-            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Khách hàng
             </th>
-            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Email
             </th>
-            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Điện thoại
             </th>
-            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Ngày đăng ký
             </th>
-            <th class="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-5 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Thao tác
             </th>
           </tr>
@@ -113,11 +113,11 @@
                       customer.fullName.charAt(0)
                     }}</span>
                   </div>
-                  <span class="text-slate-200 font-semibold">{{ customer.fullName }}</span>
+                  <span class="text-slate-700 dark:text-slate-200 font-semibold">{{ customer.fullName }}</span>
                 </div>
               </td>
-              <td class="px-5 py-4 text-slate-400 text-xs">{{ customer.email }}</td>
-              <td class="px-5 py-4 text-slate-400 text-xs font-mono">
+              <td class="px-5 py-4 text-slate-500 dark:text-slate-400 text-xs">{{ customer.email }}</td>
+              <td class="px-5 py-4 text-slate-500 dark:text-slate-400 text-xs font-mono">
                 {{ customer.phone || '—' }}
               </td>
               <td class="px-5 py-4 text-xs text-slate-500">
@@ -126,7 +126,7 @@
               <td class="px-5 py-4">
                 <button
                   (click)="openCustomerDetail(customer)"
-                  class="p-2 hover:bg-emerald-500/10 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                  class="p-2 hover:bg-emerald-500/10 rounded-lg text-slate-500 dark:text-slate-400 hover:text-emerald-400 transition-colors"
                   title="Xem chi tiết & lịch sử mua hàng"
                 >
                   <span class="material-symbols-outlined text-sm">visibility</span>
@@ -154,7 +154,7 @@
     (click)="closeDetail()"
   >
     <div
-      class="bg-surface-dark border border-emerald-500/20 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      class="bg-white dark:bg-surface-dark border border-emerald-500/20 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       (click)="$event.stopPropagation()"
     >
       <div class="p-6 border-b border-emerald-500/10 flex items-center justify-between">
@@ -165,13 +165,13 @@
             }}</span>
           </div>
           <div>
-            <h3 class="text-lg font-bold text-slate-100">{{ selectedCustomer()!.fullName }}</h3>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ selectedCustomer()!.fullName }}</h3>
             <p class="text-xs text-slate-500">Thông tin khách hàng</p>
           </div>
         </div>
         <button
           (click)="closeDetail()"
-          class="text-slate-400 hover:text-white p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
         >
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -179,23 +179,23 @@
       <div class="p-6 space-y-6">
         <!-- Customer Info -->
         <div class="grid grid-cols-2 gap-4">
-          <div class="bg-slate-800/50 rounded-xl p-4">
+          <div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
             <p class="text-xs text-slate-500 mb-1">Email</p>
-            <p class="text-sm text-slate-200 font-medium">{{ selectedCustomer()!.email }}</p>
+            <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">{{ selectedCustomer()!.email }}</p>
           </div>
-          <div class="bg-slate-800/50 rounded-xl p-4">
+          <div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
             <p class="text-xs text-slate-500 mb-1">Điện thoại</p>
-            <p class="text-sm text-slate-200 font-medium">
+            <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">
               {{ selectedCustomer()!.phone || 'Chưa cập nhật' }}
             </p>
           </div>
-          <div class="bg-slate-800/50 rounded-xl p-4">
+          <div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
             <p class="text-xs text-slate-500 mb-1">Ngày đăng ký</p>
-            <p class="text-sm text-slate-200 font-medium">
+            <p class="text-sm text-slate-700 dark:text-slate-200 font-medium">
               {{ selectedCustomer()!.createdAt | date: 'dd/MM/yyyy HH:mm' }}
             </p>
           </div>
-          <div class="bg-slate-800/50 rounded-xl p-4">
+          <div class="bg-white dark:bg-slate-800/50 rounded-xl p-4">
             <p class="text-xs text-slate-500 mb-1">Tổng chi tiêu</p>
             <p class="text-sm text-emerald-400 font-bold">
               {{ getCustomerOrderTotal(customerOrders()) | number: '1.0-0' }}₫
@@ -205,7 +205,7 @@
 
         <!-- Order History -->
         <div>
-          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+          <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
             Lịch sử đơn hàng ({{ customerOrders().length }})
           </h4>
 
@@ -214,14 +214,14 @@
               <div
                 class="animate-spin size-6 border-2 border-emerald-500 border-t-transparent rounded-full"
               ></div>
-              <span class="ml-2 text-sm text-slate-400">Đang tải...</span>
+              <span class="ml-2 text-sm text-slate-500 dark:text-slate-400">Đang tải...</span>
             </div>
           } @else {
             @if (customerOrders().length) {
               <div class="space-y-2">
                 @for (order of customerOrders(); track order.orderId) {
                   <div
-                    class="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-3"
+                    class="flex items-center justify-between bg-white dark:bg-slate-800/50 rounded-lg px-4 py-3"
                   >
                     <div class="flex items-center gap-3">
                       <span class="text-emerald-400 font-mono font-bold text-xs">{{
@@ -246,7 +246,7 @@
                 }
               </div>
             } @else {
-              <div class="text-center py-8 bg-slate-800/30 rounded-xl">
+              <div class="text-center py-8 bg-white dark:bg-slate-800/30 rounded-xl">
                 <span class="material-symbols-outlined text-3xl text-slate-600">receipt_long</span>
                 <p class="text-sm text-slate-500 mt-2">Chưa có đơn hàng nào</p>
               </div>

@@ -11,9 +11,10 @@ import {
   ResendEmailDto,
   UpdateProfileDto,
 } from '../models/auth.models';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from '../models/auth.models';
 import { SocialAuthService } from '@abacritt/angularx-social-login';
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root',
@@ -32,30 +33,43 @@ export class AuthService {
   // Login thường
   login(credentials: LoginDto): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/login`, credentials)
-      .pipe(tap((res) => this.setSession(res)));
+      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, credentials)
+      .pipe(
+        map((res) => res.data),
+        tap((res) => this.setSession(res))
+      );
   }
 
   // Đăng ký
   register(data: RegisterDto): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/register`, data)
-      .pipe(tap((res) => this.setSession(res)));
+      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/register`, data)
+      .pipe(
+        map((res) => res.data),
+        tap((res) => this.setSession(res))
+      );
   }
 
   // Google Login - Gọi sang API C#
   googleLogin(idToken: string): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/google-login`, { idToken })
-      .pipe(tap((res) => this.setSession(res)));
+      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/google-login`, { idToken })
+      .pipe(
+        map((res) => res.data),
+        tap((res) => this.setSession(res))
+      );
   }
 
   forgotPassword(data: ForgotPasswordDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, data);
+    return this.http
+      .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/forgot-password`, data)
+      .pipe(map((res) => res.data));
   }
 
   resetPassword(data: ResetPasswordDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, data);
+    return this.http
+      .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/reset-password`, data)
+      .pipe(map((res) => res.data));
   }
 
   logout() {
@@ -64,9 +78,12 @@ export class AuthService {
     const refreshToken = localStorage.getItem('refreshToken');
     // Gọi API thu hồi refresh token phía server
     if (refreshToken) {
-      this.http.post(`${this.apiUrl}/logout`, { refreshToken }).subscribe();
+      this.http
+        .post<ApiResponse<object>>(`${this.apiUrl}/logout`, { refreshToken })
+        .pipe(map((res) => res.data))
+        .subscribe();
     }
-    
+
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken'); // ← THÊM
     localStorage.removeItem('user');
@@ -74,14 +91,17 @@ export class AuthService {
     if (this.socialAuthService) {
       // Chỉ gọi signOut nếu chắc chắn socialAuthService đã sẵn sàng
       // và có khả năng đang có user social
-      this.socialAuthService.signOut().then(() => {
-        console.log('Social signed out');
-      }).catch((err: unknown) => {
-        // Bỏ qua lỗi nếu provider chưa sẵn sàng (thường xảy ra khi logout tự động lúc khởi chạy)
-        if (err !== 'Login providers not ready yet') {
-          console.log('Google sign out error', err);
-        }
-      });
+      this.socialAuthService
+        .signOut()
+        .then(() => {
+          console.log('Social signed out');
+        })
+        .catch((err: unknown) => {
+          // Bỏ qua lỗi nếu provider chưa sẵn sàng (thường xảy ra khi logout tự động lúc khởi chạy)
+          if (err !== 'Login providers not ready yet') {
+            console.log('Google sign out error', err);
+          }
+        });
     }
   }
 
@@ -123,34 +143,48 @@ export class AuthService {
       throw new Error('No refresh token available');
     }
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/refresh-token`, { refreshToken })
-      .pipe(tap((res) => this.setSession(res)));
+      .post<ApiResponse<AuthResponse>>(`${this.apiUrl}/refresh-token`, { refreshToken })
+      .pipe(
+        map((res) => res.data),
+        tap((res) => this.setSession(res))
+      );
   }
 
   verifyEmail(data: VerifyEmailDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, data);
+    return this.http
+      .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/verify-email`, data)
+      .pipe(map((res) => res.data));
   }
 
   resendEmail(data: ResendEmailDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-email`, data);
+    return this.http
+      .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/resend-email`, data)
+      .pipe(map((res) => res.data));
   }
 
   changePassword(data: ChangePasswordDto): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/change-password`, data);
+    return this.http
+      .post<ApiResponse<{ message: string }>>(`${this.apiUrl}/change-password`, data)
+      .pipe(map((res) => res.data));
   }
 
   updateProfile(data: UpdateProfileDto): Observable<UserDto> {
-    return this.http.put<UserDto>(`${this.profileUrl}`, data).pipe(
-      tap((user) => {
-        if (this.isBrowser) {
-          localStorage.setItem('user', JSON.stringify(user));
-          this.currentUserSubject.next(user);
-        }
-      }),
-    );
+    return this.http
+      .put<ApiResponse<UserDto>>(`${this.profileUrl}`, data)
+      .pipe(
+        map((res) => res.data),
+        tap((user) => {
+          if (this.isBrowser) {
+            localStorage.setItem('user', JSON.stringify(user));
+            this.currentUserSubject.next(user);
+          }
+        })
+      );
   }
 
   getProfile(): Observable<UserDto> {
-    return this.http.get<UserDto>(this.profileUrl);
+    return this.http
+      .get<ApiResponse<UserDto>>(this.profileUrl)
+      .pipe(map((res) => res.data));
   }
 }

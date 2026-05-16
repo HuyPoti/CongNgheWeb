@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface ActivityLogDto {
   logId: string;
@@ -47,6 +49,8 @@ export class ActivityLogService {
     if (opts?.fromDate) params = params.set('from', opts.fromDate);
     if (opts?.toDate) params = params.set('to', opts.toDate);
 
-    return this.http.get<PagedResult<ActivityLogDto>>(this.baseUrl, { params });
+    return this.http
+      .get<ApiResponse<PagedResult<ActivityLogDto>>>(this.baseUrl, { params })
+      .pipe(map((res) => res.data));
   }
 }

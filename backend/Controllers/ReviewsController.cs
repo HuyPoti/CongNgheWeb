@@ -18,148 +18,132 @@ public class ReviewsController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResult<ReviewDto>>>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var result = await _reviewService.GetAllAsync(ct);
-        return Ok(result);
+        var result = await _reviewService.GetAllAsync(page, pageSize, ct);
+        return Ok(ApiResponse.Ok(result));
     }
 
-    // GET: api/reviews/product/{productId}
     [HttpGet("product/{productId}")]
-    public async Task<IActionResult> GetByProductId(Guid productId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<PagedResult<ReviewDto>>>> GetByProductId(
+        Guid productId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken ct = default)
     {
-        var reviews = await _reviewService.GetByProductIdAsync(productId, ct);
-        return Ok(reviews);
+        var reviews = await _reviewService.GetByProductIdAsync(productId, page, pageSize, ct);
+        return Ok(ApiResponse.Ok(reviews));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ReviewDto>>> GetById(Guid id, CancellationToken ct)
     {
         var result = await _reviewService.GetByIdAsync(id, ct);
-        if (result == null) return NotFound();
-        return Ok(result);
+        if (result == null) return NotFound(ApiResponse.Fail("Không tìm thấy đánh giá"));
+        return Ok(ApiResponse.Ok(result));
     }
 
-    // POST api/reviews
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateReviewDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ReviewDto>>> Create([FromBody] CreateReviewDto dto, CancellationToken ct)
     {
         var result = await _reviewService.CreateAsync(dto, ct);
-        if (result == null) return BadRequest("Failed to create review");
-        return CreatedAtAction(nameof(GetById), new { id = result.ReviewId }, result);
+        if (result == null) return BadRequest(ApiResponse.Fail("Failed to create review"));
+        return CreatedAtAction(nameof(GetById), new { id = result.ReviewId }, ApiResponse.Ok(result));
     }
 
     [HttpPatch("{id}/active")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> UpdateActive(Guid id, [FromBody] UpdateReviewActiveDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ReviewDto>>> UpdateActive(Guid id, [FromBody] UpdateReviewActiveDto dto, CancellationToken ct)
     {
         var result = await _reviewService.UpdateActiveAsync(id, dto, ct);
-        if (result == null) return NotFound();
-        return Ok(result);
+        if (result == null) return NotFound(ApiResponse.Fail("Không tìm thấy đánh giá"));
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken ct)
     {
         var success = await _reviewService.DeleteAsync(id, ct);
-        if (!success) return NotFound();
-        return NoContent();
+        if (!success) return NotFound(ApiResponse.Fail("Không tìm thấy đánh giá"));
+        return Ok(ApiResponse.Ok(new { message = "Review deleted successfully" }));
     }
 
-    // ============================
-    // REVIEW REPLIES
-    // ============================
-
-    // POST api/reviews/{reviewId}/replies
     [HttpPost("{reviewId}/replies")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> CreateReply(Guid reviewId, [FromBody] CreateReviewReplyDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ReviewReplyDto>>> CreateReply(Guid reviewId, [FromBody] CreateReviewReplyDto dto, CancellationToken ct)
     {
         var result = await _reviewService.CreateReplyAsync(reviewId, dto, ct);
-        if (result == null) return NotFound("Review không tồn tại");
-        return Ok(result);
+        if (result == null) return NotFound(ApiResponse.Fail("Review không tồn tại"));
+        return Ok(ApiResponse.Ok(result));
     }
 
-    // PUT api/reviews/replies/{replyId}
     [HttpPut("replies/{replyId}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> UpdateReply(Guid replyId, [FromBody] UpdateReviewReplyDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ReviewReplyDto>>> UpdateReply(Guid replyId, [FromBody] UpdateReviewReplyDto dto, CancellationToken ct)
     {
         var result = await _reviewService.UpdateReplyAsync(replyId, dto, ct);
-        if (result == null) return NotFound("Reply không tồn tại");
-        return Ok(result);
+        if (result == null) return NotFound(ApiResponse.Fail("Reply không tồn tại"));
+        return Ok(ApiResponse.Ok(result));
     }
 
-    // DELETE api/reviews/replies/{replyId}
     [HttpDelete("replies/{replyId}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> DeleteReply(Guid replyId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteReply(Guid replyId, CancellationToken ct)
     {
         var success = await _reviewService.DeleteReplyAsync(replyId, ct);
-        if (!success) return NotFound();
-        return NoContent();
+        if (!success) return NotFound(ApiResponse.Fail("Reply not found"));
+        return Ok(ApiResponse.Ok(new { message = "Reply deleted successfully" }));
     }
 
-    // ============================
-    // REVIEW IMAGES
-    // ============================
-
-    // POST api/reviews/{reviewId}/images
     [HttpPost("{reviewId}/images")]
-    public async Task<IActionResult> AddImage(Guid reviewId, [FromBody] CreateReviewImageDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ReviewImageDto>>> AddImage(Guid reviewId, [FromBody] CreateReviewImageDto dto, CancellationToken ct)
     {
         var result = await _reviewService.AddImageAsync(reviewId, dto, ct);
-        if (result == null) return NotFound("Review không tồn tại");
-        return Ok(result);
+        if (result == null) return NotFound(ApiResponse.Fail("Review không tồn tại"));
+        return Ok(ApiResponse.Ok(result));
     }
 
-    // DELETE api/reviews/images/{imageId}
     [HttpDelete("images/{imageId}")]
-    public async Task<IActionResult> DeleteImage(Guid imageId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteImage(Guid imageId, CancellationToken ct)
     {
         var success = await _reviewService.DeleteImageAsync(imageId, ct);
-        if (!success) return NotFound();
-        return NoContent();
+        if (!success) return NotFound(ApiResponse.Fail("Image not found"));
+        return Ok(ApiResponse.Ok(new { message = "Image deleted successfully" }));
     }
 
-    // GET api/reviews/{reviewId}/images
     [HttpGet("{reviewId}/images")]
-    public async Task<IActionResult> GetImages(Guid reviewId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<List<ReviewImageDto>>>> GetImages(Guid reviewId, CancellationToken ct)
     {
         var result = await _reviewService.GetImagesByReviewIdAsync(reviewId, ct);
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
-    // ============================
-    // REVIEW HELPFUL VOTES
-    // ============================
-
-    // POST api/reviews/{reviewId}/votes/toggle
     [HttpPost("{reviewId}/votes/toggle")]
-    public async Task<IActionResult> ToggleVote(Guid reviewId, [FromBody] ToggleVoteDto dto, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> ToggleVote(Guid reviewId, [FromBody] ToggleVoteDto dto, CancellationToken ct)
     {
         var success = await _reviewService.ToggleVoteAsync(reviewId, dto, ct);
-        if (!success) return NotFound("Review không tồn tại");
+        if (!success) return NotFound(ApiResponse.Fail("Review không tồn tại"));
 
         var count = await _reviewService.GetVoteCountAsync(reviewId, ct);
         var hasVoted = await _reviewService.HasUserVotedAsync(reviewId, dto.UserId, ct);
-        return Ok(new { helpfulCount = count, hasVoted });
+        return Ok(ApiResponse.Ok(new { helpfulCount = count, hasVoted }));
     }
 
-    // GET api/reviews/{reviewId}/votes/count
     [HttpGet("{reviewId}/votes/count")]
-    public async Task<IActionResult> GetVoteCount(Guid reviewId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> GetVoteCount(Guid reviewId, CancellationToken ct)
     {
         var count = await _reviewService.GetVoteCountAsync(reviewId, ct);
-        return Ok(new { helpfulCount = count });
+        return Ok(ApiResponse.Ok(new { helpfulCount = count }));
     }
 
-    // GET api/reviews/{reviewId}/votes/check/{userId}
     [HttpGet("{reviewId}/votes/check/{userId}")]
-    public async Task<IActionResult> CheckUserVoted(Guid reviewId, Guid userId, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<object>>> CheckUserVoted(Guid reviewId, Guid userId, CancellationToken ct)
     {
         var hasVoted = await _reviewService.HasUserVotedAsync(reviewId, userId, ct);
-        return Ok(new { hasVoted });
+        return Ok(ApiResponse.Ok(new { hasVoted }));
     }
 }

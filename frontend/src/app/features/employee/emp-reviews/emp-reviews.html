@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="flex items-end justify-between mb-8">
     <div>
-      <h2 class="text-3xl font-black text-slate-100 mb-2">Phản hồi Đánh giá</h2>
+      <h2 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">Phản hồi Đánh giá</h2>
       <p class="text-slate-500">
         {{ reviewStats.total }} đánh giá · Trung bình {{ reviewStats.avgRating }}⭐ ·
         {{ reviewStats.needReply }} chưa phản hồi
@@ -46,7 +46,7 @@
       track stat.label
     ) {
       <div
-        class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all"
+        class="bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-5 flex items-center gap-4 hover:border-emerald-500/30 transition-all"
       >
         <div class="size-12 rounded-xl flex items-center justify-center" [ngClass]="stat.bg">
           <span class="material-symbols-outlined text-2xl" [ngClass]="stat.color">{{
@@ -54,7 +54,7 @@
           }}</span>
         </div>
         <div>
-          <p class="text-2xl font-bold text-slate-100">{{ stat.value }}</p>
+          <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ stat.value }}</p>
           <p class="text-xs text-slate-500">{{ stat.label }}</p>
         </div>
       </div>
@@ -73,7 +73,7 @@
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
         placeholder="Tìm theo sản phẩm, khách hàng..."
-        class="w-full bg-surface-dark/40 border border-emerald-500/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40"
+        class="w-full bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40"
       />
     </div>
     <div class="flex gap-2">
@@ -83,7 +83,7 @@
         [ngClass]="
           ratingFilter() === null
             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-            : 'text-slate-500 hover:text-slate-300 border border-transparent'
+            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-transparent'
         "
       >
         Tất cả
@@ -95,7 +95,7 @@
           [ngClass]="
             ratingFilter() === r
               ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-              : 'text-slate-500 hover:text-slate-300 border border-transparent'
+              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border border-transparent'
           "
         >
           {{ r }}⭐
@@ -110,14 +110,14 @@
       <div
         class="animate-spin size-8 border-2 border-emerald-500 border-t-transparent rounded-full"
       ></div>
-      <span class="ml-3 text-slate-400">Đang tải...</span>
+      <span class="ml-3 text-slate-500 dark:text-slate-400">Đang tải...</span>
     </div>
   } @else {
     <!-- Reviews List -->
     <div class="space-y-4">
       @for (review of filteredReviews; track review.reviewId) {
         <div
-          class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-6 hover:border-emerald-500/20 transition-all"
+          class="bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-6 hover:border-emerald-500/20 transition-all"
         >
           <!-- Review Header -->
           <div class="flex items-start justify-between mb-4">
@@ -128,7 +128,7 @@
                 }}</span>
               </div>
               <div>
-                <p class="text-sm font-semibold text-slate-200">{{ review.userName }}</p>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ review.userName }}</p>
                 <p class="text-xs text-slate-500">
                   {{ review.createdAt | date: 'dd/MM/yyyy HH:mm' }}
                 </p>
@@ -155,14 +155,14 @@
 
           <!-- Product Name -->
           <div class="mb-3">
-            <span class="text-xs text-slate-500 bg-slate-800/50 px-2 py-1 rounded">
+            <span class="text-xs text-slate-500 bg-white dark:bg-slate-800/50 px-2 py-1 rounded">
               <span class="material-symbols-outlined text-xs align-middle mr-1">inventory_2</span>
               {{ review.productName }}
             </span>
           </div>
 
           <!-- Comment -->
-          <p class="text-sm text-slate-300 leading-relaxed mb-4">{{ review.comment }}</p>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">{{ review.comment }}</p>
 
           <!-- Review Images -->
           @if (review.images && review.images.length) {
@@ -191,7 +191,7 @@
                       reply.createdAt | date: 'dd/MM/yyyy HH:mm'
                     }}</span>
                   </div>
-                  <p class="text-sm text-slate-300">{{ reply.content }}</p>
+                  <p class="text-sm text-slate-600 dark:text-slate-300">{{ reply.content }}</p>
                 </div>
               }
             </div>
@@ -221,12 +221,12 @@
                   (ngModelChange)="replyContent.set($event)"
                   placeholder="Nhập nội dung phản hồi cho khách hàng..."
                   rows="3"
-                  class="w-full bg-slate-800/50 border border-emerald-500/20 rounded-xl p-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40 resize-none"
+                  class="w-full bg-white dark:bg-slate-800/50 border border-emerald-500/20 rounded-xl p-4 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40 resize-none"
                 ></textarea>
                 <div class="flex justify-end gap-2">
                   <button
                     (click)="toggleReplyForm(review.reviewId)"
-                    class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                    class="px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
                   >
                     Hủy
                   </button>
@@ -248,7 +248,7 @@
           </div>
         </div>
       } @empty {
-        <div class="bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-16 text-center">
+        <div class="bg-white dark:bg-surface-dark/40 border border-emerald-500/10 rounded-xl p-16 text-center">
           <span class="material-symbols-outlined text-4xl text-slate-600 mb-2">rate_review</span>
           <p class="text-slate-500">Không có đánh giá nào</p>
         </div>

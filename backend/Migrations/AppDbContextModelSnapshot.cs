@@ -247,6 +247,38 @@ namespace backend.Migrations
                     b.ToTable("brands", (string)null);
                 });
 
+            modelBuilder.Entity("backend.Models.CartItem", b =>
+                {
+                    b.Property<Guid>("CartItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("cart_item_id");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("added_at");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("CartItemId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("cart_items", (string)null);
+                });
+
             modelBuilder.Entity("backend.Models.Category", b =>
                 {
                     b.Property<Guid>("CategoryId")
@@ -476,6 +508,7 @@ namespace backend.Migrations
                         .HasColumnName("product_id");
 
                     b.Property<int>("SoldCount")
+                        .IsConcurrencyToken()
                         .HasColumnType("integer")
                         .HasColumnName("sold_count");
 
@@ -845,11 +878,14 @@ namespace backend.Migrations
 
                     b.HasIndex("CouponId");
 
+                    b.HasIndex("OrderCode")
+                        .IsUnique();
+
                     b.HasIndex("ShippingAddressId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("orders");
+                    b.ToTable("orders", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.OrderItem", b =>
@@ -1706,6 +1742,25 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("backend.Models.CartItem", b =>
+                {
+                    b.HasOne("backend.Models.Product", "Product")
+                        .WithMany("CartItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.User", "User")
+                        .WithMany("CartItems")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("backend.Models.Category", b =>
                 {
                     b.HasOne("backend.Models.Category", "Parent")
@@ -2197,6 +2252,8 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Product", b =>
                 {
+                    b.Navigation("CartItems");
+
                     b.Navigation("FlashSaleItems");
 
                     b.Navigation("Images");
@@ -2231,6 +2288,8 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.User", b =>
                 {
+                    b.Navigation("CartItems");
+
                     b.Navigation("InventoryReceipts");
 
                     b.Navigation("InventoryTransactions");

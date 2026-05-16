@@ -32,20 +32,17 @@ public class OrdersController : ControllerBase
 
     // POST: api/orders
     [HttpPost]
-    public async Task<IActionResult> Create(
+    public async Task<ActionResult<ApiResponse<OrderDetailDto>>> Create(
         [FromBody] CreateOrderDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         var order = await _service.CreateAsync(dto, cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, order);
+        return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, ApiResponse.Ok(order));
     }
 
     // GET: api/orders?status=&userId=&page=1&pageSize=10
     [HttpGet]
-    public async Task<IActionResult> GetAll(
+    public async Task<ActionResult<ApiResponse<PagedResult<OrderDto>>>> GetAll(
             string? status,
             Guid? userId,
             int page = 1,
@@ -69,12 +66,12 @@ public class OrdersController : ControllerBase
             cancellationToken
         );
 
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
     // GET: api/orders/{id}
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(
+    public async Task<ActionResult<ApiResponse<OrderDetailDto>>> GetById(
         Guid id,
         CancellationToken cancellationToken = default)
     {
@@ -82,76 +79,44 @@ public class OrdersController : ControllerBase
         var userId = isAdminOrStaff ? null : GetCurrentUserId();
         
         var order = await _service.GetByIdAsync(id, userId, cancellationToken);
-        if (order == null) return NotFound(new { message = "Orders not found" });
+        if (order == null) return NotFound(ApiResponse.Fail("Order not found"));
 
-        return Ok(order);
+        return Ok(ApiResponse.Ok(order));
     }
 
     // PUT: api/orders/{id}
     [HttpPut("{id}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> Update(
+    public async Task<ActionResult<ApiResponse<object>>> Update(
         Guid id,
         [FromBody] UpdateOrderDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        try
-        {
-            var result = await _service.UpdateAsync(id, dto, cancellationToken);
-            return Ok(new { message = "Order updated successfully" });
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var currentUserId = GetCurrentUserId() ?? Guid.Empty;
+        await _service.UpdateAsync(id, dto, currentUserId, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Order updated successfully" }));
     }
 
     // POST: api/orders/{id}/cancel
     [HttpPost("{id}/cancel")]
     [Authorize]
-    public async Task<IActionResult> Cancel(
+    public async Task<ActionResult<ApiResponse<object>>> Cancel(
         Guid id,
         [FromBody] CancelOrderDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         var currentUserId = GetCurrentUserId();
-
-        try
-        {
-            var result = await _service.CancelAsync(id, dto, currentUserId, cancellationToken);
-            return Ok(new { message = "Order cancelled successfully" });
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (BadRequestException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await _service.CancelAsync(id, dto, currentUserId, cancellationToken);
+        return Ok(ApiResponse.Ok(new { message = "Order cancelled successfully" }));
     }
 
     // GET: api/orders/{id}/history
     [HttpGet("{id}/history")]
-    public async Task<IActionResult> GetStatusHistory(
+    public async Task<ActionResult<ApiResponse<List<OrderStatusHistoryDto>>>> GetStatusHistory(
         Guid id,
         CancellationToken cancellationToken = default)
     {
         var history = await _service.GetStatusHistoryAsync(id, cancellationToken);
-        return Ok(history);
+        return Ok(ApiResponse.Ok(history));
     }
 }

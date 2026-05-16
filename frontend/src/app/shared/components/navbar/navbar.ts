@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { ThemeService } from '../../../core/services/theme';
+import { ThemeService } from '../../../core/utils/theme.util';
 import { CommonModule } from '@angular/common';
 import { SearchOverlay } from '../search-overlay/search-overlay';
 import { LanguageService } from '../../../core/services/language.service';

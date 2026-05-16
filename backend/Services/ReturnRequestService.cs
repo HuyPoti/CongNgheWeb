@@ -1,25 +1,26 @@
 using AutoMapper;
-using backend.Data;
+using backend.UnitOfWork;
 using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using backend.Constants;
 
 namespace backend.Services;
 
 public class ReturnRequestService : IReturnRequestService
 {
-    private readonly AppDbContext _context;
+    private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
 
-    public ReturnRequestService(AppDbContext context, IMapper mapper)
+    public ReturnRequestService(IUnitOfWork uow, IMapper mapper)
     {
-        _context = context;
+        _uow = uow;
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<ReturnRequestDto>> GetAllAsync()
+    public async Task<IEnumerable<ReturnRequestDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var requests = await _context.ReturnRequests
+        var requests = await _uow.ReturnRequests.Query()
             .Include(r => r.Order)
             .Include(r => r.User)
             .Include(r => r.ProcessedByUser)
@@ -29,14 +30,14 @@ public class ReturnRequestService : IReturnRequestService
                     .ThenInclude(oi => oi.Product!)
                         .ThenInclude(p => p.Images)
             .OrderByDescending(r => r.CreatedAt)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return _mapper.Map<IEnumerable<ReturnRequestDto>>(requests);
     }
 
-    public async Task<ReturnRequestDto?> GetByIdAsync(Guid id)
+    public async Task<ReturnRequestDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var request = await _context.ReturnRequests
+        var request = await _uow.ReturnRequests.Query()
             .Include(r => r.Order)
             .Include(r => r.User)
             .Include(r => r.ProcessedByUser)
@@ -46,14 +47,14 @@ public class ReturnRequestService : IReturnRequestService
                     .ThenInclude(oi => oi.Product!)
                         .ThenInclude(p => p.Images)
 
-            .FirstOrDefaultAsync(r => r.ReturnId == id);
+            .FirstOrDefaultAsync(r => r.ReturnId == id, cancellationToken);
 
         return _mapper.Map<ReturnRequestDto>(request);
     }
 
-    public async Task<ReturnRequestDto?> GetByOrderIdAsync(Guid orderId)
+    public async Task<ReturnRequestDto?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
-        var request = await _context.ReturnRequests
+        var request = await _uow.ReturnRequests.Query()
             .Include(r => r.Order)
             .Include(r => r.User)
             .Include(r => r.ProcessedByUser)
@@ -63,21 +64,21 @@ public class ReturnRequestService : IReturnRequestService
                     .ThenInclude(oi => oi.Product!)
                         .ThenInclude(p => p.Images)
 
-            .FirstOrDefaultAsync(r => r.OrderId == orderId);
+            .FirstOrDefaultAsync(r => r.OrderId == orderId, cancellationToken);
 
         return _mapper.Map<ReturnRequestDto>(request);
     }
 
-    public async Task<ReturnRequestDto> CreateAsync(Guid userId, CreateReturnRequestDto dto)
+    public async Task<ReturnRequestDto> CreateAsync(Guid userId, CreateReturnRequestDto dto, CancellationToken cancellationToken = default)
     {
         // 1. Kiểm tra đơn hàng
-        var order = await _context.Orders
-            .FirstOrDefaultAsync(o => o.OrderId == dto.OrderId && o.UserId == userId);
+        var order = await _uow.Orders.Query()
+            .FirstOrDefaultAsync(o => o.OrderId == dto.OrderId && o.UserId == userId, cancellationToken);
 
         if (order == null) throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
 
         // 2. Kiểm tra trạng thái đơn hàng (Phải là 5 - Delivered)
-        if (order.Status != 5)
+        if (order.Status != OrderStatus.Delivered)
         {
             throw new InvalidOperationException("Chỉ có thể đổi trả đơn hàng đã giao thành công.");
         }
@@ -91,7 +92,7 @@ public class ReturnRequestService : IReturnRequestService
         }
 
         // 4. Kiểm tra xem đã có yêu cầu nào chưa
-        var existingRequest = await _context.ReturnRequests.AnyAsync(r => r.OrderId == dto.OrderId);
+        var existingRequest = await _uow.ReturnRequests.Query().AnyAsync(r => r.OrderId == dto.OrderId, cancellationToken);
         if (existingRequest)
         {
             throw new InvalidOperationException("Đơn hàng này đã có yêu cầu đổi trả.");
@@ -105,7 +106,7 @@ public class ReturnRequestService : IReturnRequestService
             UserId = userId,
             Reason = dto.Reason,
             Description = dto.Description,
-            Status = "pending",
+            Status = ReturnRequestStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -130,18 +131,18 @@ public class ReturnRequestService : IReturnRequestService
             });
         }
 
-        _context.ReturnRequests.Add(returnRequest);
-        await _context.SaveChangesAsync();
-
-        return await GetByIdAsync(returnRequest.ReturnId) ?? _mapper.Map<ReturnRequestDto>(returnRequest);
+        _uow.ReturnRequests.Insert(returnRequest);
+        await _uow.SaveAsync(cancellationToken);
+ 
+        return await GetByIdAsync(returnRequest.ReturnId, cancellationToken) ?? _mapper.Map<ReturnRequestDto>(returnRequest);
     }
 
-    public async Task<ReturnRequestDto> ProcessAsync(Guid adminId, Guid returnId, UpdateReturnRequestDto dto)
+    public async Task<ReturnRequestDto> ProcessAsync(Guid adminId, Guid returnId, UpdateReturnRequestDto dto, CancellationToken cancellationToken = default)
     {
-        var request = await _context.ReturnRequests
+        var request = await _uow.ReturnRequests.Query()
             .Include(r => r.Items)
                 .ThenInclude(i => i.OrderItem)
-            .FirstOrDefaultAsync(r => r.ReturnId == returnId);
+            .FirstOrDefaultAsync(r => r.ReturnId == returnId, cancellationToken);
 
         if (request == null) throw new KeyNotFoundException("Không tìm thấy yêu cầu đổi trả.");
 
@@ -154,13 +155,14 @@ public class ReturnRequestService : IReturnRequestService
         request.UpdatedAt = DateTime.UtcNow;
 
         // Logic Hoàn kho khi Approve
-        if (oldStatus != "approved" && dto.Status == "approved")
+        if (oldStatus != ReturnRequestStatus.Approved && dto.Status == ReturnRequestStatus.Approved)
         {
             foreach (var item in request.Items)
             {
                 if (item.OrderItem != null)
                 {
-                    var product = await _context.Products.FindAsync(item.OrderItem.ProductId);
+                    var product = await _uow.Products.Query()
+                        .FirstOrDefaultAsync(p => p.ProductId == item.OrderItem.ProductId, cancellationToken);
                     if (product != null)
                     {
                         product.StockQuantity += item.Quantity;
@@ -169,7 +171,7 @@ public class ReturnRequestService : IReturnRequestService
             }
         }
 
-        await _context.SaveChangesAsync();
-        return await GetByIdAsync(returnId) ?? _mapper.Map<ReturnRequestDto>(request);
+        await _uow.SaveAsync(cancellationToken);
+        return await GetByIdAsync(returnId, cancellationToken) ?? _mapper.Map<ReturnRequestDto>(request);
     }
 }
