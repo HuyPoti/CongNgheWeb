@@ -29,27 +29,17 @@ public class ExceptionMiddleware
     {
         context.Response.ContentType = "application/json";
 
-        var response = new
+        context.Response.StatusCode = ex switch
         {
-            message = ex.Message
+            NotFoundException => (int)HttpStatusCode.NotFound,
+            BadRequestException => (int)HttpStatusCode.BadRequest,
+            UnauthorizedException => (int)HttpStatusCode.Unauthorized,
+            _ => (int)HttpStatusCode.InternalServerError
         };
 
-        switch (ex)
-        {
-            case NotFoundException:
-                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                break;
-
-            case BadRequestException:
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                break;
-
-            default:
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                break;
-        }
-
-        var json = JsonSerializer.Serialize(response);
+        var response = DTOs.ApiResponse.Fail(ex.Message);
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var json = JsonSerializer.Serialize(response, options);
         await context.Response.WriteAsync(json);
     }
 }

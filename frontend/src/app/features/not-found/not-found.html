@@ -1,0 +1,36 @@
+<div class="min-h-screen bg-background-dark flex items-center justify-center p-4 overflow-hidden relative">
+  <!-- Background effects -->
+  <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 blur-[120px] rounded-full animate-pulse"></div>
+  <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" style="animation-delay: 2s"></div>
+
+  <div class="max-w-2xl w-full text-center relative z-10">
+    <!-- 404 text with neon effect -->
+    <h1 class="text-[150px] md:text-[200px] font-black leading-none mb-4 select-none">
+      <span class="text-transparent bg-clip-text bg-gradient-to-b from-primary to-primary/20 drop-shadow-[0_0_20px_rgba(0,229,255,0.3)]">4</span>
+      <span class="text-transparent bg-clip-text bg-gradient-to-b from-slate-200 to-slate-500 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">0</span>
+      <span class="text-transparent bg-clip-text bg-gradient-to-b from-emerald-400 to-emerald-900/20 drop-shadow-[0_0_20px_rgba(16,185,129,0.3)]">4</span>
+    </h1>
+
+    <div class="space-y-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-slate-100 tracking-tight">
+        Lạc lối trong không gian số?
+      </h2>
+      <p class="text-slate-400 text-lg max-w-lg mx-auto">
+        Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển sang một chiều không gian khác.
+      </p>
+
+      <div class="flex items-center justify-center mt-12">
+        <a 
+          [routerLink]="homeUrl" 
+          class="px-10 py-4 bg-primary text-background-dark font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(0,229,255,0.4)] flex items-center gap-2 text-lg"
+        >
+          <span class="material-symbols-outlined">home</span>
+          Về Trang Chủ
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decorative grid -->
+  <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 1px 1px, #334155 1px, transparent 0); background-size: 40px 40px;"></div>
+</div>

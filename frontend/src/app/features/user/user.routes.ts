@@ -1,9 +1,12 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const USER_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./user-layout/user-layout').then(m => m.UserLayout),
+    canActivate: [roleGuard],
+    data: { roles: ['customer'] }, // Chỉ cho phép khách hàng vào khu vực cá nhân này
     children: [
       { path: 'profile', loadComponent: () => import('./profile/profile').then(m => m.Profile) },
       { path: 'orders', loadComponent: () => import('./orders/orders').then(m => m.Orders) },

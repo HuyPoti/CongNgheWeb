@@ -5,6 +5,7 @@
   import { AuthService } from '../../../core/services/auth.service';
   import { CloudinaryService } from '../../../core/services/cloudinary.service';
   import { ToastService } from '../../../core/services/toast.service';
+  import { LanguageService } from '../../../core/services/language.service';
   import { UserDto, UpdateProfileDto } from '../../../core/models/auth.models';
 
 @Component({
@@ -17,6 +18,7 @@ export class Profile implements OnInit {
   authService = inject(AuthService);
   cloudinaryService = inject(CloudinaryService);
   toastService = inject(ToastService);
+  langService = inject(LanguageService);
   user = signal<UserDto | null>(null);
 
   // Form fields
@@ -30,10 +32,12 @@ export class Profile implements OnInit {
   ngOnInit() {
     this.authService.getProfile().subscribe({
       next: (data) => {
-        this.user.set(data);
-        this.fullName = data.fullName;
-        this.phone = data.phone || '';
-        this.avatarPreview.set(data.avatarUrl || null);
+        if (data) {
+          this.user.set(data);
+          this.fullName = data.fullName;
+          this.phone = data.phone || '';
+          this.avatarPreview.set(data.avatarUrl || null);
+        }
       },
     });
   }
@@ -76,11 +80,11 @@ export class Profile implements OnInit {
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('user', JSON.stringify(res.user));
         }
-        this.toastService.success("Cập nhật ảnh đại diện thành công!");
+        this.toastService.success(this.langService.instant('user.profile_avatar_success'));
       },
       error: (err) => {
         this.isUploading.set(false);
-        this.toastService.error(err.error?.message || 'Lỗi upload ảnh.');
+        this.toastService.error(err.error?.message || this.langService.instant('user.profile_avatar_error'));
       },
     })
   }
@@ -93,17 +97,17 @@ export class Profile implements OnInit {
     };
 
     if (!this.fullName || this.fullName.trim().length === 0) {
-      this.toastService.warning('Họ và tên không được để trống!');
+      this.toastService.warning(this.langService.instant('user.profile_name_required'));
       return;
     }
 
     this.authService.updateProfile(dto).subscribe({
       next: (updatedUser) => {
         this.user.set(updatedUser);
-        this.toastService.success('Cập nhật thông tin cá nhân thành công!');
+        this.toastService.success(this.langService.instant('user.profile_update_success'));
       },
       error: (err) => {
-        let errorMsg = 'Không thể cập nhật thông tin.';
+        let errorMsg = this.langService.instant('user.profile_update_error');
 
         if (err.error?.message) {
           errorMsg = err.error.message;

@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Category, CreateCategory, UpdateCategory } from '../models/category.model';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -20,7 +21,8 @@ export class CategoryService {
     if (this.categoriesCache) {
       return of(this.categoriesCache);
     }
-    return this.http.get<Category[]>(this.apiUrl).pipe(
+    return this.http.get<ApiResponse<Category[]>>(this.apiUrl).pipe(
+      map((res) => res.data),
       tap((categories) => {
         this.categoriesCache = categories;
       }),
@@ -28,17 +30,25 @@ export class CategoryService {
   }
 
   getById(id: string): Observable<Category> {
-    return this.http.get<Category>(`${this.apiUrl}/${id}`);
+    return this.http.get<ApiResponse<Category>>(`${this.apiUrl}/${id}`).pipe(map((res) => res.data));
   }
 
   create(category: CreateCategory): Observable<Category> {
-    return this.http.post<Category>(this.apiUrl, category).pipe(tap(() => this.clearCache()));
+    return this.http
+      .post<ApiResponse<Category>>(this.apiUrl, category)
+      .pipe(
+        map((res) => res.data),
+        tap(() => this.clearCache())
+      );
   }
 
   update(id: string, category: UpdateCategory): Observable<Category> {
     return this.http
-      .put<Category>(`${this.apiUrl}/${id}`, category)
-      .pipe(tap(() => this.clearCache()));
+      .put<ApiResponse<Category>>(`${this.apiUrl}/${id}`, category)
+      .pipe(
+        map((res) => res.data),
+        tap(() => this.clearCache())
+      );
   }
 
   delete(id: string): Observable<void> {

@@ -18,139 +18,70 @@ public class InventoryController(IInventoryService inventoryService) : Controlle
         return Guid.Parse(idStr);
     }
 
-    private IActionResult Success<T>(T data, string message = "Success")
-    {
-        return Ok(new { status = "success", data, message });
-    }
-
-    private IActionResult Error(string message, string details = "")
-    {
-        return BadRequest(new { status = "error", message, error = new { details } });
-    }
-
     [HttpGet("receipts")]
-    public async Task<IActionResult> GetReceipts(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<List<InventoryReceiptDto>>>> GetReceipts(CancellationToken cancellationToken)
     {
-        try
-        {
-            var receipts = await inventoryService.GetReceiptsAsync(cancellationToken);
-            return Success(receipts);
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to get receipts", ex.Message);
-        }
+        var receipts = await inventoryService.GetReceiptsAsync(cancellationToken);
+        return Ok(ApiResponse.Ok(receipts));
     }
 
     [HttpGet("receipts/{id}")]
-    public async Task<IActionResult> GetReceiptById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<InventoryReceiptDto>>> GetReceiptById(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var receipt = await inventoryService.GetReceiptByIdAsync(id, cancellationToken);
-            if (receipt == null) return NotFound(new { status = "error", message = "Receipt not found" });
-            return Success(receipt);
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to get receipt", ex.Message);
-        }
+        var receipt = await inventoryService.GetReceiptByIdAsync(id, cancellationToken);
+        if (receipt == null) return NotFound(ApiResponse.Fail("Receipt not found"));
+        return Ok(ApiResponse.Ok(receipt));
     }
 
     [HttpPost("receipts")]
-    public async Task<IActionResult> CreateReceipt([FromBody] CreateInventoryReceiptDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<InventoryReceiptDto>>> CreateReceipt([FromBody] CreateInventoryReceiptDto dto, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        
-        try
-        {
-            var userId = GetUserId();
-            var receipt = await inventoryService.CreateReceiptAsync(dto, userId, cancellationToken);
-            return Success(receipt, "Receipt created successfully as Draft");
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to create receipt", ex.Message);
-        }
+        var userId = GetUserId();
+        var receipt = await inventoryService.CreateReceiptAsync(dto, userId, cancellationToken);
+        return Ok(ApiResponse.Ok(receipt, "Receipt created successfully as Draft"));
     }
 
     [HttpPatch("receipts/{id}/complete")]
-    public async Task<IActionResult> CompleteReceipt(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<InventoryReceiptDto>>> CompleteReceipt(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            var userId = GetUserId();
-            var receipt = await inventoryService.CompleteReceiptAsync(id, userId, cancellationToken);
-            if (receipt == null) return NotFound(new { status = "error", message = "Receipt not found" });
-            return Success(receipt, "Receipt completed successfully");
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to complete receipt", ex.Message);
-        }
+        var userId = GetUserId();
+        var receipt = await inventoryService.CompleteReceiptAsync(id, userId, cancellationToken);
+        if (receipt == null) return NotFound(ApiResponse.Fail("Receipt not found"));
+        return Ok(ApiResponse.Ok(receipt, "Receipt completed successfully"));
     }
 
     [HttpPatch("receipts/{id}/cancel")]
-    public async Task<IActionResult> CancelReceipt(Guid id, [FromBody] CancelReceiptRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<InventoryReceiptDto>>> CancelReceipt(Guid id, [FromBody] CancelReceiptRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var userId = GetUserId();
-            var receipt = await inventoryService.CancelReceiptAsync(id, userId, request.Reason, cancellationToken);
-            if (receipt == null) return NotFound(new { status = "error", message = "Receipt not found" });
-            return Success(receipt, "Receipt cancelled successfully");
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to cancel receipt", ex.Message);
-        }
+        var userId = GetUserId();
+        var receipt = await inventoryService.CancelReceiptAsync(id, userId, request.Reason, cancellationToken);
+        if (receipt == null) return NotFound(ApiResponse.Fail("Receipt not found"));
+        return Ok(ApiResponse.Ok(receipt, "Receipt cancelled successfully"));
     }
 
     [HttpGet("transactions/{productId}")]
-    public async Task<IActionResult> GetTransactions(Guid productId, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<List<InventoryTransactionDto>>>> GetTransactions(Guid productId, CancellationToken cancellationToken)
     {
-        try
-        {
-            var transactions = await inventoryService.GetTransactionsAsync(productId, cancellationToken);
-            return Success(transactions);
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to get transactions", ex.Message);
-        }
+        var transactions = await inventoryService.GetTransactionsAsync(productId, cancellationToken);
+        return Ok(ApiResponse.Ok(transactions));
     }
 
     [HttpPost("adjust")]
-    public async Task<IActionResult> AdjustStock([FromBody] AdjustStockDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<InventoryTransactionDto>>> AdjustStock([FromBody] AdjustStockDto dto, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        
-        try
-        {
-            var userId = GetUserId();
-            var transaction = await inventoryService.AdjustStockAsync(dto, userId, cancellationToken);
-            return Success(transaction, "Stock adjusted successfully");
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to adjust stock", ex.Message);
-        }
+        var userId = GetUserId();
+        var transaction = await inventoryService.AdjustStockAsync(dto, userId, cancellationToken);
+        return Ok(ApiResponse.Ok(transaction, "Stock adjusted successfully"));
     }
 
     [HttpGet("stock-status")]
-    public async Task<IActionResult> GetStockStatus(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<List<StockStatusDto>>>> GetStockStatus(CancellationToken cancellationToken)
     {
-        try
-        {
-            var status = await inventoryService.GetStockStatusAsync(cancellationToken);
-            return Success(status);
-        }
-        catch (Exception ex)
-        {
-            return Error("Failed to get stock status", ex.Message);
-        }
+        var status = await inventoryService.GetStockStatusAsync(cancellationToken);
+        return Ok(ApiResponse.Ok(status));
     }
 }
+
 
 public class CancelReceiptRequest
 {

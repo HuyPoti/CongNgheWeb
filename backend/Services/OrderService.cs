@@ -1,26 +1,26 @@
-// using AutoMapper;
-// using AutoMapper.QueryableExtensions;
-using backend.DTOs;
-using backend.Exceptions;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using backend.Models;
-// using backend.Models;
 using backend.UnitOfWork;
+using backend.DTOs;
 using Microsoft.EntityFrameworkCore;
+using backend.Constants;
+using backend.Extensions;
+using backend.Exceptions;
 
 namespace backend.Services;
 
 public class OrderService(
     IUnitOfWork uow,
-    IEmailNotificationService emailNotification) : IOrderService
+    IMapper mapper,
+    IEmailNotificationService emailNotification,
+    IFlashSaleService flashSaleService) : IOrderService
 {
     // CREATE ORDER
     public async Task<OrderDetailDto> CreateAsync(
         CreateOrderDto dto,
         CancellationToken cancellationToken)
     {
-        if (dto.Items.Count == 0)
-            throw new BadRequestException("Order must have at least one item");
-
         var userId = await ResolveUserIdAsync(dto.UserId, cancellationToken);
         var user = await uow.Users.Query()
             .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
@@ -42,19 +42,24 @@ public class OrderService(
 
         foreach (var item in dto.Items)
         {
-            if (item.Quantity <= 0)
-                throw new BadRequestException("Item quantity must be greater than zero");
-
             var product = products[item.ProductId];
-            if (product.Status != 2)
+            if (product.Status != ProductStatus.Published)
                 throw new BadRequestException($"Product {product.Name} is not available");
 
             if (product.StockQuantity < item.Quantity)
                 throw new BadRequestException($"Product {product.Name} does not have enough stock");
 
-            var unitPrice = product.SalePrice.HasValue && product.SalePrice.Value > 0
+            var flashPrice = await flashSaleService.GetFlashPriceAsync(product.ProductId, cancellationToken);
+            var unitPrice = flashPrice ?? (product.SalePrice.HasValue && product.SalePrice.Value > 0
                 ? product.SalePrice.Value
-                : product.RegularPrice;
+                : product.RegularPrice);
+
+            if (flashPrice.HasValue)
+            {
+                var reserved = await flashSaleService.RecordPurchaseAsync(product.ProductId, item.Quantity, cancellationToken);
+                if (!reserved)
+                    throw new BadRequestException($"Flash sale for product {product.Name} has ended or reached limit.");
+            }
 
             totalAmount += unitPrice * item.Quantity;
             product.StockQuantity -= item.Quantity;
@@ -80,8 +85,8 @@ public class OrderService(
                 : dto.PaymentMethod,
             Notes = dto.Notes,
             TotalAmount = totalAmount,
-            Status = 1,
-            PaymentStatus = 1,
+            Status = OrderStatus.Pending,
+            PaymentStatus = PaymentStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             OrderItems = orderItems,
@@ -94,7 +99,7 @@ public class OrderService(
             Id = Guid.NewGuid(),
             OrderId = order.OrderId,
             OldStatus = null,
-            NewStatus = 1,
+            NewStatus = OrderStatus.Pending,
             ChangedBy = userId,
             Note = "Đơn hàng mới tạo",
             CreatedAt = DateTime.UtcNow
@@ -141,33 +146,10 @@ public class OrderService(
             query = query.Where(o => o.UserId == userId.Value);
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        var items = await query
+        return await query
             .OrderByDescending(o => o.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(o => new OrderDto
-            {
-                OrderId = o.OrderId,
-                OrderCode = o.OrderCode,
-                Status = MapStatusToString(o.Status),
-                PaymentMethod = o.PaymentMethod,
-                PaymentStatus = MapPaymentStatusToString(o.PaymentStatus),
-                TotalAmount = o.TotalAmount,
-                CustomerName = o.User.FullName,
-                CreatedAt = o.CreatedAt,
-                UpdatedAt = o.UpdatedAt
-            })
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<OrderDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
+            .ProjectTo<OrderDto>(mapper.ConfigurationProvider)
+            .ToPagedResultAsync(page, pageSize, cancellationToken);
     }
 
     // GET BY ID (Order detail)
@@ -193,48 +175,14 @@ public class OrderService(
 
         if (order == null) return null;
 
-        return new OrderDetailDto
-        {
-            OrderId = order.OrderId,
-            OrderCode = order.OrderCode,
-            Status = MapStatusToString(order.Status),
-            PaymentMethod = order.PaymentMethod,
-            PaymentStatus = MapPaymentStatusToString(order.PaymentStatus),
-            TotalAmount = order.TotalAmount,
-            Notes = order.Notes,
-            UserId = order.UserId,
-            CustomerName = order.User.FullName,
-            ShippingAddress = new AddressDto
-            {
-                AddressId = order.Address.AddressId,
-                RecipientName = order.Address.RecipientName,
-                Phone = order.Address.Phone,
-                AddressLine = order.Address.AddressLine,
-                Province = order.Address.Province,
-                District = order.Address.District,
-                Ward = order.Address.Ward
-            },
-            Items = order.OrderItems.Select(oi => new OrderItemDto
-            {
-                OrderItemId = oi.OrderItemId,
-                ProductId = oi.ProductId,
-                ProductName = oi.Product != null ? oi.Product.Name : "",
-                ProductImageUrl = oi.Product != null && oi.Product.Images.Any()
-                    ? oi.Product.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
-                      ?? oi.Product.Images.FirstOrDefault()?.ImageUrl!
-                    : null,
-                Quantity = oi.Quantity,
-                UnitPrice = oi.UnitPrice
-            }).ToList(),
-            CreatedAt = order.CreatedAt,
-            UpdatedAt = order.UpdatedAt
-        };
+        return mapper.Map<OrderDetailDto>(order);
     }
 
     // UPDATE STATUS
     public async Task<bool> UpdateAsync(
         Guid id,
         UpdateOrderDto dto,
+        Guid changedByUserId,
         CancellationToken cancellationToken)
     {
         var order = await uow.Orders.Query()
@@ -259,7 +207,7 @@ public class OrderService(
                     OrderId = order.OrderId,
                     OldStatus = oldStatus,
                     NewStatus = newStatus,
-                    ChangedBy = Guid.Empty, // Will ideally come from current user context, but missing here. We can assume system/admin for now unless passed. 
+                    ChangedBy = changedByUserId,
                     Note = "Trạng thái cập nhật từ quản trị",
                     CreatedAt = DateTime.UtcNow
                 });
@@ -278,11 +226,11 @@ public class OrderService(
         await uow.SaveAsync(cancellationToken);
 
         // Gửi email thông báo trạng thái mới
-        if (order.Status == 4) // shipping
+        if (order.Status == OrderStatus.Shipping) // shipping
         {
             _ = emailNotification.SendOrderShippingEmail(order.OrderId);
         }
-        else if (order.Status == 5) // delivered
+        else if (order.Status == OrderStatus.Delivered) // delivered
         {
             _ = emailNotification.SendOrderDeliveredEmail(order.OrderId);
         }
@@ -304,11 +252,11 @@ public class OrderService(
         if (order == null)
             throw new NotFoundException("Order not found");
 
-        if (order.Status == 5 || order.Status == 6)
+        if (order.Status == OrderStatus.Delivered || order.Status == OrderStatus.Cancelled)
             throw new BadRequestException("Order is already delivered or cancelled.");
 
         var oldStatus = order.Status;
-        order.Status = 6;
+        order.Status = OrderStatus.Cancelled;
         order.CancelledReason = dto.Reason;
         order.CancelledBy = userId;
         order.UpdatedAt = DateTime.UtcNow;
@@ -335,7 +283,7 @@ public class OrderService(
             Id = Guid.NewGuid(),
             OrderId = order.OrderId,
             OldStatus = oldStatus,
-            NewStatus = 6,
+            NewStatus = OrderStatus.Cancelled,
             ChangedBy = userId ?? Guid.Empty,
             Note = $"Đã hủy đơn hàng. Lý do: {dto.Reason}",
             CreatedAt = DateTime.UtcNow
@@ -358,58 +306,48 @@ public class OrderService(
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return history.Select(h => new OrderStatusHistoryDto
-        {
-            Id = h.Id,
-            OrderId = h.OrderId,
-            OldStatus = h.OldStatus,
-            OldStatusLabel = h.OldStatus.HasValue ? MapStatusToString(h.OldStatus.Value) : null,
-            NewStatus = h.NewStatus,
-            NewStatusLabel = MapStatusToString(h.NewStatus),
-            ChangedBy = h.ChangedBy,
-            ChangedByName = h.ChangedByUser?.FullName ?? "Hệ thống",
-            Note = h.Note,
-            CreatedAt = h.CreatedAt
-        }).ToList();
+        return mapper.Map<List<OrderStatusHistoryDto>>(history);
     }
 
     // Helper: Map int → string
     private static string MapStatusToString(int status) => status switch
     {
-        1 => "pending",
-        2 => "confirmed",
-        3 => "processing",
-        4 => "shipping",
-        5 => "delivered",
-        6 => "cancelled",
+        OrderStatus.Pending => "pending",
+        OrderStatus.Confirmed => "confirmed",
+        OrderStatus.Processing => "processing",
+        OrderStatus.Shipping => "shipping",
+        OrderStatus.Delivered => "delivered",
+        OrderStatus.Cancelled => "cancelled",
         _ => "pending"
     };
 
     private static int MapStatusToInt(string status) => status.ToLower() switch
     {
-        "pending" => 1,
-        "confirmed" => 2,
-        "processing" => 3,
-        "shipping" => 4,
-        "delivered" => 5,
-        "cancelled" => 6,
-        _ => 1
+        "pending" => OrderStatus.Pending,
+        "confirmed" => OrderStatus.Confirmed,
+        "processing" => OrderStatus.Processing,
+        "shipping" => OrderStatus.Shipping,
+        "delivered" => OrderStatus.Delivered,
+        "cancelled" => OrderStatus.Cancelled,
+        _ => OrderStatus.Pending
     };
 
     private static string MapPaymentStatusToString(int status) => status switch
     {
-        1 => "unpaid",
-        2 => "paid",
-        3 => "refunded",
+        PaymentStatus.Pending => "unpaid",
+        PaymentStatus.Completed => "paid",
+        PaymentStatus.Failed => "failed",
+        PaymentStatus.Refunded => "refunded",
         _ => "unpaid"
     };
 
     private static int MapPaymentStatusToInt(string status) => status.ToLower() switch
     {
-        "unpaid" => 1,
-        "paid" => 2,
-        "refunded" => 3,
-        _ => 1
+        "unpaid" => PaymentStatus.Pending,
+        "paid" => PaymentStatus.Completed,
+        "failed" => PaymentStatus.Failed,
+        "refunded" => PaymentStatus.Refunded,
+        _ => PaymentStatus.Pending
     };
 
     private static string GenerateOrderCode()
@@ -458,13 +396,6 @@ public class OrderService(
         if (dto.ShippingAddress == null)
             throw new BadRequestException("Shipping address is required");
 
-        if (string.IsNullOrWhiteSpace(dto.ShippingAddress.RecipientName) ||
-            string.IsNullOrWhiteSpace(dto.ShippingAddress.Phone) ||
-            string.IsNullOrWhiteSpace(dto.ShippingAddress.AddressLine))
-        {
-            throw new BadRequestException("Shipping recipient name, phone and address are required");
-        }
-
         var address = new Address
         {
             AddressId = Guid.NewGuid(),
@@ -489,3 +420,4 @@ public class OrderService(
         return address;
     }
 }
+

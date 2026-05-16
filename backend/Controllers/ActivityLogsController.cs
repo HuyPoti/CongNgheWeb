@@ -18,7 +18,7 @@ public class ActivityLogsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<ActivityLogDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] Guid? userId = null, [FromQuery] string? entityType = null, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<ApiResponse<PagedResult<ActivityLogDto>>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] Guid? userId = null, [FromQuery] string? entityType = null, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, CancellationToken cancellationToken = default)
     {
         var query = new ActivityLogQueryDto
         {
@@ -31,6 +31,6 @@ public class ActivityLogsController : ControllerBase
         };
 
         var res = await _activityLogService.GetLogsAsync(query, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 }

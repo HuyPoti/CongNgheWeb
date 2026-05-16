@@ -55,10 +55,6 @@
             >
               <div class="flex items-center gap-4">
                 <span
-                  class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-xl"
-                  >category</span
-                >
-                <span
                   class="text-[13px] font-bold text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors"
                   >{{ cat.name }}</span
                 >
@@ -80,29 +76,25 @@
       <div
         class="col-span-12 lg:col-span-6 relative rounded-3xl overflow-hidden group cursor-pointer border border-slate-100 dark:border-white/5 shadow-xl"
       >
-        @if (isBannersLoading) {
-          <div class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+        @if (isBannersLoading || !heroBanner) {
+          <div
+            class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center"
+          >
+            <span class="material-symbols-outlined text-slate-400 text-6xl opacity-20">image</span>
+          </div>
         } @else {
           <div class="absolute inset-0 bg-slate-900/30 z-10"></div>
-          @if (heroBanner) {
-            <img
-              [src]="heroBanner.imageUrl"
-              class="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110"
-              [alt]="heroBanner.targetAlt"
-            />
-          } @else {
-            <img
-              src="https://gearvn.com/cdn/shop/files/Laptop_Gaming_Slider_600x480.jpg?v=1712741926"
-              class="w-full h-full object-cover"
-              alt="Hero"
-            />
-          }
+          <img
+            [src]="heroBanner.imageUrl"
+            class="w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110"
+            [alt]="heroBanner.targetAlt"
+          />
           <div class="absolute bottom-10 left-10 z-20">
             <h2 class="text-3xl font-display font-bold text-white mb-2 uppercase tracking-tight">
-              {{ heroBanner ? heroBanner.title : ('home.hero_title' | translate) }}
+              {{ heroBanner.title }}
             </h2>
             <p class="text-white/80 font-medium text-sm">
-              {{ heroBanner?.subtitle || ('home.hero_subtitle' | translate) }}
+              {{ heroBanner.subtitle }}
             </p>
           </div>
         }
@@ -120,20 +112,20 @@
         } @else {
           <div
             class="flex-1 rounded-3xl overflow-hidden relative group cursor-pointer border border-slate-100 dark:border-white/5"
-            [routerLink]="midBanners[0]?.linkUrl || '/product/list'"
+            [routerLink]="midTopBanner?.linkUrl || '/product/list'"
           >
-            @if (midBanners[0]) {
+            @if (midTopBanner) {
               <img
-                [src]="midBanners[0].imageUrl"
+                [src]="midTopBanner?.imageUrl"
                 class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                [alt]="midBanners[0].targetAlt"
+                [alt]="midTopBanner?.targetAlt"
               />
             } @else {
-              <img
-                src="https://phongvu.vn/media/banner/06_Jun607548773950fb28fc586ecc495f5ac2.png"
-                class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                alt="Promo 1"
-              />
+              <div
+                class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center"
+              >
+                <span class="material-symbols-outlined text-slate-400 opacity-20">image</span>
+              </div>
             }
             <div
               class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -141,20 +133,20 @@
           </div>
           <div
             class="flex-1 rounded-3xl overflow-hidden relative group cursor-pointer border border-slate-100 dark:border-white/5"
-            [routerLink]="midBanners[1]?.linkUrl || '/product/list'"
+            [routerLink]="midBottomBanner?.linkUrl || '/product/list'"
           >
-            @if (midBanners[1]) {
+            @if (midBottomBanner) {
               <img
-                [src]="midBanners[1].imageUrl"
+                [src]="midBottomBanner?.imageUrl"
                 class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                [alt]="midBanners[1].targetAlt"
+                [alt]="midBottomBanner?.targetAlt"
               />
             } @else {
-              <img
-                src="https://phongvu.vn/media/banner/06_Jun73248386e8ca779430c77431e7f09805.png"
-                class="w-full h-full object-cover transition-transform group-hover:scale-105"
-                alt="Promo 2"
-              />
+              <div
+                class="w-full h-full bg-slate-200 dark:bg-slate-800 animate-pulse flex items-center justify-center"
+              >
+                <span class="material-symbols-outlined text-slate-400 opacity-20">image</span>
+              </div>
             }
             <div
               class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -465,15 +457,15 @@
       <div
         class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden mt-12 bg-slate-200 dark:bg-slate-800 animate-pulse border border-slate-100 dark:border-white/5 shadow-sm"
       ></div>
-    } @else if (midBanners[2]) {
+    } @else if (wideBanner) {
       <div
         class="relative w-full h-[550px] rounded-[3.5rem] overflow-hidden group cursor-pointer border border-primary/10 shadow-2xl mt-12"
       >
         <!-- Ảnh Banner rõ nét -->
         <img
-          [src]="midBanners[2].imageUrl"
+          [src]="wideBanner?.imageUrl"
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[10s]"
-          [alt]="midBanners[2].targetAlt"
+          [alt]="wideBanner?.targetAlt"
         />
 
         <!-- Lớp Gradient bảo vệ chữ (Cực mờ) -->
@@ -484,13 +476,13 @@
             <!-- Tiêu đề lớn -->
             <h2 class="text-3xl font-display font-bold text-white mb-2 uppercase tracking-tight">
               <span class="block mb-2">{{
-                midBanners[2].title || ('home.promo_title' | translate)
+                wideBanner?.title || ('home.promo_title' | translate)
               }}</span>
-              @if (midBanners[2].subtitle) {
+              @if (wideBanner?.subtitle) {
                 <span
                   class="text-2xl md:text-3xl font-medium normal-case tracking-normal block text-slate-200"
                 >
-                  {{ midBanners[2].subtitle }}
+                  {{ wideBanner?.subtitle }}
                 </span>
               }
             </h2>
@@ -498,7 +490,7 @@
             <!-- Nút bấm -->
             <button
               class="px-10 py-4 bg-primary text-white rounded-full font-black text-[12px] uppercase tracking-widest hover:bg-white hover:text-primary transition-all shadow-2xl shadow-primary/40"
-              [routerLink]="midBanners[2].linkUrl || '/product/list'"
+              [routerLink]="wideBanner?.linkUrl || '/product/list'"
             >
               {{ 'home.buy_now' | translate }}
             </button>

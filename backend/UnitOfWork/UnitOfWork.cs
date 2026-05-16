@@ -30,6 +30,19 @@ public class UnitOfWork(AppDbContext dbContext, IMapper mapper) : IUnitOfWork
 
     public IRepository<Shipment> Shipments { get; } = new Repository<Shipment>(dbContext, mapper);
     public IRepository<OrderStatusHistory> OrderStatusHistories { get; } = new Repository<OrderStatusHistory>(dbContext, mapper);
+    public IRepository<Wishlist> Wishlists { get; } = new Repository<Wishlist>(dbContext, mapper);
+    public IRepository<ReturnRequest> ReturnRequests { get; } = new Repository<ReturnRequest>(dbContext, mapper);
+    public IRepository<ReturnRequestItem> ReturnRequestItems { get; } = new Repository<ReturnRequestItem>(dbContext, mapper);
+    public IRepository<ReturnRequestImage> ReturnRequestImages { get; } = new Repository<ReturnRequestImage>(dbContext, mapper);
+    public IRepository<OrderItem> OrderItems { get; } = new Repository<OrderItem>(dbContext, mapper);
+    public IRepository<Coupon> Coupons { get; } = new Repository<Coupon>(dbContext, mapper);
+    public IRepository<CouponUsage> CouponUsages { get; } = new Repository<CouponUsage>(dbContext, mapper);
+    public IRepository<FlashSale> FlashSales { get; } = new Repository<FlashSale>(dbContext, mapper);
+    public IRepository<FlashSaleItem> FlashSaleItems { get; } = new Repository<FlashSaleItem>(dbContext, mapper);
+    public IRepository<ActivityLog> ActivityLogs { get; } = new Repository<ActivityLog>(dbContext, mapper);
+    public IRepository<CartItem> CartItems { get; } = new Repository<CartItem>(dbContext, mapper);
+    public IRepository<PasswordResetToken> PasswordResetTokens { get; } = new Repository<PasswordResetToken>(dbContext, mapper);
+    public IRepository<RefreshToken> RefreshTokens { get; } = new Repository<RefreshToken>(dbContext, mapper);
 
     public async Task<int> SaveAsync(CancellationToken cancellationToken)
     {

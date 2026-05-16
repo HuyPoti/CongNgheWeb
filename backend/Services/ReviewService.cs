@@ -5,14 +5,17 @@ using backend.Exceptions;
 using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using backend.Extensions;
+using backend.Constants;
+
 
 namespace backend.Services;
 
 public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
 {
-    public async Task<List<ReviewDto>> GetAllAsync(CancellationToken ct)
+    public async Task<PagedResult<ReviewDto>> GetAllAsync(int page, int pageSize, CancellationToken ct)
     {
-        var reviews = await uow.Reviews.Query()
+        return await uow.Reviews.Query()
             .Include(r => r.Product)
             .Include(r => r.User)
             .Include(r => r.Images)
@@ -20,8 +23,7 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
             .Include(r => r.HelpfulVotes).ThenInclude(v => v.User)
             .OrderByDescending(r => r.CreatedAt)
             .ProjectTo<ReviewDto>(mapper.ConfigurationProvider)
-            .ToListAsync(ct);
-        return reviews;
+            .ToPagedResultAsync(page, pageSize, ct);
     }
 
     public async Task<ReviewDto?> GetByIdAsync(Guid id, CancellationToken ct)
@@ -37,21 +39,18 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
         return review;
     }
 
-    public async Task<List<ReviewDto>> GetByProductIdAsync(Guid productId, CancellationToken ct)
+    public async Task<PagedResult<ReviewDto>> GetByProductIdAsync(Guid productId, int page, int pageSize, CancellationToken ct)
     {
-        var reviews = await uow.Reviews.Query()
+        return await uow.Reviews.Query()
             .Include(r => r.Product)
             .Include(r => r.User)
             .Include(r => r.Images)
-            .Include(r => r.Replies).
-            ThenInclude(rp => rp.User)
-            .Include(r => r.HelpfulVotes)
-            .ThenInclude(v => v.User)
-            .Where(r => r.ProductId == productId && r.IsActive == 1)
+            .Include(r => r.Replies).ThenInclude(rp => rp.User)
+            .Include(r => r.HelpfulVotes).ThenInclude(v => v.User)
+            .Where(r => r.ProductId == productId && r.IsActive == ReviewStatus.Published)
             .OrderByDescending(r => r.CreatedAt)
             .ProjectTo<ReviewDto>(mapper.ConfigurationProvider)
-            .ToListAsync(ct);
-        return reviews;
+            .ToPagedResultAsync(page, pageSize, ct);
     }
 
     public async Task<ReviewDto?> UpdateActiveAsync(Guid id, UpdateReviewActiveDto dto, CancellationToken ct)
@@ -89,7 +88,7 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
             ReviewId = reviewId,
             UserId = dto.UserId,
             Content = dto.Content,
-            IsActive = 1,
+            IsActive = ReviewStatus.Published,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -230,7 +229,7 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
         var isVerified = await uow.Orders.Query()
             .Include(o => o.OrderItems)
             .AnyAsync(o => o.UserId == userGuid && 
-                          o.Status == 5 && 
+                          o.Status == OrderStatus.Delivered && 
                           o.OrderItems.Any(oi => oi.ProductId == productGuid), ct);
 
         var review = new Review
@@ -240,7 +239,7 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
             UserId = userGuid,
             Rating = dto.Rating,
             Comment = dto.Comment,
-            IsActive = 1,
+            IsActive = ReviewStatus.Published,
             IsVerifiedPurchase = isVerified,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

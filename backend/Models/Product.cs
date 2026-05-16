@@ -85,4 +85,5 @@ public class Product
     public ICollection<FlashSaleItem> FlashSaleItems { get; set; } = new List<FlashSaleItem>();
     public ICollection<InventoryReceiptItem> InventoryReceiptItems { get; set; } = new List<InventoryReceiptItem>();
     public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
+    public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 }

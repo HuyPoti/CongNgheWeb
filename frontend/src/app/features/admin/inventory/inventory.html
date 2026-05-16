@@ -1,7 +1,7 @@
 <div class="p-8">
   <div class="flex items-end justify-between mb-8">
     <div>
-      <h2 class="text-3xl font-black text-slate-100 mb-2">Quản lý Kho hàng</h2>
+      <h2 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">Quản lý Kho hàng</h2>
       <p class="text-slate-500">Tổng giá trị kho: {{ totalValue() | number: '1.0-0' }}đ</p>
     </div>
     <button
@@ -18,7 +18,7 @@
       (click)="filterMode.set('all')"
       (keyup.enter)="filterMode.set('all')"
       tabindex="0"
-      class="bg-surface-dark/40 border rounded-xl p-5 flex items-center gap-4 cursor-pointer transition-all"
+      class="bg-white dark:bg-surface-dark/40 border rounded-xl p-5 flex items-center gap-4 cursor-pointer transition-all"
       [ngClass]="
         filterMode() === 'all'
           ? 'border-primary shadow-lg shadow-primary/10'
@@ -27,7 +27,7 @@
     >
       <span class="material-symbols-outlined text-3xl text-primary">inventory_2</span>
       <div>
-        <p class="text-2xl font-bold text-slate-100">{{ items().length }}</p>
+        <p class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ items().length }}</p>
         <p class="text-xs text-slate-500">Tất cả sản phẩm</p>
       </div>
     </div>
@@ -35,7 +35,7 @@
       (click)="filterMode.set('out')"
       (keyup.enter)="filterMode.set('out')"
       tabindex="0"
-      class="bg-surface-dark/40 border rounded-xl p-5 flex items-center gap-4 cursor-pointer transition-all"
+      class="bg-white dark:bg-surface-dark/40 border rounded-xl p-5 flex items-center gap-4 cursor-pointer transition-all"
       [ngClass]="
         filterMode() === 'out'
           ? 'border-red-400 shadow-lg shadow-red-400/10'
@@ -52,7 +52,7 @@
       (click)="filterMode.set('low')"
       (keyup.enter)="filterMode.set('low')"
       tabindex="0"
-      class="bg-surface-dark/40 border rounded-xl p-5 flex items-center gap-4 cursor-pointer transition-all"
+      class="bg-white dark:bg-surface-dark/40 border rounded-xl p-5 flex items-center gap-4 cursor-pointer transition-all"
       [ngClass]="
         filterMode() === 'low'
           ? 'border-yellow-400 shadow-lg shadow-yellow-400/10'
@@ -72,32 +72,32 @@
       <div
         class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
       ></div>
-      <span class="ml-3 text-slate-400">Đang tải dữ liệu kho...</span>
+      <span class="ml-3 text-slate-500 dark:text-slate-400">Đang tải dữ liệu kho...</span>
     </div>
   } @else {
-    <div class="bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
+    <div class="bg-white dark:bg-surface-dark/40 border border-primary/10 rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-primary/10 text-left">
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               SKU
             </th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Sản phẩm
             </th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Danh mục
             </th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Đơn giá
             </th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Tồn kho
             </th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Giá trị
             </th>
-            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <th class="px-6 py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               Điều chỉnh
             </th>
           </tr>
@@ -105,10 +105,10 @@
         <tbody>
           @for (item of filteredItems(); track item.productId) {
             <tr class="border-b border-primary/5 hover:bg-primary/5 transition-colors">
-              <td class="px-6 py-4 text-xs text-slate-400 font-mono">{{ item.sku || '—' }}</td>
-              <td class="px-6 py-4 text-slate-100 font-semibold">{{ item.name }}</td>
-              <td class="px-6 py-4 text-xs text-slate-400">{{ item.categoryName }}</td>
-              <td class="px-6 py-4 text-slate-300">{{ item.regularPrice | number: '1.0-0' }}đ</td>
+              <td class="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-mono">{{ item.sku || '—' }}</td>
+              <td class="px-6 py-4 text-slate-800 dark:text-slate-100 font-semibold">{{ item.name }}</td>
+              <td class="px-6 py-4 text-xs text-slate-500 dark:text-slate-400">{{ item.categoryName }}</td>
+              <td class="px-6 py-4 text-slate-600 dark:text-slate-300">{{ item.regularPrice | number: '1.0-0' }}đ</td>
               <td class="px-6 py-4">
                 <span
                   class="text-lg font-bold"
@@ -120,7 +120,7 @@
                   >{{ item.stockQuantity }}</span
                 >
               </td>
-              <td class="px-6 py-4 text-slate-300 font-semibold">
+              <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-semibold">
                 {{ item.stockQuantity * item.regularPrice | number: '1.0-0' }}đ
               </td>
               <td class="px-6 py-4">
@@ -131,7 +131,7 @@
                   >
                     −
                   </button>
-                  <span class="w-10 text-center text-slate-200 font-bold">{{
+                  <span class="w-10 text-center text-slate-700 dark:text-slate-200 font-bold">{{
                     item.stockQuantity
                   }}</span>
                   <button

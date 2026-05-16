@@ -5,6 +5,9 @@ using backend.Exceptions;
 using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using backend.Extensions;
+using backend.Constants;
+
 
 namespace backend.Services;
 
@@ -15,55 +18,35 @@ public class ProductService(
 {
     // ── Admin: danh sach co filter ─────────────────────────────────
     public async Task<PagedResult<ProductDto>> GetAllAsync(
-        string? keyword,
-        Guid? categoryId,
-        decimal? minPrice,
-        decimal? maxPrice,
-        CancellationToken cancellationToken,
-        int page,
-        int pageSize)
+        ProductQueryDto query,
+        CancellationToken cancellationToken)
     {
-        page = page <= 0 ? 1 : page;
-        pageSize = Math.Clamp(pageSize, 1, 20);
-
-        var query = uow.Products.Query()
-            .Where(p => p.Status != 3)
+        var dbQuery = uow.Products.Query()
+            .Where(p => p.Status != ProductStatus.Deleted)
             .Include(p => p.Category)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(keyword))
+        if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
-            var kw = keyword.Trim();
-            query = kw.Length <= 3
-                ? query.Where(p => EF.Functions.ILike(p.Name, $"{kw}%"))
-                : query.Where(p => EF.Functions.ILike(p.Name, $"%{kw}%"));
+            var kw = query.Keyword.Trim();
+            dbQuery = kw.Length <= 3
+                ? dbQuery.Where(p => EF.Functions.ILike(p.Name, $"{kw}%"))
+                : dbQuery.Where(p => EF.Functions.ILike(p.Name, $"%{kw}%"));
         }
 
-        if (categoryId.HasValue)
-            query = query.Where(p => p.CategoryId == categoryId.Value);
+        if (query.CategoryId.HasValue)
+            dbQuery = dbQuery.Where(p => p.CategoryId == query.CategoryId.Value);
 
-        if (minPrice.HasValue)
-            query = query.Where(p => p.RegularPrice >= minPrice.Value);
+        if (query.MinPrice.HasValue)
+            dbQuery = dbQuery.Where(p => p.RegularPrice >= query.MinPrice.Value);
 
-        if (maxPrice.HasValue)
-            query = query.Where(p => p.RegularPrice <= maxPrice.Value);
+        if (query.MaxPrice.HasValue)
+            dbQuery = dbQuery.Where(p => p.RegularPrice <= query.MaxPrice.Value);
 
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        var items = await query
+        return await dbQuery
             .OrderByDescending(p => p.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
             .ProjectTo<ProductDto>(mapper.ConfigurationProvider)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<ProductDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
+            .ToPagedResultAsync(query.Page, query.PageSize, cancellationToken);
     }
 
     // ── Get full (product + images + specs) ───────────────────────
@@ -95,7 +78,7 @@ public class ProductService(
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var product = await uow.Products.Query()
-            .Where(p => p.Status != 3)
+            .Where(p => p.Status != ProductStatus.Deleted)
             .Include(p => p.Category)
             .ProjectTo<ProductDto>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(p => p.ProductId == id, cancellationToken);
@@ -110,7 +93,7 @@ public class ProductService(
     public async Task<ProductDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken)
     {
         var product = await uow.Products.Query()
-            .Where(p => p.Status != 3)
+            .Where(p => p.Status != ProductStatus.Deleted)
             .Include(p => p.Category)
             .ProjectTo<ProductDto>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(p => p.Slug == slug, cancellationToken);
@@ -141,7 +124,7 @@ public class ProductService(
         var product = mapper.Map<Product>(dto);
         product.CreatedAt = DateTime.UtcNow;
         product.UpdatedAt = DateTime.UtcNow;
-        product.Status = dto.Status ?? 1;
+        product.Status = dto.Status ?? ProductStatus.Draft;
 
         uow.Products.Insert(product);
         await uow.SaveAsync(cancellationToken);
@@ -198,7 +181,7 @@ public class ProductService(
         if (product == null)
             throw new NotFoundException("Product not found");
 
-        product.Status = 3;
+        product.Status = ProductStatus.Deleted;
         product.UpdatedAt = DateTime.UtcNow;
         uow.Products.Update(product);
         await uow.SaveAsync(cancellationToken);
@@ -206,31 +189,21 @@ public class ProductService(
 
     // ── Client: danh sach san pham voi day du filter ───────────────
     public async Task<PagedResult<ProductListItemDto>> GetProductListAsync(
-        CancellationToken cancellationToken,
-        int page,
-        int pageSize,
-        string? categorySlug = null,
-        string? keyword = null,
-        Guid? brandId = null,
-        decimal? minPrice = null,
-        decimal? maxPrice = null,
-        string? sortBy = null)
+        ProductQueryDto query,
+        CancellationToken cancellationToken)
     {
-        page = page <= 0 ? 1 : page;
-        pageSize = Math.Clamp(pageSize, 1, 50);
-
-        var query = uow.Products.Query()
-            .Where(p => p.Status == 2)
+        var dbQuery = uow.Products.Query()
+            .Where(p => p.Status == ProductStatus.Published)
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .Include(p => p.Images)
             .AsQueryable();
 
         // MỚI - lấy cả category cha + con
-        if (!string.IsNullOrWhiteSpace(categorySlug))
+        if (!string.IsNullOrWhiteSpace(query.CategorySlug))
         {
             var cat = await uow.Categories.Query()
-                .FirstOrDefaultAsync(c => c.Slug == categorySlug, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Slug == query.CategorySlug, cancellationToken);
 
             if (cat != null)
             {
@@ -240,37 +213,33 @@ public class ProductService(
                     .ToListAsync(cancellationToken);
 
                 var allIds = new HashSet<Guid>(childIds) { cat.CategoryId };
-                query = query.Where(p => allIds.Contains(p.CategoryId));
+                dbQuery = dbQuery.Where(p => allIds.Contains(p.CategoryId));
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(keyword))
-            query = query.Where(p => EF.Functions.ILike(p.Name, $"%{keyword.Trim()}%"));
+        if (!string.IsNullOrWhiteSpace(query.Keyword))
+            dbQuery = dbQuery.Where(p => EF.Functions.ILike(p.Name, $"%{query.Keyword.Trim()}%"));
 
-        if (brandId.HasValue)
-            query = query.Where(p => p.BrandId == brandId.Value);
+        if (query.BrandId.HasValue)
+            dbQuery = dbQuery.Where(p => p.BrandId == query.BrandId.Value);
 
         // Filter gia theo gia ban thuc te (SalePrice neu co, nguoc lai RegularPrice)
-        if (minPrice.HasValue)
-            query = query.Where(p => (p.SalePrice ?? p.RegularPrice) >= minPrice.Value);
+        if (query.MinPrice.HasValue)
+            dbQuery = dbQuery.Where(p => (p.SalePrice ?? p.RegularPrice) >= query.MinPrice.Value);
 
-        if (maxPrice.HasValue)
-            query = query.Where(p => (p.SalePrice ?? p.RegularPrice) <= maxPrice.Value);
+        if (query.MaxPrice.HasValue)
+            dbQuery = dbQuery.Where(p => (p.SalePrice ?? p.RegularPrice) <= query.MaxPrice.Value);
 
         // Sort
-        query = sortBy switch
+        dbQuery = query.SortBy switch
         {
-            "price_asc" => query.OrderBy(p => p.SalePrice ?? p.RegularPrice),
-            "price_desc" => query.OrderByDescending(p => p.SalePrice ?? p.RegularPrice),
-            "name_asc" => query.OrderBy(p => p.Name),
-            _ => query.OrderByDescending(p => p.CreatedAt)
+            "price_asc" => dbQuery.OrderBy(p => p.SalePrice ?? p.RegularPrice),
+            "price_desc" => dbQuery.OrderByDescending(p => p.SalePrice ?? p.RegularPrice),
+            "name_asc" => dbQuery.OrderBy(p => p.Name),
+            _ => dbQuery.OrderByDescending(p => p.CreatedAt)
         };
 
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        return await dbQuery
             .Select(p => new ProductListItemDto
             {
                 Id = p.ProductId,
@@ -296,14 +265,6 @@ public class ProductService(
                         .Select(i => i.ImageUrl)
                         .FirstOrDefault()
             })
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<ProductListItemDto>
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
+            .ToPagedResultAsync(query.Page, query.PageSize, cancellationToken);
     }
 }

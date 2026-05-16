@@ -4,16 +4,9 @@ using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using backend.Constants;
 
 namespace backend.Services;
-
-public interface IPaymentService
-{
-    Task<CreatePaymentResponseDto> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken cancellationToken = default);
-    Task<PaymentDto?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default);
-    Task<PaymentDto> ConfirmBankTransferAsync(Guid paymentId, Guid confirmedByUserId, CancellationToken cancellationToken = default);
-    Task CompleteCodPaymentAsync(Guid orderId, CancellationToken cancellationToken = default);
-}
 
 public class PaymentService : IPaymentService
 {
@@ -41,8 +34,8 @@ public class PaymentService : IPaymentService
             .OrderByDescending(p => p.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        // 2 = success
-        if (existingPayment != null && existingPayment.Status == 2)
+        // PaymentStatus.Completed = 2
+        if (existingPayment != null && existingPayment.Status == PaymentStatus.Completed)
         {
             throw new BadRequestException("Order has already been paid");
         }
@@ -53,7 +46,7 @@ public class PaymentService : IPaymentService
             OrderId = dto.OrderId,
             Amount = order.TotalAmount,
             PaymentMethod = dto.PaymentMethod.ToLower(),
-            Status = 1,  // 1 = pending
+            Status = PaymentStatus.Pending,  // 1 = pending
             TransactionId = string.Empty,
             ReturnUrl = dto.ReturnUrl,
             CreatedAt = DateTime.UtcNow,
@@ -122,11 +115,11 @@ public class PaymentService : IPaymentService
         if (payment.PaymentMethod != "bank_transfer")
             throw new BadRequestException("Only bank transfer payments can be confirmed this way");
 
-        // 2 = success
-        if (payment.Status == 2)
+        // PaymentStatus.Completed = 2
+        if (payment.Status == PaymentStatus.Completed)
             throw new BadRequestException("Payment has already been confirmed");
 
-        payment.Status = 2;  // 2 = success
+        payment.Status = PaymentStatus.Completed;  // 2 = success
         payment.PaidAt = DateTime.UtcNow;
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId = $"BT-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
@@ -135,7 +128,7 @@ public class PaymentService : IPaymentService
             .FirstOrDefaultAsync(o => o.OrderId == payment.OrderId, cancellationToken);
         if (order != null)
         {
-            order.PaymentStatus = 2;
+            order.PaymentStatus = PaymentStatus.Completed;
             order.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -164,11 +157,11 @@ public class PaymentService : IPaymentService
             .OrderByDescending(p => p.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        // 2 = success
-        if (payment == null || payment.Status == 2)
+        // PaymentStatus.Completed = 2
+        if (payment == null || payment.Status == PaymentStatus.Completed)
             return;
 
-        payment.Status = 2;  // 2 = success
+        payment.Status = PaymentStatus.Completed;  // 2 = success
         payment.PaidAt = DateTime.UtcNow;
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId = $"COD-{DateTime.UtcNow:yyyyMMddHHmmss}";
@@ -177,7 +170,7 @@ public class PaymentService : IPaymentService
             .FirstOrDefaultAsync(o => o.OrderId == orderId, cancellationToken);
         if (order != null)
         {
-            order.PaymentStatus = 2;
+            order.PaymentStatus = PaymentStatus.Completed;
             order.UpdatedAt = DateTime.UtcNow;
         }
 

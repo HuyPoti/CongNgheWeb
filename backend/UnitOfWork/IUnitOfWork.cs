@@ -28,6 +28,19 @@ public interface IUnitOfWork
     
     IRepository<Shipment> Shipments { get; }
     IRepository<OrderStatusHistory> OrderStatusHistories { get; }
+    IRepository<Wishlist> Wishlists { get; }
+    IRepository<ReturnRequest> ReturnRequests { get; }
+    IRepository<ReturnRequestItem> ReturnRequestItems { get; }
+    IRepository<ReturnRequestImage> ReturnRequestImages { get; }
+    IRepository<OrderItem> OrderItems { get; }
+    IRepository<Coupon> Coupons { get; }
+    IRepository<CouponUsage> CouponUsages { get; }
+    IRepository<FlashSale> FlashSales { get; }
+    IRepository<FlashSaleItem> FlashSaleItems { get; }
+    IRepository<ActivityLog> ActivityLogs { get; }
+    IRepository<CartItem> CartItems { get; }
+    IRepository<PasswordResetToken> PasswordResetTokens { get; }
+    IRepository<RefreshToken> RefreshTokens { get; }
     
     Task<int> SaveAsync(CancellationToken cancellationToken);
 }

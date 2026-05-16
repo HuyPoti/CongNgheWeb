@@ -18,14 +18,14 @@ public class CouponsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<CouponDto>> Create([FromBody] CreateCouponDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<CouponDto>>> Create([FromBody] CreateCouponDto dto, CancellationToken cancellationToken)
     {
         var result = await _couponService.CreateAsync(dto, cancellationToken);
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<CouponDto>>> GetAll(
+    public async Task<ActionResult<ApiResponse<PagedResult<CouponDto>>>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] bool? isActive = null,
@@ -33,28 +33,28 @@ public class CouponsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var res = await _couponService.GetAllAsync(page, pageSize, isActive, keyword, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<CouponDto>> Update(Guid id, [FromBody] UpdateCouponDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<CouponDto>>> Update(Guid id, [FromBody] UpdateCouponDto dto, CancellationToken cancellationToken)
     {
         var updated = await _couponService.UpdateAsync(id, dto, cancellationToken);
-        return Ok(updated);
+        return Ok(ApiResponse.Ok(updated));
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<CouponDto>> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<CouponDto>>> Delete(Guid id, CancellationToken cancellationToken)
     {
         var res = await _couponService.DeactivateAsync(id, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [AllowAnonymous]
     [HttpPost("validate")]
-    public async Task<ActionResult<CouponValidationResultDto>> Validate([FromBody] CouponValidationRequestDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<CouponValidationResultDto>>> Validate([FromBody] CouponValidationRequestDto dto, CancellationToken cancellationToken)
     {
         var r = await _couponService.ValidateAsync(dto.Code, dto.TotalAmount, dto.UserId, cancellationToken);
-        return Ok(r);
+        return Ok(ApiResponse.Ok(r));
     }
 }

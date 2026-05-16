@@ -1,24 +1,18 @@
 using AutoMapper;
-using backend.Data;
+using AutoMapper.QueryableExtensions;
+using backend.UnitOfWork;
 using backend.DTOs;
 using backend.Exceptions;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using backend.Extensions;
+using backend.Constants;
+
 
 namespace backend.Services;
 
-public interface ICouponService
-{
-	Task<CouponDto> CreateAsync(CreateCouponDto dto, CancellationToken cancellationToken = default);
-	Task<PagedResult<CouponDto>> GetAllAsync(int page, int pageSize, bool? isActive, string? keyword, CancellationToken cancellationToken = default);
-	Task<CouponValidationResultDto> ValidateAsync(string code, decimal totalAmount, Guid? userId, CancellationToken cancellationToken = default);
-	Task<CouponUsageDto> ApplyAsync(Guid couponId, Guid orderId, Guid? userId, CancellationToken cancellationToken = default);
-	Task<CouponDto> DeactivateAsync(Guid couponId, CancellationToken cancellationToken = default);
-	Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default);
-}
-
-public class CouponService(AppDbContext context, IMapper mapper, IActivityLogService activityLogService) : ICouponService
+public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService activityLogService) : ICouponService
 {
 	public async Task<CouponDto> CreateAsync(CreateCouponDto dto, CancellationToken cancellationToken = default)
 	{
@@ -36,7 +30,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 			throw new BadRequestException("Coupon code is required");
 
 		var normalizedCode = dto.Code.Trim().ToUpperInvariant();
-		var existed = await context.Coupons
+		var existed = await uow.Coupons.Query()
 			.AnyAsync(x => x.Code == normalizedCode, cancellationToken);
 
 		if (existed)
@@ -53,18 +47,18 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 			MaxDiscount = dto.MaxDiscount,
 			UsageLimit = dto.UsageLimit,
 			PerUserLimit = dto.PerUserLimit,
-			StartDate = dto.StartDate,
-			EndDate = dto.EndDate,
+			StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc),
+			EndDate = DateTime.SpecifyKind(dto.EndDate, DateTimeKind.Utc),
 			IsActive = dto.IsActive,
 			CreatedBy = dto.CreatedBy,
 			CreatedAt = DateTime.UtcNow,
 			UsedCount = 0
 		};
 
-		context.Coupons.Add(coupon);
-		await context.SaveChangesAsync(cancellationToken);
+		uow.Coupons.Insert(coupon);
+		await uow.SaveAsync(cancellationToken);
 
-		await LogIfHasUserAsync(
+		await activityLogService.LogIfHasUserAsync(
 			dto.CreatedBy,
 			"coupon.create",
 			"coupon",
@@ -86,7 +80,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		page = page <= 0 ? 1 : page;
 		pageSize = Math.Clamp(pageSize, 1, 50);
 
-		var query = context.Coupons.AsQueryable();
+		var query = uow.Coupons.Query().AsQueryable();
 
 		if (isActive.HasValue)
 			query = query.Where(x => x.IsActive == isActive.Value);
@@ -99,20 +93,10 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 				(x.Description != null && EF.Functions.ILike(x.Description, $"%{kw}%")));
 		}
 
-		var totalCount = await query.CountAsync(cancellationToken);
-		var items = await query
+		return await query
 			.OrderByDescending(x => x.CreatedAt)
-			.Skip((page - 1) * pageSize)
-			.Take(pageSize)
-			.ToListAsync(cancellationToken);
-
-		return new PagedResult<CouponDto>
-		{
-			Items = mapper.Map<List<CouponDto>>(items),
-			TotalCount = totalCount,
-			Page = page,
-			PageSize = pageSize
-		};
+			.ProjectTo<CouponDto>(mapper.ConfigurationProvider)
+			.ToPagedResultAsync(page, pageSize, cancellationToken);
 	}
 
 	public async Task<CouponValidationResultDto> ValidateAsync(
@@ -143,7 +127,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 
 		var normalizedCode = code.Trim().ToUpperInvariant();
 		var now = DateTime.UtcNow;
-		var coupon = await context.Coupons
+		var coupon = await uow.Coupons.Query()
 			.FirstOrDefaultAsync(x => x.Code == normalizedCode, cancellationToken);
 
 		if (coupon == null)
@@ -163,7 +147,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 
 		if (userId.HasValue && userId.Value != Guid.Empty)
 		{
-			var usedByUser = await context.CouponUsages
+			var usedByUser = await uow.CouponUsages.Query()
 				.CountAsync(x => x.CouponId == coupon.CouponId && x.UserId == userId.Value, cancellationToken);
 			if (usedByUser >= coupon.PerUserLimit)
 				return InvalidResult("You have reached usage limit for this coupon", totalAmount);
@@ -187,11 +171,11 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		Guid? userId,
 		CancellationToken cancellationToken = default)
 	{
-		var coupon = await context.Coupons
+		var coupon = await uow.Coupons.Query()
 			.FirstOrDefaultAsync(x => x.CouponId == couponId, cancellationToken)
 			?? throw new NotFoundException("Coupon not found");
 
-		var order = await context.Orders
+		var order = await uow.Orders.Query()
 			.FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken)
 			?? throw new NotFoundException("Order not found");
 
@@ -222,10 +206,10 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		order.DiscountAmount = validation.DiscountAmount;
 		order.UpdatedAt = DateTime.UtcNow;
 
-		context.CouponUsages.Add(usage);
-		await context.SaveChangesAsync(cancellationToken);
+		uow.CouponUsages.Insert(usage);
+		await uow.SaveAsync(cancellationToken);
 
-		await LogIfHasUserAsync(
+		await activityLogService.LogIfHasUserAsync(
 			applyUserId,
 			"coupon.apply",
 			"order",
@@ -239,7 +223,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 
 	public async Task<CouponDto> DeactivateAsync(Guid couponId, CancellationToken cancellationToken = default)
 	{
-		var coupon = await context.Coupons
+		var coupon = await uow.Coupons.Query()
 			.FirstOrDefaultAsync(x => x.CouponId == couponId, cancellationToken)
 			?? throw new NotFoundException("Coupon not found");
 
@@ -249,9 +233,9 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		var old = new { coupon.CouponId, coupon.Code, coupon.IsActive };
 
 		coupon.IsActive = false;
-		await context.SaveChangesAsync(cancellationToken);
+		await uow.SaveAsync(cancellationToken);
 
-		await LogIfHasUserAsync(
+		await activityLogService.LogIfHasUserAsync(
 			coupon.CreatedBy,
 			"coupon.deactivate",
 			"coupon",
@@ -265,7 +249,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 
 	public async Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default)
 	{
-		var coupon = await context.Coupons.FirstOrDefaultAsync(x => x.CouponId == id, cancellationToken);
+		var coupon = await uow.Coupons.Query().FirstOrDefaultAsync(x => x.CouponId == id, cancellationToken);
 		if (coupon == null) throw new NotFoundException("Coupon not found");
 
 		var oldVal = new { coupon.CouponId, coupon.Code, coupon.IsActive, coupon.DiscountValue, coupon.DiscountType };
@@ -283,16 +267,16 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		if (dto.PerUserLimit.HasValue)
 			coupon.PerUserLimit = dto.PerUserLimit.Value;
 		if (dto.StartDate.HasValue)
-			coupon.StartDate = dto.StartDate.Value;
+			coupon.StartDate = DateTime.SpecifyKind(dto.StartDate.Value, DateTimeKind.Utc);
 		if (dto.EndDate.HasValue)
-			coupon.EndDate = dto.EndDate.Value;
+			coupon.EndDate = DateTime.SpecifyKind(dto.EndDate.Value, DateTimeKind.Utc);
 		if (dto.IsActive.HasValue)
 			coupon.IsActive = dto.IsActive.Value;
 
 		// Coupon model does not have UpdatedAt column; skip setting it here.
-		await context.SaveChangesAsync(cancellationToken);
+		await uow.SaveAsync(cancellationToken);
 
-		await LogIfHasUserAsync(coupon.CreatedBy, "coupon.update", "coupon", coupon.CouponId, oldVal, coupon, cancellationToken);
+		await activityLogService.LogIfHasUserAsync(coupon.CreatedBy, "coupon.update", "coupon", coupon.CouponId, oldVal, coupon, cancellationToken);
 
 		return mapper.Map<CouponDto>(coupon);
 	}
@@ -310,9 +294,9 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		var value = discountType.Trim().ToLowerInvariant();
 		return value switch
 		{
-			"percent" or "percentage" => "percentage",
-			"fixed" or "amount" => "fixed",
-			_ => throw new BadRequestException("DiscountType must be 'percentage' or 'fixed'")
+			"percent" or "percentage" => CouponDiscountType.Percentage,
+			"fixed" or "amount" => CouponDiscountType.Fixed,
+			_ => throw new BadRequestException($"DiscountType must be '{CouponDiscountType.Percentage}' or '{CouponDiscountType.Fixed}'")
 		};
 	}
 
@@ -331,7 +315,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		if (discountValue <= 0)
 			throw new BadRequestException("DiscountValue must be greater than zero");
 
-		if (normalizedType == "percentage" && discountValue > 100)
+		if (normalizedType == CouponDiscountType.Percentage && discountValue > 100)
 			throw new BadRequestException("Percentage discount cannot exceed 100");
 
 		if (minOrderAmount < 0)
@@ -353,7 +337,7 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 	private static decimal CalculateDiscount(Coupon coupon, decimal totalAmount)
 	{
 		// M2: discount amount không được vượt maxDiscount với coupon dạng phần trăm.
-		if (coupon.DiscountType == "percentage")
+		if (coupon.DiscountType == CouponDiscountType.Percentage)
 		{
 			var percentageDiscount = totalAmount * (coupon.DiscountValue / 100m);
 			var cappedDiscount = coupon.MaxDiscount.HasValue
@@ -364,30 +348,5 @@ public class CouponService(AppDbContext context, IMapper mapper, IActivityLogSer
 		}
 
 		return Math.Min(coupon.DiscountValue, totalAmount);
-	}
-
-	private async Task LogIfHasUserAsync(
-		Guid? userId,
-		string action,
-		string entityType,
-		Guid entityId,
-		object? oldValue,
-		object? newValue,
-		CancellationToken cancellationToken)
-	{
-		if (!userId.HasValue || userId.Value == Guid.Empty)
-			return;
-
-		await activityLogService.LogAsync(
-			new CreateActivityLogDto
-			{
-				UserId = userId.Value,
-				Action = action,
-				EntityType = entityType,
-				EntityId = entityId,
-				OldValue = oldValue == null ? null : JsonSerializer.Serialize(oldValue),
-				NewValue = newValue == null ? null : JsonSerializer.Serialize(newValue)
-			},
-			cancellationToken);
 	}
 }

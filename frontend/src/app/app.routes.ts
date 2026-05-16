@@ -23,7 +23,7 @@ export const routes: Routes = [
     path: 'employee',
     loadComponent: () => import('./layouts/employee-layout/employee-layout').then((m) => m.EmployeeLayout),
     canActivate: [roleGuard], // Bật bảo vệ route
-    data: { roles: ['admin', 'staff'] }, // Cho phép cả admin và nhân viên
+    data: { roles: ['staff'] }, // Chỉ cho phép role staff (admin không vào đây)
     children: [
       {
         path: '',
@@ -84,5 +84,13 @@ export const routes: Routes = [
           import('./features/cart/vnpay-return/vnpay-return').then((m) => m.VnPayReturnComponent),
       },
     ],
+  },
+  {
+    path: '404',
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFoundComponent),
+  },
+  {
+    path: '**',
+    redirectTo: '404',
   },
 ];

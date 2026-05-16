@@ -5,13 +5,8 @@ namespace backend.Services;
 public interface IProductService
 {
     Task<PagedResult<ProductDto>> GetAllAsync(
-        string? keyword,
-        Guid? categoryId,
-        decimal? minPrice,
-        decimal? maxPrice,
-        CancellationToken cancellationToken,
-        int page,
-        int pageSize
+        ProductQueryDto query,
+        CancellationToken cancellationToken
     );
 
     Task<ProductFullDto> GetFullByIdAsync(Guid id, CancellationToken cancellationToken);
@@ -24,14 +19,7 @@ public interface IProductService
     Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 
     Task<PagedResult<ProductListItemDto>> GetProductListAsync(
-        CancellationToken cancellationToken,
-        int page,
-        int pageSize,
-        string? categorySlug = null,
-        string? keyword = null,
-        Guid? brandId = null,
-        decimal? minPrice = null,
-        decimal? maxPrice = null,
-        string? sortBy = null
+        ProductQueryDto query,
+        CancellationToken cancellationToken
     );
 }

@@ -1,24 +1,33 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { ThemeService } from '../../core/services/theme';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../core/utils/theme.util';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.css',
 })
 export class AdminLayout implements OnInit, OnDestroy {
-  private themeService = inject(ThemeService);
+  readonly themeService = inject(ThemeService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   ngOnInit() {
-    // Admin section is exclusively Dark Mode
-    this.themeService.setForcedTheme('dark');
+    // Switch to admin context — persists theme_admin key, defaults to 'light'
+    this.themeService.setContext('admin');
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/portal']);
   }
 
   ngOnDestroy() {
-    // Revert to user preference when leaving admin
-    this.themeService.setForcedTheme(null);
+    // Revert to user context when leaving admin
+    this.themeService.setContext(null);
   }
 }

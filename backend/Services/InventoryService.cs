@@ -4,6 +4,7 @@ using backend.DTOs;
 using backend.Models;
 using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
+using backend.Constants;
 
 namespace backend.Services;
 
@@ -20,7 +21,7 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
             ReceiptCode = $"REC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}",
             CreatedBy = userId,
             Notes = dto.Notes,
-            Status = 1, // 1: Draft
+            Status = InventoryReceiptStatus.Draft, // 1: Draft
             CreatedAt = DateTime.UtcNow,
             TotalAmount = dto.Items.Sum(i => i.Quantity * i.UnitPrice)
         };
@@ -77,9 +78,9 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
             .FirstOrDefaultAsync(r => r.ReceiptId == receiptId, cancellationToken);
 
         if (receipt == null) return null;
-        if (receipt.Status != 1) throw new Exception("Only draft receipts can be completed");
+        if (receipt.Status != InventoryReceiptStatus.Draft) throw new Exception("Only draft receipts can be completed");
 
-        receipt.Status = 2; // 2: Completed
+        receipt.Status = InventoryReceiptStatus.Completed; // 2: Completed
         receipt.UpdatedAt = DateTime.UtcNow;
         uow.InventoryReceipts.Update(receipt);
 
@@ -94,7 +95,7 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
             {
                 TransactionId = Guid.NewGuid(),
                 ProductId = item.ProductId,
-                TransactionType = 1, // 1: Nhập kho
+                TransactionType = InventoryTransactionType.Import, // 1: Nhập kho
                 ReferenceId = receiptId,
                 QuantityChanged = item.Quantity,
                 StockAfter = product.StockQuantity,
@@ -116,17 +117,17 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
             .FirstOrDefaultAsync(r => r.ReceiptId == receiptId, cancellationToken);
 
         if (receipt == null) return null;
-        if (receipt.Status == 3) throw new Exception("Receipt is already cancelled");
+        if (receipt.Status == InventoryReceiptStatus.Cancelled) throw new Exception("Receipt is already cancelled");
 
         var previousStatus = receipt.Status;
-        receipt.Status = 3; // 3: Cancelled
+        receipt.Status = InventoryReceiptStatus.Cancelled; // 3: Cancelled
         receipt.UpdatedAt = DateTime.UtcNow;
         receipt.Notes = string.IsNullOrEmpty(receipt.Notes) ? $"Lý do hủy: {reason}" : $"{receipt.Notes}\nLý do hủy: {reason}";
         
         uow.InventoryReceipts.Update(receipt);
 
         // Nếu phiếu đã Completed (2), ta phải rollback số lượng (Xuất trả lại)
-        if (previousStatus == 2)
+        if (previousStatus == InventoryReceiptStatus.Completed)
         {
             foreach (var item in receipt.Items)
             {
@@ -140,7 +141,7 @@ public class InventoryService(IUnitOfWork uow, IMapper mapper) : IInventoryServi
                 {
                     TransactionId = Guid.NewGuid(),
                     ProductId = item.ProductId,
-                    TransactionType = 4, // 4: Xuất hủy/Điều chỉnh do hủy phiếu
+                    TransactionType = InventoryTransactionType.Dispose, // 4: Xuất hủy/Điều chỉnh do hủy phiếu
                     ReferenceId = receiptId,
                     QuantityChanged = -item.Quantity,
                     StockAfter = product.StockQuantity,

@@ -30,94 +30,56 @@ public class ShipmentsController : ControllerBase
 
     // POST: api/shipments
     [HttpPost]
-    public async Task<IActionResult> Create(
+    public async Task<ActionResult<ApiResponse<ShipmentDto>>> Create(
         [FromBody] CreateShipmentDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        try
-        {
-            var shipment = await _service.CreateAsync(dto, GetCurrentUserId(), cancellationToken);
-            return Ok(shipment);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (BadRequestException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var shipment = await _service.CreateAsync(dto, GetCurrentUserId(), cancellationToken);
+        return Ok(ApiResponse.Ok(shipment));
     }
 
     // PUT: api/shipments/{id}
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(
+    public async Task<ActionResult<ApiResponse<ShipmentDto>>> Update(
         Guid id,
         [FromBody] UpdateShipmentDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        try
-        {
-            var shipment = await _service.UpdateAsync(id, dto, cancellationToken);
-            return Ok(shipment);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var shipment = await _service.UpdateAsync(id, dto, cancellationToken);
+        return Ok(ApiResponse.Ok(shipment));
     }
 
     // GET: api/shipments/order/{orderId}
     [HttpGet("order/{orderId}")]
-    public async Task<IActionResult> GetByOrderId(
+    public async Task<ActionResult<ApiResponse<ShipmentDto>>> GetByOrderId(
         Guid orderId,
         CancellationToken cancellationToken = default)
     {
         var shipment = await _service.GetByOrderIdAsync(orderId, cancellationToken);
         if (shipment == null)
-            return NotFound(new { message = "Shipment not found for this order" });
+            return NotFound(ApiResponse.Fail("Shipment not found for this order"));
 
-        return Ok(shipment);
+        return Ok(ApiResponse.Ok(shipment));
     }
 
     // PATCH: api/shipments/{id}/qc
     [HttpPatch("{id}/qc")]
-    public async Task<IActionResult> MarkQcPassed(
+    public async Task<ActionResult<ApiResponse<ShipmentDto>>> MarkQcPassed(
         Guid id,
         [FromBody] MarkQcDto dto,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var shipment = await _service.MarkQcPassedAsync(id, dto, GetCurrentUserId(), cancellationToken);
-            return Ok(shipment);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var shipment = await _service.MarkQcPassedAsync(id, dto, GetCurrentUserId(), cancellationToken);
+        return Ok(ApiResponse.Ok(shipment));
     }
 
     // PATCH: api/shipments/{id}/packed
     [HttpPatch("{id}/packed")]
-    public async Task<IActionResult> MarkPacked(
+    public async Task<ActionResult<ApiResponse<ShipmentDto>>> MarkPacked(
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var shipment = await _service.MarkPackedAsync(id, GetCurrentUserId(), cancellationToken);
-            return Ok(shipment);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var shipment = await _service.MarkPackedAsync(id, GetCurrentUserId(), cancellationToken);
+        return Ok(ApiResponse.Ok(shipment));
     }
 }

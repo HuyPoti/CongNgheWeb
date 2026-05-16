@@ -4,13 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Supplier, CreateSupplierDto, UpdateSupplierDto } from '../models/supplier.model';
 import { environment } from '../../../environments/environment';
-
-interface ApiResponse<T> {
-  status: string;
-  data: T;
-  message: string;
-  error?: any;
-}
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -34,13 +28,13 @@ export class SupplierService {
       .pipe(map(res => res.data));
   }
 
-  updateSupplier(id: string, dto: UpdateSupplierDto): Observable<any> {
-    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/${id}`, dto)
+  updateSupplier(id: string, dto: UpdateSupplierDto): Observable<object> {
+    return this.http.put<ApiResponse<object>>(`${this.apiUrl}/${id}`, dto)
       .pipe(map(res => res.data));
   }
 
-  deleteSupplier(id: string): Observable<any> {
-    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/${id}`)
+  deleteSupplier(id: string): Observable<object> {
+    return this.http.delete<ApiResponse<object>>(`${this.apiUrl}/${id}`)
       .pipe(map(res => res.data));
   }
 }

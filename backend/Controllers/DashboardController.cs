@@ -18,30 +18,30 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("overview")]
-    public async Task<ActionResult<OverviewDto>> Overview(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<OverviewDto>>> Overview(CancellationToken cancellationToken)
     {
         var res = await _dashboardService.GetOverviewAsync(cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpGet("revenue")]
-    public async Task<ActionResult<IEnumerable<RevenueChartDto>>> Revenue([FromQuery] int days = 30, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<ApiResponse<IEnumerable<RevenueChartDto>>>> Revenue([FromQuery] int days = 30, CancellationToken cancellationToken = default)
     {
         var res = await _dashboardService.GetRevenueChartAsync(days, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpGet("top-products")]
-    public async Task<ActionResult<IEnumerable<TopProductDto>>> TopProducts([FromQuery] int take = 10, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<ApiResponse<IEnumerable<TopProductDto>>>> TopProducts([FromQuery] int take = 10, CancellationToken cancellationToken = default)
     {
         var res = await _dashboardService.GetTopProductsAsync(take, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 
     [HttpGet("top-customers")]
-    public async Task<ActionResult<IEnumerable<TopCustomerDto>>> TopCustomers([FromQuery] int take = 10, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<ApiResponse<IEnumerable<TopCustomerDto>>>> TopCustomers([FromQuery] int take = 10, CancellationToken cancellationToken = default)
     {
         var res = await _dashboardService.GetTopCustomersAsync(take, cancellationToken);
-        return Ok(res);
+        return Ok(ApiResponse.Ok(res));
     }
 }

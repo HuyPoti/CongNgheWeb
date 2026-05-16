@@ -1,12 +1,20 @@
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 
-export const roleGuard: CanActivateFn = (route, state) => {
+export const roleGuard: CanActivateFn = (route) => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const toast = inject(ToastService);
+  const platformId = inject(PLATFORM_ID);
+
+  // 0. Nếu đang ở Server (SSR), cho phép qua để tránh bị redirect nhầm khi F5
+  // client-side hydration sẽ chạy lại guard này ở Browser sau đó.
+  if (!isPlatformBrowser(platformId)) {
+    return true;
+  }
 
   const currentUser = authService.currentUserValue;
 
@@ -31,16 +39,8 @@ export const roleGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // 4. Nếu là customer cố tình vào admin/employee, báo lỗi và đẩy ra
-  toast.error('Từ chối truy cập! Bạn không có quyền hạn.');
-  
-  if (userRole === 'customer') {
-    router.navigate(['/']); // Đẩy khách hàng về trang chủ
-  } else if (userRole === 'staff') {
-    router.navigate(['/employee/dashboard']); // Đẩy nhân viên về đúng trang của họ
-  } else {
-    router.navigate(['/portal']);
-  }
-
+  // 4. Nếu không có quyền, đẩy về trang 404 để bảo mật (che giấu sự tồn tại của route)
+  // hoặc có thể tạo trang 403 riêng nếu muốn.
+  router.navigate(['/404']);
   return false;
 };

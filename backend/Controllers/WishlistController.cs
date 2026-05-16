@@ -28,36 +28,29 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMyWishlist()
+    public async Task<ActionResult<ApiResponse<List<WishlistItemDto>>>> GetMyWishlist()
     {
         var userId = GetCurrentUserId();
         var result = await _service.GetByUserAsync(userId);
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpPost("toggle/{productId}")]
-    public async Task<IActionResult> Toggle(Guid productId)
+    public async Task<ActionResult<ApiResponse<object>>> Toggle(Guid productId)
     {
         var userId = GetCurrentUserId();
-        try
-        {
-            var isAdded = await _service.ToggleAsync(userId, productId);
-            return Ok(new { 
-                isAdded, 
-                message = isAdded ? "Đã thêm vào danh sách yêu thích" : "Đã xóa khỏi danh sách yêu thích" 
-            });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var isAdded = await _service.ToggleAsync(userId, productId);
+        return Ok(ApiResponse.Ok(new { 
+            isAdded, 
+            message = isAdded ? "Đã thêm vào danh sách yêu thích" : "Đã xóa khỏi danh sách yêu thích" 
+        }));
     }
 
     [HttpGet("check/{productId}")]
-    public async Task<IActionResult> Check(Guid productId)
+    public async Task<ActionResult<ApiResponse<object>>> Check(Guid productId)
     {
         var userId = GetCurrentUserId();
         var isInWishlist = await _service.IsInWishlistAsync(userId, productId);
-        return Ok(new { isInWishlist });
+        return Ok(ApiResponse.Ok(new { isInWishlist }));
     }
 }

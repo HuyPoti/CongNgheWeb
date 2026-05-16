@@ -1,6 +1,6 @@
-<div class="p-6 bg-slate-900 min-h-screen no-print">
+<div class="p-6 bg-slate-100 dark:bg-slate-900 min-h-screen no-print">
   <div class="max-w-4xl mx-auto mb-6 flex justify-between items-center">
-    <button (click)="goBack()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-4 rounded-xl transition-all flex items-center gap-2 border border-slate-700">
+    <button (click)="goBack()" class="bg-white dark:bg-slate-800 hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-2 px-4 rounded-xl transition-all flex items-center gap-2 border border-slate-700">
       <span class="material-symbols-outlined text-sm">arrow_back</span>
       <span>Quay lại</span>
     </button>
@@ -28,24 +28,24 @@
       <!-- Info Grid -->
       <div class="grid grid-cols-2 gap-16 mb-12">
         <div>
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Thông tin người nhận</h3>
+          <h3 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-6">Thông tin người nhận</h3>
           <p class="font-black text-slate-900 text-xl mb-2">{{ order.customerName }}</p>
           <p class="text-slate-600 font-bold mb-2">{{ order.phone }}</p>
           <p class="text-slate-600 leading-relaxed font-medium">{{ order.address }}</p>
         </div>
         <div>
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Đơn vị vận chuyển</h3>
+          <h3 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-6">Đơn vị vận chuyển</h3>
           <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
             <div class="flex items-center justify-between mb-4">
-              <span class="text-xs font-bold text-slate-400 uppercase">Đối tác:</span>
+              <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Đối tác:</span>
               <span class="font-black text-slate-900">{{ order.carrier }}</span>
             </div>
             <div class="flex flex-col gap-2">
-              <span class="text-xs font-bold text-slate-400 uppercase">Mã vận đơn:</span>
+              <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Mã vận đơn:</span>
               <span class="font-mono font-black text-2xl text-emerald-600 tracking-wider">{{ order.trackingCode }}</span>
             </div>
             <div class="mt-6 pt-6 border-t border-slate-200">
-              <div class="w-full h-20 bg-white border border-slate-200 rounded-xl flex items-center justify-center font-mono text-xs text-slate-300 italic">
+              <div class="w-full h-20 bg-white border border-slate-200 rounded-xl flex items-center justify-center font-mono text-xs text-slate-600 dark:text-slate-300 italic">
                 [BARCODE: {{ order.trackingCode }}]
               </div>
             </div>
@@ -57,10 +57,10 @@
       <table class="w-full mb-12">
         <thead>
           <tr class="border-b-2 border-slate-900">
-            <th class="py-5 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Sản phẩm / SKU</th>
-            <th class="py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 w-24">Số lượng</th>
-            <th class="py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 w-40">Đơn giá</th>
-            <th class="py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400 w-40">Thành tiền</th>
+            <th class="py-5 text-left text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Sản phẩm / SKU</th>
+            <th class="py-5 text-center text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 w-24">Số lượng</th>
+            <th class="py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 w-40">Đơn giá</th>
+            <th class="py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 w-40">Thành tiền</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -78,7 +78,7 @@
         </tbody>
         <tfoot>
           <tr class="border-t-2 border-slate-900">
-            <td colspan="3" class="py-8 text-right font-black uppercase tracking-[0.2em] text-xs text-slate-400">Tổng cộng tiền hàng:</td>
+            <td colspan="3" class="py-8 text-right font-black uppercase tracking-[0.2em] text-xs text-slate-500 dark:text-slate-400">Tổng cộng tiền hàng:</td>
             <td class="py-8 text-right font-black text-3xl text-slate-900">{{ order.total | currency:'VND' }}</td>
           </tr>
         </tfoot>
@@ -87,17 +87,17 @@
       <!-- Footer Info -->
       <div class="grid grid-cols-2 gap-16 pt-10 border-t border-slate-100">
         <div>
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Ghi chú đơn hàng</h3>
+          <h3 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Ghi chú đơn hàng</h3>
           <p class="text-sm font-bold text-slate-600 bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100/50 italic leading-relaxed">"{{ order.note }}"</p>
         </div>
         <div class="flex justify-end gap-16 text-center">
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-16">Người lập phiếu</p>
+            <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-16">Người lập phiếu</p>
             <p class="font-black text-slate-900 italic text-lg">Huy Poti</p>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-16">Người đóng gói</p>
-            <div class="w-32 h-1 bg-slate-900 mx-auto"></div>
+            <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-16">Người đóng gói</p>
+            <div class="w-32 h-1 bg-slate-100 dark:bg-slate-900 mx-auto"></div>
           </div>
         </div>
       </div>

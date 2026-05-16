@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
-import { ComparisonService } from '../../core/services/comparison';
+import { ComparisonService } from '../../core/services/comparison.service';
 import { ProductService } from '../../core/services/product.service';
 import { ProductListItemDto } from '../../core/models/product.model';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, map } from 'rxjs';

@@ -33,17 +33,17 @@ public class ReturnRequestsController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<ApiResponse<List<ReturnRequestDto>>>> GetAll()
     {
         var result = await _service.GetAllAsync();
-        return Ok(result);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<ApiResponse<ReturnRequestDto>>> GetById(Guid id)
     {
         var request = await _service.GetByIdAsync(id);
-        if (request == null) return NotFound();
+        if (request == null) return NotFound(ApiResponse.Fail("Return request not found"));
 
         // Security: Khách hàng chỉ xem được yêu cầu của chính mình
         bool isAdminOrStaff = User.IsInRole("admin") || User.IsInRole("staff");
@@ -52,14 +52,14 @@ public class ReturnRequestsController : ControllerBase
             return Forbid();
         }
 
-        return Ok(request);
+        return Ok(ApiResponse.Ok(request));
     }
 
     [HttpGet("order/{orderId}")]
-    public async Task<IActionResult> GetByOrderId(Guid orderId)
+    public async Task<ActionResult<ApiResponse<ReturnRequestDto>>> GetByOrderId(Guid orderId)
     {
         var request = await _service.GetByOrderIdAsync(orderId);
-        if (request == null) return NotFound();
+        if (request == null) return NotFound(ApiResponse.Fail("Return request not found"));
 
         bool isAdminOrStaff = User.IsInRole("admin") || User.IsInRole("staff");
         if (!isAdminOrStaff && request.UserId != GetCurrentUserId())
@@ -67,50 +67,27 @@ public class ReturnRequestsController : ControllerBase
             return Forbid();
         }
 
-        return Ok(request);
+        return Ok(ApiResponse.Ok(request));
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateReturnRequestDto dto)
+    public async Task<ActionResult<ApiResponse<ReturnRequestDto>>> Create([FromBody] CreateReturnRequestDto dto)
     {
-        try
-        {
-            var userId = GetCurrentUserId();
-            var result = await _service.CreateAsync(userId, dto);
-            return CreatedAtAction(nameof(GetById), new { id = result.ReturnId }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var userId = GetCurrentUserId();
+        var result = await _service.CreateAsync(userId, dto);
+        return CreatedAtAction(nameof(GetById), new { id = result.ReturnId }, ApiResponse.Ok(result));
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<IActionResult> Process(Guid id, [FromBody] UpdateReturnRequestDto dto)
+    public async Task<ActionResult<ApiResponse<ReturnRequestDto>>> Process(Guid id, [FromBody] UpdateReturnRequestDto dto)
     {
+        var adminId = GetCurrentUserId();
+        var result = await _service.ProcessAsync(adminId, id, dto);
+        
+        // Gửi thông báo email sau khi xử lý
+        await _emailNotification.SendReturnProcessedEmail(id);
 
-        try
-        {
-            var adminId = GetCurrentUserId();
-            var result = await _service.ProcessAsync(adminId, id, dto);
-            
-            // Gửi thông báo email sau khi xử lý
-            await _emailNotification.SendReturnProcessedEmail(id);
-
-            return Ok(result);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return Ok(ApiResponse.Ok(result));
     }
 }

@@ -17,55 +17,58 @@ public class BannersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<BannerDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<PagedResult<BannerDto>>>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        return Ok(await _service.GetAllAsync(cancellationToken));
+        var result = await _service.GetAllAsync(page, pageSize, cancellationToken);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpGet("public")]
-    public async Task<ActionResult<List<BannerDto>>> GetPublic(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<PagedResult<BannerDto>>>> GetPublic(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        return Ok(await _service.GetPublicAsync(cancellationToken));
+        var result = await _service.GetPublicAsync(page, pageSize, cancellationToken);
+        return Ok(ApiResponse.Ok(result));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<BannerDto>> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<BannerDto>>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var banner = await _service.GetByIdAsync(id, cancellationToken);
-        return banner == null ? NotFound(new { message = "Không tìm thấy banner" }) : Ok(banner);
+        return banner == null ? NotFound(ApiResponse.Fail("Không tìm thấy banner")) : Ok(ApiResponse.Ok(banner));
     }
 
     [HttpPost]
     [Authorize(Roles = "admin,staff")]
-    public async Task<ActionResult<BannerDto>> Create([FromBody] CreateBannerDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<BannerDto>>> Create([FromBody] CreateBannerDto dto, CancellationToken cancellationToken)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(new { message = "Dữ liệu banner không hợp lệ" });
-        }
-
         var banner = await _service.CreateAsync(dto, cancellationToken);
         if (banner == null)
         {
-            return BadRequest(new { message = "Dữ liệu banner không hợp lệ" });
+            return BadRequest(ApiResponse.Fail("Dữ liệu banner không hợp lệ"));
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = banner.BannerId }, banner);
+        return CreatedAtAction(nameof(GetById), new { id = banner.BannerId }, ApiResponse.Ok(banner));
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<ActionResult<BannerDto>> Update(Guid id, [FromBody] UpdateBannerDto dto, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<BannerDto>>> Update(Guid id, [FromBody] UpdateBannerDto dto, CancellationToken cancellationToken)
     {
         var banner = await _service.UpdateAsync(id, dto, cancellationToken);
-        return banner == null ? NotFound(new { message = "Không tìm thấy banner" }) : Ok(banner);
+        return banner == null ? NotFound(ApiResponse.Fail("Không tìm thấy banner")) : Ok(ApiResponse.Ok(banner));
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "admin,staff")]
-    public async Task<ActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
-        if (!await _service.DeleteAsync(id, cancellationToken)) return NotFound(new { message = "Không tìm thấy banner" });
-        return NoContent();
+        if (!await _service.DeleteAsync(id, cancellationToken)) return NotFound(ApiResponse.Fail("Không tìm thấy banner"));
+        return Ok(ApiResponse.Ok(new { message = "Đã xóa thành công" }));
     }
 }

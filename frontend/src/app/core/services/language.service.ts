@@ -1,5 +1,6 @@
 import { Injectable, signal, effect, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { TRANSLATIONS } from '../constants/translations';
 
 export type Language = 'en' | 'vi';
 
@@ -43,5 +44,20 @@ export class LanguageService {
   // Simple translate helper (can be expanded)
   translate(key: string, translations: Record<Language, string>): string {
     return translations[this._lang()];
+  }
+
+  instant(key: string, params?: Record<string, unknown>): string {
+    const lang = this._lang();
+    const dictionary = (TRANSLATIONS as Record<string, Record<string, string>>)[lang] || TRANSLATIONS.vi;
+
+    let text = dictionary[key] || key;
+
+    if (params) {
+      for (const k of Object.keys(params)) {
+        text = text.replace(new RegExp(`\\[\\[${k}\\]\\]`, 'g'), String(params[k]));
+      }
+    }
+
+    return text;
   }
 }

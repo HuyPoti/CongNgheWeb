@@ -4,7 +4,7 @@ namespace backend.Services;
 
 public interface INewsService
 {
-    Task<List<NewsDto>> GetAllAsync(CancellationToken ct);
+    Task<PagedResult<NewsDto>> GetAllAsync(int page, int pageSize, CancellationToken ct);
     Task<NewsDto?> GetByIdAsync(Guid id, CancellationToken ct);
     Task<NewsDto> CreateAsync(CreateNewsDto dto, CancellationToken ct);
     Task<NewsDto?> UpdateAsync(Guid id, UpdateNewsDto dto, CancellationToken ct);

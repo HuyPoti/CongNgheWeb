@@ -30,6 +30,7 @@ public interface IOrderService
     Task<bool> UpdateAsync(
         Guid id,
         UpdateOrderDto dto,
+        Guid changedByUserId,
         CancellationToken cancellationToken
     );
 

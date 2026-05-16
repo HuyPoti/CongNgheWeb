@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface FlashSaleItemDto {
   id: string;
@@ -59,37 +61,46 @@ export class FlashSaleService {
   private baseUrl = `${environment.apiUrl}/flash-sales`;
 
   // Admin CRUD
-  getAll(opts?: {
-    page?: number;
-    pageSize?: number;
-  }): Observable<PagedResult<FlashSaleDto>> {
+  getAll(opts?: { page?: number; pageSize?: number }): Observable<PagedResult<FlashSaleDto>> {
     const params = new HttpParams()
       .set('page', String(opts?.page ?? 1))
       .set('pageSize', String(opts?.pageSize ?? 10));
 
-    return this.http.get<PagedResult<FlashSaleDto>>(this.baseUrl, { params });
+    return this.http
+      .get<ApiResponse<PagedResult<FlashSaleDto>>>(this.baseUrl, { params })
+      .pipe(map((res) => res.data));
   }
 
   getById(id: string): Observable<FlashSaleDto> {
-    return this.http.get<FlashSaleDto>(`${this.baseUrl}/${id}`);
+    return this.http
+      .get<ApiResponse<FlashSaleDto>>(`${this.baseUrl}/${id}`)
+      .pipe(map((res) => res.data));
   }
 
   create(dto: CreateFlashSaleDto): Observable<FlashSaleDto> {
-    return this.http.post<FlashSaleDto>(this.baseUrl, dto);
+    return this.http
+      .post<ApiResponse<FlashSaleDto>>(this.baseUrl, dto)
+      .pipe(map((res) => res.data));
   }
 
   update(id: string, dto: UpdateFlashSaleDto): Observable<FlashSaleDto> {
-    return this.http.put<FlashSaleDto>(`${this.baseUrl}/${id}`, dto);
+    return this.http
+      .put<ApiResponse<FlashSaleDto>>(`${this.baseUrl}/${id}`, dto)
+      .pipe(map((res) => res.data));
   }
 
   // Public endpoint for store/home page
   getActive(): Observable<FlashSaleDto | null> {
-    return this.http.get<FlashSaleDto>(`${this.baseUrl}/active`);
+    return this.http
+      .get<ApiResponse<FlashSaleDto>>(`${this.baseUrl}/active`)
+      .pipe(map((res) => res.data));
   }
 
   // Add item to flash sale
   addItem(flashSaleId: string, dto: CreateFlashSaleItemDto): Observable<FlashSaleItemDto> {
-    return this.http.post<FlashSaleItemDto>(`${this.baseUrl}/${flashSaleId}/items`, dto);
+    return this.http
+      .post<ApiResponse<FlashSaleItemDto>>(`${this.baseUrl}/${flashSaleId}/items`, dto)
+      .pipe(map((res) => res.data));
   }
 
   // Remove item from flash sale

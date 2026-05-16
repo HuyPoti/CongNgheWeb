@@ -1,6 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import { Component, signal, computed, inject, OnInit, HostListener } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { CartService } from '../../../core/services/cart.service';
@@ -21,6 +21,7 @@ import { VerifiedBadgeComponent } from '../../../shared/components/verified-badg
 })
 export class ProductDetail implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private cartService = inject(CartService);
   private productService = inject(ProductService);
   private reviewsService = inject(ReviewService);
@@ -197,6 +198,11 @@ export class ProductDetail implements OnInit {
   addToCart(): void {
     this.cartService.addToCart(this.product());
     this.toastService.success(`Da them "${this.product().name}" vao gio hang`);
+  }
+
+  buyNow(): void {
+    this.cartService.addToCart(this.product());
+    this.router.navigate(['/cart/checkout']);
   }
 
   private calculateRatingRate(reviews: ReviewDto[]) {

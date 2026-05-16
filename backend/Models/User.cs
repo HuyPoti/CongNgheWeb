@@ -62,4 +62,5 @@ public class User
     // Navigation
     public ICollection<InventoryReceipt> InventoryReceipts { get; set; } = new List<InventoryReceipt>();
     public ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
+    public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 }

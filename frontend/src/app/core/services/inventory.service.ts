@@ -11,13 +11,7 @@ import {
   StockStatus
 } from '../models/inventory.model';
 import { environment } from '../../../environments/environment';
-
-interface ApiResponse<T> {
-  status: string;
-  data: T;
-  message: string;
-  error?: unknown;
-}
+import { ApiResponse } from '../models/api-response.model';
 
 @Injectable({
   providedIn: 'root'

@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface ShipmentDto {
   shipmentId: string;
@@ -38,29 +40,37 @@ export interface UpdateShipmentDto {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ShipmentService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/shipments`;
+  private apiUrl = `${environment.apiUrl}/shipments`;
 
   create(dto: CreateShipmentDto): Observable<ShipmentDto> {
-    return this.http.post<ShipmentDto>(this.apiUrl, dto);
+    return this.http.post<ApiResponse<ShipmentDto>>(this.apiUrl, dto).pipe(map((res) => res.data));
   }
 
   update(id: string, dto: UpdateShipmentDto): Observable<ShipmentDto> {
-    return this.http.put<ShipmentDto>(`${this.apiUrl}/${id}`, dto);
+    return this.http
+      .put<ApiResponse<ShipmentDto>>(`${this.apiUrl}/${id}`, dto)
+      .pipe(map((res) => res.data));
   }
 
   getByOrderId(orderId: string): Observable<ShipmentDto> {
-    return this.http.get<ShipmentDto>(`${this.apiUrl}/order/${orderId}`);
+    return this.http
+      .get<ApiResponse<ShipmentDto>>(`${this.apiUrl}/order/${orderId}`)
+      .pipe(map((res) => res.data));
   }
 
   markQcPassed(id: string, qcPassed: boolean, qcNotes?: string): Observable<ShipmentDto> {
-    return this.http.patch<ShipmentDto>(`${this.apiUrl}/${id}/qc`, { qcPassed, qcNotes });
+    return this.http
+      .patch<ApiResponse<ShipmentDto>>(`${this.apiUrl}/${id}/qc`, { qcPassed, qcNotes })
+      .pipe(map((res) => res.data));
   }
 
   markPacked(id: string): Observable<ShipmentDto> {
-    return this.http.patch<ShipmentDto>(`${this.apiUrl}/${id}/packed`, {});
+    return this.http
+      .patch<ApiResponse<ShipmentDto>>(`${this.apiUrl}/${id}/packed`, {})
+      .pipe(map((res) => res.data));
   }
 }

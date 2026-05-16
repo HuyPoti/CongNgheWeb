@@ -40,6 +40,7 @@ public class AppDbContext : DbContext
     public DbSet<InventoryReceipt> InventoryReceipts { get; set; }
     public DbSet<InventoryReceiptItem> InventoryReceiptItems { get; set; }
     public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,7 +66,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("banners");
             entity.HasKey(e => e.BannerId);
-            entity.Property(e => e.Position).HasDefaultValue(BannerPosition.homepage_mid);
+            entity.Property(e => e.Position).HasDefaultValue(BannerPosition.homepage_slider);
             entity.Property(e => e.SortOrder).HasDefaultValue(0);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
@@ -345,6 +346,14 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.LogId);
         });
 
+        // Orders
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.ToTable("orders");
+            entity.HasKey(e => e.OrderId);
+            entity.HasIndex(e => e.OrderCode).IsUnique();
+        });
+
         // Suppliers
         modelBuilder.Entity<Supplier>(entity =>
         {
@@ -396,6 +405,21 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.InventoryTransactions)
                 .HasForeignKey(e => e.CreatedBy)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Cart Items
+        modelBuilder.Entity<CartItem>(entity =>
+        {
+            entity.ToTable("cart_items");
+            entity.HasKey(e => e.CartItemId);
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.CartItems)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.CartItems)
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

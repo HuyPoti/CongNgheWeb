@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace backend.DTOs;
 
@@ -30,6 +31,7 @@ public class RegisterDto
 public class GoogleLoginDto
 {
     [Required]
+    [JsonPropertyName("idToken")]
     public string IdToken {get; set; } = string.Empty;
 }
 
