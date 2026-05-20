@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../../core/services/category.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
 import { Category, CreateCategory, UpdateCategory } from '../../../core/models/category.model';
 
 @Component({
@@ -14,32 +16,51 @@ import { Category, CreateCategory, UpdateCategory } from '../../../core/models/c
 export class CategoryHierarchy implements OnInit {
   private categoryService = inject(CategoryService);
   private toastService = inject(ToastService);
+  private confirmService = inject(ConfirmService);
+  private cloudinary = inject(CloudinaryService);
 
   categories = signal<Category[]>([]);
   isLoading = signal(true);
-  errorMessage = signal('');
 
   showModal = signal(false);
   isCreating = signal(false);
   editingCategory = signal<Category | null>(null);
   form: Partial<Category> = {};
 
+  isUploadingFile = signal(false);
+  selectedImageFile = signal<File | null>(null);
+  isSubmitting = signal(false);
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      const error = this.cloudinary.validateImageFile(file);
+      if (error) {
+        this.toastService.error(error);
+        return;
+      }
+      this.selectedImageFile.set(file);
+      this.form.imageUrl = URL.createObjectURL(file);
+    }
+  }
+
   rootCategories = computed(() => this.categories().filter(c => !c.parentId));
 
   ngOnInit() {
-    this.loadCategories();  // ← Gọi API lấy danh sách users khi component load
+    this.loadCategories();
   }
 
   loadCategories() {
     this.isLoading.set(true);
     this.categoryService.getAll().subscribe({
-      next: (data) => {                     // ← Thành công
+      next: (data) => {
         this.categories.set(data);
         this.isLoading.set(false);
       },
-      error: (err) => {                     // ← Thất bại
-        console.error('Lỗi tải users:', err);
-        this.errorMessage.set('Không thể tải danh sách người dùng');
+      error: (err) => {
+        console.error('Lỗi tải danh mục:', err);
+        this.toastService.error('Không thể tải danh sách danh mục sản phẩm!');
         this.isLoading.set(false);
       },
     });
@@ -56,15 +77,17 @@ export class CategoryHierarchy implements OnInit {
 
   openCreate(parentId: string | null = null) {
     this.editingCategory.set(null);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = { name: '', slug: '', description: '', parentId: parentId, imageUrl: '', isActive: true };
-    this.errorMessage.set(''); // Reset lỗi cũ
     this.showModal.set(true);
   }
 
   openEdit(cat: Category) {
     this.editingCategory.set(cat);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = { ...cat };
-    this.errorMessage.set(''); // Reset lỗi cũ
     this.showModal.set(true);
   }
 
@@ -83,6 +106,26 @@ export class CategoryHierarchy implements OnInit {
       return; 
     }
 
+    if (this.isUploadingFile() && this.selectedImageFile()) {
+      this.isSubmitting.set(true);
+      this.cloudinary.uploadImage('categories', this.selectedImageFile()!).subscribe({
+        next: (res) => {
+          this.form.imageUrl = res.imageUrl;
+          this.submitData();
+        },
+        error: () => {
+          this.toastService.error('Lỗi khi upload ảnh');
+          this.isSubmitting.set(false);
+        }
+      });
+    } else {
+      this.submitData();
+    }
+  }
+
+  private submitData() {
+    this.isSubmitting.set(true);
+
     if (this.editingCategory()) {
       // CẬP NHẬT (PUT)
       const categoryId = this.editingCategory()!.categoryId;
@@ -100,7 +143,7 @@ export class CategoryHierarchy implements OnInit {
           this.toastService.success('Cập nhật danh mục thành công!');
           this.loadCategories();
           this.closeModal();
-          this.errorMessage.set('');
+          this.isSubmitting.set(false);
         },
         error: (err) => {
           let msg = 'Lỗi khi cập nhật danh mục';
@@ -109,8 +152,8 @@ export class CategoryHierarchy implements OnInit {
             const keys = Object.keys(err.error.errors);
             if (keys.length > 0) msg = err.error.errors[keys[0]][0];
           }
-          this.errorMessage.set(msg);
           this.toastService.error(msg);
+          this.isSubmitting.set(false);
         }
       });
     } else {
@@ -128,7 +171,7 @@ export class CategoryHierarchy implements OnInit {
           this.toastService.success('Danh mục đã được tạo thành công!');
           this.loadCategories();
           this.closeModal();
-          this.errorMessage.set('');
+          this.isSubmitting.set(false);
         },
         error: (err) => {
           let msg = 'Lỗi khi tạo danh mục';
@@ -137,8 +180,8 @@ export class CategoryHierarchy implements OnInit {
             const keys = Object.keys(err.error.errors);
             if (keys.length > 0) msg = err.error.errors[keys[0]][0];
           }
-          this.errorMessage.set(msg);
           this.toastService.error(msg);
+          this.isSubmitting.set(false);
         }
       }); 
     }
@@ -155,8 +198,13 @@ export class CategoryHierarchy implements OnInit {
     });
   }
 
-  deleteCategory(cat: Category) {
-    if (confirm(`Xóa danh mục "${cat.name}"? Các danh mục con cũng sẽ mất liên kết.`)) {
+  async deleteCategory(cat: Category) {
+    const isConfirmed = await this.confirmService.confirm(
+      `Bạn có chắc chắn muốn xóa danh mục "${cat.name}"? Các danh mục con cũng sẽ mất liên kết.`,
+      'Xóa danh mục',
+      'danger'
+    );
+    if (isConfirmed) {
       this.categoryService.delete(cat.categoryId).subscribe({
         next: () => {
           this.toastService.success('Đã xóa danh mục');

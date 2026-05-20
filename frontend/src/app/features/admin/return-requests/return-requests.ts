@@ -18,9 +18,10 @@ export class AdminReturnRequestsComponent implements OnInit {
   isLoading = signal(true);
   selectedRequest = signal<ReturnRequest | null>(null);
 
-  processingStatus = signal('approved');
-  refundAmount = signal(0);
-  adminNote = signal('');
+  processingStatus = 'Approved';
+  refundAmount = 0;
+  adminNote = '';
+  isSubmitting = signal(false);
 
   ngOnInit(): void {
     this.loadRequests();
@@ -33,8 +34,11 @@ export class AdminReturnRequestsComponent implements OnInit {
         this.requests.set(data);
         this.isLoading.set(false);
       },
-      error: () => {
-        this.toast.error('Không thể tải danh sách yêu cầu đổi trả');
+      error: (err) => {
+        // Không hiện toast lỗi nếu là lỗi 401 hoặc 403 vì interceptor/guard đã lo việc chuyển hướng đăng nhập
+        if (err?.status !== 401 && err?.status !== 403) {
+          this.toast.error('Không thể tải danh sách yêu cầu đổi trả');
+        }
         this.isLoading.set(false);
       }
     });
@@ -42,27 +46,48 @@ export class AdminReturnRequestsComponent implements OnInit {
 
   selectRequest(req: ReturnRequest): void {
     this.selectedRequest.set(req);
-    this.refundAmount.set(req.refundAmount || 0);
-    this.adminNote.set(req.adminNote || '');
-    this.processingStatus.set(req.status === 'pending' ? 'approved' : req.status);
+    this.refundAmount = req.refundAmount || 0;
+    this.adminNote = req.adminNote || '';
+    this.processingStatus = req.status === 'pending' ? 'Approved' : this.capitalizeFirst(req.status);
   }
 
   updateStatus(): void {
     const current = this.selectedRequest();
     if (!current) return;
 
+    // Validation
+    if (this.processingStatus === 'Approved' || this.processingStatus === 'Completed') {
+      if (this.refundAmount < 0) {
+        this.toast.error('Số tiền hoàn lại không được âm');
+        return;
+      }
+    }
+    if (this.processingStatus === 'Rejected' && !this.adminNote.trim()) {
+      this.toast.error('Vui lòng nhập lý do từ chối trong phần Ghi chú');
+      return;
+    }
+
+    this.isSubmitting.set(true);
     this.returnService.process(current.returnId, {
-      status: this.processingStatus().toLowerCase(),
-      refundAmount: this.refundAmount(),
-      adminNote: this.adminNote()
+      status: this.processingStatus.toLowerCase(),
+      refundAmount: this.refundAmount,
+      adminNote: this.adminNote
     }).subscribe({
       next: (updated) => {
         this.toast.success('Cập nhật trạng thái thành công');
+        this.isSubmitting.set(false);
         this.loadRequests();
         this.selectedRequest.set(updated);
       },
-      error: () => this.toast.error('Có lỗi xảy ra khi cập nhật')
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Có lỗi xảy ra khi cập nhật');
+        this.isSubmitting.set(false);
+      }
     });
+  }
+
+  private capitalizeFirst(s: string): string {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
   }
 
   getStatusClass(status: string): string {

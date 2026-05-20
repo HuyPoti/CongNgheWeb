@@ -35,6 +35,14 @@ public class WishlistController : ControllerBase
         return Ok(ApiResponse.Ok(result));
     }
 
+    [HttpGet("my-ids")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<Guid>>>> GetMyWishlistIds()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _service.GetMyWishlistIdsAsync(userId);
+        return Ok(ApiResponse.Ok(result));
+    }
+
     [HttpPost("toggle/{productId}")]
     public async Task<ActionResult<ApiResponse<object>>> Toggle(Guid productId)
     {

@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../../core/services/toast.service';
 import { NewsService } from '../../../core/services/news.service';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
 import { News, NewsCategory, CreateNews, UpdateNews, CreateNewsCategory, UpdateNewsCategory } from '../../../core/models/news.model';
 
 @Component({
@@ -14,6 +17,9 @@ import { News, NewsCategory, CreateNews, UpdateNews, CreateNewsCategory, UpdateN
 export class CmsNews implements OnInit {
   private toast = inject(ToastService);
   private newsService = inject(NewsService);
+  private cloudinary = inject(CloudinaryService);
+  private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
 
   activeTab = signal<'articles' | 'categories'>('articles');
   
@@ -24,9 +30,27 @@ export class CmsNews implements OnInit {
   editingNews = signal<News | null>(null);
   form: Partial<News> = {};
 
+  isUploadingFile = signal(false);
+  selectedImageFile = signal<File | null>(null);
+  isLoading = signal(false);
+
   showCatModal = signal(false);
   editingCat = signal<NewsCategory | null>(null);
   catForm: Partial<NewsCategory> = {};
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      const error = this.cloudinary.validateImageFile(file);
+      if (error) {
+        this.toast.error(error);
+        return;
+      }
+      this.selectedImageFile.set(file);
+      this.form.imageUrl = URL.createObjectURL(file);
+    }
+  }
 
   ngOnInit() {
     this.loadData();
@@ -127,20 +151,24 @@ export class CmsNews implements OnInit {
   }
 
   deleteCat(cat: NewsCategory) {
-    if (confirm(`Xóa danh mục tin "${cat.name}"?`)) {
-      this.newsService.deleteCategory(cat.categoryId).subscribe({
-        next: () => {
-          this.toast.success('Đã xóa danh mục tin');
-          this.loadData();
-        },
-        error: () => this.toast.error('Lỗi khi xóa danh mục')
-      });
-    }
+    this.confirmService.confirm(`Xóa danh mục tin "${cat.name}"?`, 'Xác nhận xóa', 'danger').then((confirmed) => {
+      if (confirmed) {
+        this.newsService.deleteCategory(cat.categoryId).subscribe({
+          next: () => {
+            this.toast.success('Đã xóa danh mục tin');
+            this.loadData();
+          },
+          error: () => this.toast.error('Lỗi khi xóa danh mục')
+        });
+      }
+    });
   }
 
   // === UI Helpers cho Bài viết ===
   openCreateArticle() {
     this.editingNews.set(null);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = {
       title: '', slug: '', categoryId: '', content: '', excerpt: '',
       imageUrl: '', isPublished: false, metaTitle: '', metaDescription: ''
@@ -150,6 +178,8 @@ export class CmsNews implements OnInit {
 
   openEditArticle(news: News) {
     this.editingNews.set(news);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     // Đảm bảo categoryId được gán vào form là chữ thường để khớp với danh mục đã chuẩn hóa
     this.form = { 
       ...news,
@@ -172,6 +202,26 @@ export class CmsNews implements OnInit {
       return;
     }
 
+    if (this.isUploadingFile() && this.selectedImageFile()) {
+      this.isLoading.set(true);
+      this.cloudinary.uploadImage('news', this.selectedImageFile()!).subscribe({
+        next: (res) => {
+          this.form.imageUrl = res.imageUrl;
+          this.submitArticleData();
+        },
+        error: () => {
+          this.toast.error('Lỗi khi upload ảnh');
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      this.submitArticleData();
+    }
+  }
+
+  private submitArticleData() {
+    this.isLoading.set(true);
+
     if (this.editingNews()) {
       const id = this.editingNews()!.newsId;
       const updateData: UpdateNews = {
@@ -191,20 +241,24 @@ export class CmsNews implements OnInit {
         next: () => {
           this.toast.success('Cập nhật bài viết thành công');
           this.loadData();
+          this.isLoading.set(false);
           this.closeModal();
         },
-        error: () => this.toast.error('Lỗi khi cập nhật bài viết')
+        error: () => {
+          this.toast.error('Lỗi khi cập nhật bài viết');
+          this.isLoading.set(false);
+        }
       });
     } else {
       const createData: CreateNews = {
-        title: this.form.title,
-        slug: this.form.slug,
-        categoryId: this.form.categoryId,
+        title: this.form.title!,
+        slug: this.form.slug!,
+        categoryId: this.form.categoryId!,
         content: this.form.content ?? '',
         excerpt: this.form.excerpt,
         imageUrl: this.form.imageUrl,
         isPublished: this.form.isPublished ?? false,
-        authorId: '11111111-1111-1111-1111-111111111111',
+        authorId: this.authService.currentUserValue?.userId || '',
         metaTitle: this.form.metaTitle,
         metaDescription: this.form.metaDescription
       };
@@ -213,23 +267,29 @@ export class CmsNews implements OnInit {
         next: () => {
           this.toast.success('Thêm bài viết mới thành công');
           this.loadData();
+          this.isLoading.set(false);
           this.closeModal();
         },
-        error: () => this.toast.error('Lỗi khi tạo bài viết')
+        error: () => {
+          this.toast.error('Lỗi khi tạo bài viết');
+          this.isLoading.set(false);
+        }
       });
     }
   }
 
   deleteArticle(news: News) {
-    if (confirm(`Xóa bài viết "${news.title}"?`)) {
-      this.newsService.deleteNews(news.newsId).subscribe({
-        next: () => {
-          this.toast.success('Đã xóa bài viết');
-          this.loadData();
-        },
-        error: () => this.toast.error('Lỗi khi xóa bài viết')
-      });
-    }
+    this.confirmService.confirm(`Xóa bài viết "${news.title}"?`, 'Xác nhận xóa', 'danger').then((confirmed) => {
+      if (confirmed) {
+        this.newsService.deleteNews(news.newsId).subscribe({
+          next: () => {
+            this.toast.success('Đã xóa bài viết');
+            this.loadData();
+          },
+          error: () => this.toast.error('Lỗi khi xóa bài viết')
+        });
+      }
+    });
   }
 
   togglePublish(news: News) {

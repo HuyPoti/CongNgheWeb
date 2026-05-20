@@ -21,4 +21,5 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'inventory-receipts', loadComponent: () => import('./inventory-receipts/inventory-receipt-list/inventory-receipt-list').then(m => m.InventoryReceiptList) },
   { path: 'inventory-receipts/new', loadComponent: () => import('./inventory-receipts/inventory-receipt-form/inventory-receipt-form').then(m => m.InventoryReceiptForm) },
   { path: 'inventory-receipts/:id', loadComponent: () => import('./inventory-receipts/inventory-receipt-detail/inventory-receipt-detail').then(m => m.InventoryReceiptDetail) },
+  { path: 'payment-transactions', loadComponent: () => import('./payment-transactions/payment-transactions').then(m => m.PaymentTransactionsComponent) },
 ];

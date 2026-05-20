@@ -2,6 +2,8 @@ import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CouponService, CouponDto, PagedResult } from '../../../core/services/coupon.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
 import { CouponFormComponent } from './coupon-form';
 
 @Component({
@@ -12,6 +14,8 @@ import { CouponFormComponent } from './coupon-form';
 })
 export class CouponListComponent implements OnInit {
   private couponService = inject(CouponService);
+  private toast = inject(ToastService);
+  private confirmService = inject(ConfirmService);
 
   coupons = signal<CouponDto[]>([]);
   loading = signal(false);
@@ -79,14 +83,20 @@ export class CouponListComponent implements OnInit {
     this.loadCoupons();
   }
 
-  deactivateCoupon(id: string, coupon: CouponDto) {
-    if(confirm('Bạn có chắc muốn vô hiệu hóa mã này?')) {
+  async deactivateCoupon(id: string) {
+    const isConfirmed = await this.confirmService.confirm(
+      'Bạn có chắc chắn muốn vô hiệu hóa mã giảm giá này? Hành động này không thể hoàn tác.',
+      'Vô hiệu hóa mã',
+      'danger'
+    );
+    if (isConfirmed) {
       this.couponService.deactivate(id).subscribe({
         next: () => {
+          this.toast.success('Vô hiệu hóa mã giảm giá thành công!');
           this.loadCoupons();
         },
         error: (err) => {
-          alert('Lỗi: ' + (err?.message || 'Cannot deactivate coupon'));
+          this.toast.error('Lỗi: ' + (err?.message || 'Cannot deactivate coupon'));
         }
       });
     }

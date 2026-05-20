@@ -65,7 +65,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
     }
 
     // PUT /api/shipments/{id}
-    public async Task<ShipmentDto> UpdateAsync(Guid shipmentId, UpdateShipmentDto dto, CancellationToken cancellationToken = default)
+    public async Task<ShipmentDto> UpdateAsync(Guid shipmentId, UpdateShipmentDto dto, Guid userId, CancellationToken cancellationToken = default)
     {
         var shipment = await uow.Shipments.Query()
             .FirstOrDefaultAsync(s => s.ShipmentId == shipmentId, cancellationToken)
@@ -100,6 +100,7 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
                         OrderId = order.OrderId,
                         OldStatus = oldStatus,
                         NewStatus = OrderStatus.Shipping,
+                        ChangedBy = userId,
                         Note = $"Đã cập nhật mã vận đơn: {shipment.TrackingCode}. Đơn hàng chuyển sang 'Đang giao'.",
                         CreatedAt = DateTime.UtcNow
                     });
@@ -152,6 +153,37 @@ public class ShipmentService(IUnitOfWork uow) : IShipmentService
         shipment.PackedAt = DateTime.UtcNow;
         shipment.Status = ShipmentStatus.Packed;
         shipment.UpdatedAt = DateTime.UtcNow;
+
+        // Auto move to shipping if tracking code exists and QC is passed
+        if (!string.IsNullOrWhiteSpace(shipment.TrackingCode) && shipment.QcPassed)
+        {
+            if (shipment.Status != ShipmentStatus.Shipping)
+            {
+                shipment.Status = ShipmentStatus.Shipping;
+
+                var order = await uow.Orders.Query()
+                    .FirstOrDefaultAsync(o => o.OrderId == shipment.OrderId, cancellationToken);
+                if (order != null && order.Status != OrderStatus.Shipping && order.Status != OrderStatus.Delivered && order.Status != OrderStatus.Cancelled) // Not delivered, cancelled or already shipping
+                {
+                    int oldStatus = order.Status;
+                    order.Status = OrderStatus.Shipping; // Shipping
+                    order.UpdatedAt = DateTime.UtcNow;
+                    uow.Orders.Update(order);
+
+                    // Log history
+                    uow.OrderStatusHistories.Insert(new OrderStatusHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order.OrderId,
+                        OldStatus = oldStatus,
+                        NewStatus = OrderStatus.Shipping,
+                        ChangedBy = userId,
+                        Note = $"Đã đóng gói và có mã vận đơn: {shipment.TrackingCode}. Đơn hàng chuyển sang 'Đang giao'.",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+        }
 
         uow.Shipments.Update(shipment);
         await uow.SaveAsync(cancellationToken);

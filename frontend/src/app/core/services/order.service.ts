@@ -64,6 +64,11 @@ export class OrderService {
     return this.http.post<ApiResponse<object>>(`${this.baseUrl}/${id}/cancel`, { reason });
   }
 
+  // POST: /api/orders/{id}/mark-delivered (Admin only)
+  markDelivered(id: string): Observable<ApiResponse<object>> {
+    return this.http.post<ApiResponse<object>>(`${this.baseUrl}/${id}/mark-delivered`, {});
+  }
+
   // GET: /api/orders/{id}/history
   getHistory(id: string): Observable<OrderStatusHistoryDto[]> {
     return this.http

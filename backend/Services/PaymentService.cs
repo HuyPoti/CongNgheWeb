@@ -5,6 +5,7 @@ using backend.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using backend.Constants;
+using Microsoft.AspNetCore.Http;
 
 namespace backend.Services;
 
@@ -12,11 +13,17 @@ public class PaymentService : IPaymentService
 {
     private readonly IUnitOfWork _uow;
     private readonly PaymentConfig _paymentConfig;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IVnPayService _vnPayService;
+    private readonly AutoMapper.IMapper _mapper;
 
-    public PaymentService(IUnitOfWork uow, IConfiguration configuration)
+    public PaymentService(IUnitOfWork uow, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IVnPayService vnPayService, AutoMapper.IMapper mapper)
     {
         _uow = uow;
         _paymentConfig = configuration.GetSection("Payment").Get<PaymentConfig>() ?? new PaymentConfig();
+        _httpContextAccessor = httpContextAccessor;
+        _vnPayService = vnPayService;
+        _mapper = mapper;
     }
 
     public async Task<CreatePaymentResponseDto> CreatePaymentAsync(
@@ -69,6 +76,30 @@ public class PaymentService : IPaymentService
                                $"Số tài khoản: {_paymentConfig.BankAccount}\n" +
                                $"Chủ tài khoản: {_paymentConfig.BankOwner}\n" +
                                $"Nội dung chuyển khoản: {order.OrderCode}";
+
+            // Sinh mã QR chuyển khoản VietQR động (Sử dụng API img.vietqr.io chuẩn)
+            var amountInt = (long)order.TotalAmount;
+            var encodedOwner = Uri.EscapeDataString(_paymentConfig.BankOwner);
+            var encodedInfo = Uri.EscapeDataString(order.OrderCode);
+            response.QrUrl = $"https://img.vietqr.io/image/{_paymentConfig.BankId}-{_paymentConfig.BankAccount}-compact2.jpg?amount={amountInt}&addInfo={encodedInfo}&accountName={encodedOwner}";
+        }
+        else if (payment.PaymentMethod == "vnpay")
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+            {
+                throw new BadRequestException("HTTP Context is not available");
+            }
+
+            var vnPayRequest = new VnPayRequestDto
+            {
+                OrderId = payment.PaymentId, // Sử dụng PaymentId làm TxnRef để VNPAY không bị trùng TxnRef
+                Amount = order.TotalAmount,
+                Description = $"Thanh toan don hang {order.OrderCode}"
+            };
+
+            var paymentUrl = _vnPayService.CreatePaymentUrl(vnPayRequest, httpContext);
+            response.PaymentUrl = paymentUrl;
         }
 
         return response;
@@ -175,5 +206,43 @@ public class PaymentService : IPaymentService
         }
 
         await _uow.SaveAsync(cancellationToken);
+    }
+
+    public async Task<PagedResult<PaymentTransactionDto>> GetAllTransactionsAsync(
+        string? keyword,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _uow.Payments.Query()
+            .Include(p => p.Order)
+            .ThenInclude(o => o.User)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            keyword = keyword.ToLower().Trim();
+            query = query.Where(p => 
+                (p.TransactionId != null && p.TransactionId.ToLower().Contains(keyword)) ||
+                p.Order.OrderCode.ToLower().Contains(keyword));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var payments = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var dtos = _mapper.Map<List<PaymentTransactionDto>>(payments);
+
+        return new PagedResult<PaymentTransactionDto>
+        {
+            Items = dtos,
+            TotalCount = total,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 }

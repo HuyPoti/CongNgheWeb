@@ -6,6 +6,7 @@ public interface INewsService
 {
     Task<PagedResult<NewsDto>> GetAllAsync(int page, int pageSize, CancellationToken ct);
     Task<NewsDto?> GetByIdAsync(Guid id, CancellationToken ct);
+    Task<NewsDto?> GetBySlugAsync(string slug, CancellationToken ct);
     Task<NewsDto> CreateAsync(CreateNewsDto dto, CancellationToken ct);
     Task<NewsDto?> UpdateAsync(Guid id, UpdateNewsDto dto, CancellationToken ct);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);

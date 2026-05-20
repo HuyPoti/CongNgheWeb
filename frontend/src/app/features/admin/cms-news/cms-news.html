@@ -149,8 +149,23 @@
           <textarea [(ngModel)]="form.content" rows="8" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary resize-none"></textarea>
         </div>
         <div>
-          <label for="articleImage" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">URL Ảnh đại diện</label>
-          <input [(ngModel)]="form.imageUrl" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"/>
+          <span class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Ảnh đại diện *</span>
+          <div class="flex items-center gap-4 mb-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="imageSourceNews" [value]="false" [(ngModel)]="isUploadingFile" class="accent-primary" />
+              <span class="text-xs text-slate-600 dark:text-slate-300">Nhập URL</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="imageSourceNews" [value]="true" [(ngModel)]="isUploadingFile" class="accent-primary" />
+              <span class="text-xs text-slate-600 dark:text-slate-300">Tải lên từ máy</span>
+            </label>
+          </div>
+          
+          @if (!isUploadingFile()) {
+            <input [(ngModel)]="form.imageUrl" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary" placeholder="https://..."/>
+          } @else {
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"/>
+          }
         </div>
         <!-- SEO -->
         <div class="border-t border-primary/10 pt-5">

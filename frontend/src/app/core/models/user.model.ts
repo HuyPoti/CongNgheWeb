@@ -5,7 +5,8 @@ export interface User {
   email: string;
   fullName: string;
   phone: string | null;
-  role: 'customer' | 'admin' | 'staff';
+  role: 'customer' | 'admin' | 'staff' | 'warehouse';
+  isActive: boolean;
   createdAt: string;    // ← Nhận dạng ISO string từ API
   updatedAt: string;
 }
@@ -21,4 +22,5 @@ export interface UpdateUser {
   fullName?: string;
   phone?: string;
   role?: string;
+  isActive?: boolean;
 }

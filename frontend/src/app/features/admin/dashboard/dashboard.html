@@ -1,255 +1,252 @@
-<!-- Dashboard Content -->
 <div class="p-8 space-y-8">
-<!-- KPI Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-<!-- Card 1: Total Revenue -->
-<div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
-<div class="flex justify-between items-start mb-4">
-<div class="p-2 bg-primary/10 rounded-lg text-primary">
-<span class="material-symbols-outlined">payments</span>
-</div>
-<div class="flex items-center text-emerald-400 text-xs font-bold">
-<span class="material-symbols-outlined text-sm">trending_up</span>
-<span>+12.5%</span>
-</div>
-</div>
-<p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{{ 'admin.total_sales' | translate }}</p>
-<h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
-  @if (overview()) {
-    {{ formatCurrency(overview()!.totalRevenue) }}
-  } @else {
-    --
+
+  <!-- ════════════════════ LOADING ════════════════════ -->
+  @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-32 gap-4">
+      <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-slate-500 text-sm font-semibold">Đang tải dữ liệu dashboard...</p>
+    </div>
   }
-</h3>
-</div>
-<!-- Card 2: Total Orders -->
-<div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
-<div class="flex justify-between items-start mb-4">
-<div class="p-2 bg-accent-blue/10 rounded-lg text-accent-blue">
-<span class="material-symbols-outlined">monetization_on</span>
-</div>
-<div class="flex items-center text-emerald-400 text-xs font-bold">
-<span class="material-symbols-outlined text-sm">trending_up</span>
-<span>+8.2%</span>
-</div>
-</div>
-<p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">{{ 'admin.revenue' | translate }}</p>
-<h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
-  @if (overview()) {
-    {{ overview()!.totalOrders }}
-  } @else {
-    --
+
+  <!-- ════════════════════ ERROR ════════════════════ -->
+  @if (!loading() && error()) {
+    <div class="flex flex-col items-center justify-center py-24 gap-4">
+      <span class="material-symbols-outlined text-5xl text-red-400">error_outline</span>
+      <p class="text-slate-500 text-sm font-semibold">{{ error() }}</p>
+      <button (click)="ngOnInit()" class="px-5 py-2 bg-primary text-slate-900 font-bold rounded-xl text-sm hover:bg-primary/80 transition-all">
+        Thử lại
+      </button>
+    </div>
   }
-</h3>
-</div>
-<!-- Card 3: Total Customers -->
-<div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
-<div class="flex justify-between items-start mb-4">
-<div class="p-2 bg-purple-500/10 rounded-lg text-purple-500">
-<span class="material-symbols-outlined">people</span>
-</div>
-<div class="flex items-center text-emerald-400 text-xs font-bold">
-<span class="material-symbols-outlined text-sm">trending_up</span>
-<span>+5.1%</span>
-</div>
-</div>
-<p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Tổng khách hàng</p>
-<h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
-  @if (overview()) {
-    {{ formatNumber(overview()!.totalCustomers) }}
-  } @else {
-    --
+
+  <!-- ════════════════════ CONTENT ════════════════════ -->
+  @if (!loading() && !error()) {
+
+    <!-- ── KPI Grid ── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <!-- Card 1: Tổng Doanh thu -->
+      <div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-primary/10 rounded-lg text-primary">
+            <span class="material-symbols-outlined">payments</span>
+          </div>
+          <div class="flex items-center text-primary text-xs font-bold gap-1">
+            <span class="material-symbols-outlined text-sm">account_balance_wallet</span>
+            <span>All time</span>
+          </div>
+        </div>
+        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Tổng doanh thu</p>
+        <h3 class="font-neon text-2xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
+          {{ formatCurrency(overview()?.totalRevenue ?? 0) }}
+        </h3>
+      </div>
+
+      <!-- Card 2: Tổng Đơn hàng (tháng này) -->
+      <div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-accent-blue/10 rounded-lg text-accent-blue">
+            <span class="material-symbols-outlined">orders</span>
+          </div>
+          <div class="flex items-center text-accent-blue text-xs font-bold gap-1">
+            <span class="material-symbols-outlined text-sm">calendar_month</span>
+            <span>Tháng này</span>
+          </div>
+        </div>
+        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Đơn hàng</p>
+        <h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
+          {{ formatNumber(overview()?.totalOrders ?? 0) }}
+        </h3>
+      </div>
+
+      <!-- Card 3: Tổng Khách hàng -->
+      <div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-purple-500/10 rounded-lg text-purple-500">
+            <span class="material-symbols-outlined">people</span>
+          </div>
+          <div class="flex items-center text-purple-400 text-xs font-bold gap-1">
+            <span class="material-symbols-outlined text-sm">person_add</span>
+            <span>Đã đăng ký</span>
+          </div>
+        </div>
+        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Tổng khách hàng</p>
+        <h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
+          {{ formatNumber(overview()?.totalCustomers ?? 0) }}
+        </h3>
+      </div>
+
+      <!-- Card 4: Khuyến mãi đang hoạt động -->
+      <div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
+            <span class="material-symbols-outlined">local_offer</span>
+          </div>
+          <div class="flex items-center text-emerald-400 text-xs font-bold gap-1">
+            <span class="material-symbols-outlined text-sm">bolt</span>
+            <span>Đang chạy</span>
+          </div>
+        </div>
+        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Khuyến mãi hoạt động</p>
+        <h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
+          {{ (overview()?.activeCoupons ?? 0) + (overview()?.activeFlashSales ?? 0) }}
+        </h3>
+        <p class="text-xs text-slate-400 mt-1">
+          {{ overview()?.activeCoupons ?? 0 }} coupon · {{ overview()?.activeFlashSales ?? 0 }} flash sale
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ── Revenue Chart + Customers ── -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Revenue Line Chart (Real Data) -->
+      <div class="lg:col-span-2 bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Doanh thu 30 ngày gần nhất</h3>
+            <p class="text-sm text-slate-500">{{ revenueChart().length }} ngày có dữ liệu</p>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-500">
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-1 rounded bg-primary inline-block"></span> Doanh thu
+            </span>
+          </div>
+        </div>
+
+        @if (revenueChart().length > 0) {
+          <div class="relative h-52 w-full overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="revenueGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- Area fill -->
+              <path [attr.d]="revenueAreaPath()" fill="url(#revenueGrad)"/>
+              <!-- Line -->
+              <polyline
+                [attr.points]="revenuePolylinePoints()"
+                fill="none"
+                stroke="#00e5ff"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                class="drop-shadow-[0_0_6px_rgba(0,229,255,0.8)]"
+              />
+            </svg>
+          </div>
+          <!-- Labels -->
+          <div class="flex justify-between mt-3 px-1 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+            @for (label of revenueLabels(); track $index) {
+              <span>{{ label }}</span>
+            }
+          </div>
+        } @else {
+          <div class="h-52 flex flex-col items-center justify-center text-slate-400 gap-2">
+            <span class="material-symbols-outlined text-3xl">bar_chart</span>
+            <p class="text-xs font-semibold">Chưa có dữ liệu doanh thu</p>
+          </div>
+        }
+      </div>
+
+      <!-- Top Customers Panel -->
+      <div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 flex flex-col gap-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Top Khách hàng</h3>
+          <p class="text-sm text-slate-500">Chi tiêu nhiều nhất</p>
+        </div>
+
+        @if (topCustomers().length > 0) {
+          <div class="space-y-3 flex-1">
+            @for (customer of topCustomers(); track customer.userId; let i = $index) {
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
+                  {{ (i + 1) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{{ customer.fullName }}</p>
+                  <p class="text-xs text-slate-500">{{ customer.totalOrders }} đơn hàng</p>
+                </div>
+                <span class="text-xs font-bold text-primary whitespace-nowrap">
+                  {{ formatCurrency(customer.totalSpent) }}
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="flex-1 flex flex-col items-center justify-center text-slate-400 gap-2">
+            <span class="material-symbols-outlined text-3xl">people_outline</span>
+            <p class="text-xs font-semibold">Chưa có dữ liệu</p>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Top Products Table ── -->
+    <div class="bg-white dark:bg-neutral-dark rounded-2xl border border-primary/10 overflow-hidden">
+      <div class="p-6 border-b border-primary/10 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Sản phẩm bán chạy</h3>
+          <p class="text-sm text-slate-500">Top {{ topProducts().length }} sản phẩm theo số lượng đã bán</p>
+        </div>
+        <a routerLink="/admin/manage-product" class="text-primary text-xs font-bold uppercase tracking-widest flex items-center gap-1 hover:opacity-80 transition-opacity">
+          Xem tất cả <span class="material-symbols-outlined text-sm">open_in_new</span>
+        </a>
+      </div>
+
+      @if (topProducts().length > 0) {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="bg-background-light dark:bg-background-dark/30">
+                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">#</th>
+                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sản phẩm</th>
+                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Đã bán</th>
+                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Doanh thu</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-primary/5">
+              @for (product of topProducts(); track product.productId; let i = $index) {
+                <tr class="hover:bg-primary/5 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-neon font-bold" [ngClass]="i === 0 ? 'text-primary' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'">
+                      #{{ (i + 1).toString().padStart(2, '0') }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                        <span class="material-symbols-outlined text-[18px]">devices</span>
+                      </div>
+                      <span class="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-xs">{{ product.productName }}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">{{ formatNumber(product.unitsSold) }}</span>
+                    <span class="text-slate-400 ml-1 text-xs">sp</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="font-bold text-primary">{{ formatCurrency(product.revenue) }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="p-16 text-center">
+          <div class="flex flex-col items-center justify-center gap-3 text-slate-400">
+            <span class="material-symbols-outlined text-4xl">inventory_2</span>
+            <p class="text-sm font-semibold">Chưa có dữ liệu sản phẩm bán chạy</p>
+          </div>
+        </div>
+      }
+    </div>
+
   }
-</h3>
+
 </div>
-<!-- Card 4: Active Promotions -->
-<div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 hover:border-primary/40 transition-all group">
-<div class="flex justify-between items-start mb-4">
-<div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
-<span class="material-symbols-outlined">local_offer</span>
-</div>
-<div class="flex items-center text-emerald-400 text-xs font-bold">
-<span class="material-symbols-outlined text-sm">trending_up</span>
-<span>+0.4%</span>
-</div>
-</div>
-<p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Khuyến mãi hoạt động</p>
-<h3 class="font-neon text-3xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tight">
-  @if (overview()) {
-    {{ overview()!.activeCoupons + overview()!.activeFlashSales }}
-  } @else {
-    --
-  }
-</h3>
-</div>
-</div>
-<!-- Middle Charts Section -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Area Chart (Wide) -->
-<div class="lg:col-span-2 bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10">
-<div class="flex items-center justify-between mb-8">
-<div>
-<h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'admin.rev_over_time' | translate }}</h3>
-<p class="text-sm text-slate-500">{{ 'admin.weekly_summary' | translate }}</p>
-</div>
-<div class="flex bg-background-light dark:bg-background-dark p-1 rounded-lg">
-<button class="px-3 py-1 text-xs font-bold bg-primary text-background-dark rounded-md">1W</button>
-<button class="px-3 py-1 text-xs font-bold text-slate-500 hover:text-primary">1M</button>
-<button class="px-3 py-1 text-xs font-bold text-slate-500 hover:text-primary">1Y</button>
-</div>
-</div>
-<div class="relative h-64 w-full">
-<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 800 240">
-<defs>
-<lineargradient id="glowGradient" x1="0" x2="0" y1="0" y2="1">
-<stop offset="0%" stop-color="#00e5ff" stop-opacity="0.3"></stop>
-<stop offset="100%" stop-color="#0066FF" stop-opacity="0"></stop>
-</lineargradient>
-</defs>
-<path d="M0 200 C 100 180, 150 220, 200 150 C 250 80, 300 120, 400 100 C 500 80, 600 180, 700 40 C 750 20, 800 50, 800 50 V 240 H 0 Z" fill="url(#glowGradient)"></path>
-<path class="drop-shadow-[0_0_8px_rgba(0,229,255,1)]" d="M0 200 C 100 180, 150 220, 200 150 C 250 80, 300 120, 400 100 C 500 80, 600 180, 700 40 C 750 20, 800 50, 800 50" fill="none" stroke="#00e5ff" stroke-width="3"></path>
-</svg>
-<div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-<div class="w-full border-t border-slate-200 dark:border-slate-700/30"></div>
-<div class="w-full border-t border-slate-200 dark:border-slate-700/30"></div>
-<div class="w-full border-t border-slate-200 dark:border-slate-700/30"></div>
-<div class="w-full border-t border-slate-200 dark:border-slate-700/30"></div>
-</div>
-</div>
-<div class="flex justify-between mt-4 px-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-<span>{{ 'days.mon' | translate }}</span><span>{{ 'days.tue' | translate }}</span><span>{{ 'days.wed' | translate }}</span><span>{{ 'days.thu' | translate }}</span><span>{{ 'days.fri' | translate }}</span><span>{{ 'days.sat' | translate }}</span><span>{{ 'days.sun' | translate }}</span>
-</div>
-</div>
-<!-- Doughnut Chart -->
-<div class="bg-white dark:bg-neutral-dark p-6 rounded-2xl border border-primary/10 flex flex-col items-center justify-between">
-<div class="w-full mb-4">
-<h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'admin.sales_by_cat' | translate }}</h3>
-<p class="text-sm text-slate-500">{{ 'admin.dist_analysis' | translate }}</p>
-</div>
-<div class="relative size-48">
-<svg class="size-full" viewbox="0 0 100 100">
-<circle cx="50" cy="50" fill="transparent" r="40" class="stroke-slate-200 dark:stroke-slate-800" stroke-width="12"></circle>
-<circle class="drop-shadow-[0_0_5px_rgba(0,229,255,0.5)]" cx="50" cy="50" fill="transparent" r="40" stroke="#00e5ff" stroke-dasharray="251.2" stroke-dashoffset="62.8" stroke-width="12"></circle>
-<circle cx="50" cy="50" fill="transparent" r="40" stroke="#0066FF" stroke-dasharray="251.2" stroke-dashoffset="188.4" stroke-width="12"></circle>
-<circle cx="50" cy="50" fill="transparent" r="40" stroke="#a855f7" stroke-dasharray="251.2" stroke-dashoffset="230" stroke-width="12"></circle>
-</svg>
-<div class="absolute inset-0 flex flex-col items-center justify-center">
-<span class="text-2xl font-neon font-bold text-primary">84%</span>
-<span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{{ 'admin.overall' | translate }}</span>
-</div>
-</div>
-<div class="w-full grid grid-cols-2 gap-4 mt-6">
-<div class="flex items-center gap-2">
-<span class="size-2 rounded-full bg-primary shadow-[0_0_5px_#00e5ff]"></span>
-<span class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.cat_tech' | translate }}</span>
-</div>
-<div class="flex items-center gap-2">
-<span class="size-2 rounded-full bg-accent-blue shadow-[0_0_5px_#0066FF]"></span>
-<span class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.cat_fashion' | translate }}</span>
-</div>
-<div class="flex items-center gap-2">
-<span class="size-2 rounded-full bg-purple-500 shadow-[0_0_5px_#a855f7]"></span>
-<span class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.cat_home' | translate }}</span>
-</div>
-<div class="flex items-center gap-2">
-<span class="size-2 rounded-full bg-slate-700"></span>
-<span class="text-xs text-slate-500 dark:text-slate-400">{{ 'admin.cat_others' | translate }}</span>
-</div>
-</div>
-</div>
-</div>
-<!-- Products Table -->
-<div class="bg-white dark:bg-neutral-dark rounded-2xl border border-primary/10 overflow-hidden">
-<div class="p-6 border-b border-primary/10 flex items-center justify-between">
-<h3 class="text-lg font-bold text-slate-900 dark:text-white">{{ 'admin.top_products' | translate }}</h3>
-<button class="text-primary text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:opacity-80">
-                            {{ 'admin.view_report' | translate }} <span class="material-symbols-outlined text-sm">open_in_new</span>
-</button>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full">
-<thead>
-<tr class="text-left bg-background-light dark:bg-background-dark/30">
-<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">{{ 'admin.rank' | translate }}</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">{{ 'admin.product' | translate }}</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">{{ 'admin.units_sold' | translate }}</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">{{ 'admin.revenue' | translate }}</th>
-<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">{{ 'admin.status' | translate }}</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-primary/5">
-<tr class="hover:bg-primary/5 transition-colors">
-<td class="px-6 py-4">
-<span class="font-neon text-primary font-bold">#01</span>
-</td>
-<td class="px-6 py-4">
-<div class="flex items-center gap-4">
-<div class="size-12 rounded-lg bg-white dark:bg-slate-800 flex-shrink-0 bg-cover bg-center" data-alt="Cyberpunk high-end headphone product image" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCJyXwzg2Y9X7gmWzvn6MqDgs3sCp5NicFCprFCBTxpoE2lnLEKkSDnQ3RFRPDKJvQrdUbG8Ay-UmTOoGR8o-1uf-olYvaXhyPHmNd9chP3l3yC8ga3iHnXVylh_px6qMF8OtQKTQyfi_dcYf67QX8Ba89cAsdNSqelnxYA3uMxtcxekJzXCBIGrfVKO5lxfbXucoMmrG9qDE_KQSIGXcgcJCN4KUj2xzvH40G7UBVeK7NvfKXmPJgui8OK48qjNTmv7CmIxknRHsJL')"></div>
-<div>
-<p class="font-neon text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">ZX-Neuros Pro</p>
-<p class="text-xs text-slate-500">Audio &amp; Sound</p>
-</div>
-</div>
-</td>
-<td class="px-6 py-4 text-center">
-<span class="font-data font-medium text-slate-600 dark:text-slate-300">1,420</span>
-</td>
-<td class="px-6 py-4 text-right">
-<span class="font-data font-bold text-primary">$42,600.00</span>
-</td>
-<td class="px-6 py-4 text-center">
-<span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded uppercase tracking-tighter">{{ 'admin.in_stock' | translate }}</span>
-</td>
-</tr>
-<tr class="hover:bg-primary/5 transition-colors">
-<td class="px-6 py-4">
-<span class="font-neon text-slate-500 dark:text-slate-400 font-bold">#02</span>
-</td>
-<td class="px-6 py-4">
-<div class="flex items-center gap-4">
-<div class="size-12 rounded-lg bg-white dark:bg-slate-800 flex-shrink-0 bg-cover bg-center" data-alt="Futuristic neon backlit mechanical keyboard" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDO27eY9Abmwnr4I7NdkqMmCsI5XJ6GncCWz0ewIEEVp2fbYzziaY41mbVps3IVJkqCTxPIKbeUlvfXH7bKmt9VIZ7TysxX2P3NgMxEE-3zliZ9kpUi_avvb-3g28ZrVRvX2-r9G41Cn2h5shvQtA4NTcrCglbkhCeX6KH2sAHdhbG1KAXRZY-TbBiHGiupdeoLYk7xTSgdVQZ1RKQ8t9a7v6lbCFYyaVkJlZEMMPiELz_sw2iHivwn1IqRtmD7fGlDfwl4MaiqPUn8')"></div>
-<div>
-<p class="font-neon text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Apex Matrix K1</p>
-<p class="text-xs text-slate-500">Peripherals</p>
-</div>
-</div>
-</td>
-<td class="px-6 py-4 text-center">
-<span class="font-data font-medium text-slate-600 dark:text-slate-300">985</span>
-</td>
-<td class="px-6 py-4 text-right">
-<span class="font-data font-bold text-primary">$24,625.00</span>
-</td>
-<td class="px-6 py-4 text-center">
-<span class="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded uppercase tracking-tighter">{{ 'admin.in_stock' | translate }}</span>
-</td>
-</tr>
-<tr class="hover:bg-primary/5 transition-colors">
-<td class="px-6 py-4">
-<span class="font-neon text-slate-500 dark:text-slate-400 font-bold">#03</span>
-</td>
-<td class="px-6 py-4">
-<div class="flex items-center gap-4">
-<div class="size-12 rounded-lg bg-white dark:bg-slate-800 flex-shrink-0 bg-cover bg-center" data-alt="Modern minimalist smartwatch with glowing cyan screen" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBgQia0WJowlJklkR5y6olyDhqgvSsh9JthV_PbFottT6D9sXtNxl6ewqvD9zpfAR2TZ-v8nu56I695XL_wIkfmiVOkoo_ofskSHpK8jHgQVd3NcHLn6AFmn2f9Ek8EY_H7yW02T4c4QJV728tUEF_TyNvH0vL8y31uIrUfxoQ3m8hHZZtnQLOmiFhLXY_OIg0yqtdOqgPsF3pqm6lTm54dalpmknvzgOYi3rAmxA4mtYEB_ldfTk-4SGnYL8bQPJGXrE2wPDg5H6fy')"></div>
-<div>
-<p class="font-neon text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Sync Chrono V3</p>
-<p class="text-xs text-slate-500">Wearables</p>
-</div>
-</div>
-</td>
-<td class="px-6 py-4 text-center">
-<span class="font-data font-medium text-slate-600 dark:text-slate-300">842</span>
-</td>
-<td class="px-6 py-4 text-right">
-<span class="font-data font-bold text-primary">$18,524.00</span>
-</td>
-<td class="px-6 py-4 text-center">
-<span class="px-2 py-1 bg-rose-500/10 text-rose-500 text-[10px] font-bold rounded uppercase tracking-tighter">{{ 'admin.low_stock' | translate }}</span>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<!-- Footer -->

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InventoryService } from '../../../../core/services/inventory.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmService } from '../../../../core/services/confirm.service';
 import { InventoryReceipt } from '../../../../core/models/inventory.model';
 
 @Component({
@@ -15,6 +17,8 @@ export class InventoryReceiptDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private inventoryService = inject(InventoryService);
+  private toast = inject(ToastService);
+  private confirmService = inject(ConfirmService);
 
   receipt = signal<InventoryReceipt | null>(null);
   isLoading = signal<boolean>(true);
@@ -40,14 +44,19 @@ export class InventoryReceiptDetail implements OnInit {
       },
       error: (err) => {
         console.error('Lỗi khi tải chi tiết phiếu nhập', err);
-        alert('Không tìm thấy phiếu nhập!');
+        this.toast.error('Không tìm thấy phiếu nhập!');
         this.router.navigate(['/admin/inventory-receipts']);
       }
     });
   }
 
-  completeReceipt() {
-    if (confirm('Xác nhận nhập kho? Số lượng tồn kho của sản phẩm sẽ được cộng thêm.')) {
+  async completeReceipt() {
+    const isConfirmed = await this.confirmService.confirm(
+      'Bạn có chắc chắn muốn xác nhận nhập kho? Số lượng tồn kho của sản phẩm sẽ được cộng thêm.',
+      'Nhập kho',
+      'warning'
+    );
+    if (isConfirmed) {
       const id = this.receipt()?.receiptId;
       if (!id) return;
       
@@ -56,11 +65,11 @@ export class InventoryReceiptDetail implements OnInit {
         next: (data) => {
           this.receipt.set(data);
           this.isProcessing.set(false);
-          alert('Nhập kho thành công!');
+          this.toast.success('Nhập kho thành công!');
         },
         error: (err) => {
           console.error('Lỗi khi nhập kho', err);
-          alert('Có lỗi xảy ra: ' + (err.error?.message || err.message));
+          this.toast.error('Có lỗi xảy ra: ' + (err.error?.message || err.message));
           this.isProcessing.set(false);
         }
       });
@@ -78,7 +87,7 @@ export class InventoryReceiptDetail implements OnInit {
 
   cancelReceipt() {
     if (!this.cancelReason().trim()) {
-      alert('Vui lòng nhập lý do hủy');
+      this.toast.warning('Vui lòng nhập lý do hủy');
       return;
     }
 
@@ -91,11 +100,11 @@ export class InventoryReceiptDetail implements OnInit {
         this.receipt.set(data);
         this.closeCancelModal();
         this.isProcessing.set(false);
-        alert('Đã hủy phiếu nhập!');
+        this.toast.success('Đã hủy phiếu nhập!');
       },
       error: (err) => {
         console.error('Lỗi khi hủy phiếu', err);
-        alert('Có lỗi xảy ra: ' + (err.error?.message || err.message));
+        this.toast.error('Có lỗi xảy ra: ' + (err.error?.message || err.message));
         this.isProcessing.set(false);
       }
     });

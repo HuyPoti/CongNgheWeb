@@ -14,7 +14,8 @@ public class OrderService(
     IUnitOfWork uow,
     IMapper mapper,
     IEmailNotificationService emailNotification,
-    IFlashSaleService flashSaleService) : IOrderService
+    IFlashSaleService flashSaleService,
+    ICouponService couponService) : IOrderService
 {
     // CREATE ORDER
     public async Task<OrderDetailDto> CreateAsync(
@@ -74,6 +75,33 @@ public class OrderService(
             });
         }
 
+        Guid? couponId = null;
+        decimal discountAmount = 0;
+
+        if (!string.IsNullOrWhiteSpace(dto.CouponCode))
+        {
+            var validationItems = orderItems.Select(oi => new CouponValidationItemDto
+            {
+                ProductId = oi.ProductId,
+                Quantity = oi.Quantity
+            }).ToList();
+
+            var validation = await couponService.ValidateAsync(
+                dto.CouponCode,
+                totalAmount,
+                userId,
+                validationItems,
+                cancellationToken);
+
+            if (!validation.IsValid)
+            {
+                throw new BadRequestException(validation.Message);
+            }
+
+            couponId = validation.CouponId;
+            discountAmount = validation.DiscountAmount;
+        }
+
         var order = new Order
         {
             OrderId = Guid.NewGuid(),
@@ -84,7 +112,9 @@ public class OrderService(
                 ? "cod"
                 : dto.PaymentMethod,
             Notes = dto.Notes,
-            TotalAmount = totalAmount,
+            TotalAmount = Math.Max(totalAmount - discountAmount, 0),
+            CouponId = couponId,
+            DiscountAmount = discountAmount,
             Status = OrderStatus.Pending,
             PaymentStatus = PaymentStatus.Pending,
             CreatedAt = DateTime.UtcNow,
@@ -107,8 +137,29 @@ public class OrderService(
 
         await uow.SaveAsync(cancellationToken);
 
+        if (couponId.HasValue)
+        {
+            var coupon = await uow.Coupons.Query().FirstOrDefaultAsync(c => c.CouponId == couponId.Value, cancellationToken);
+            if (coupon != null)
+            {
+                coupon.UsedCount += 1;
+                
+                var usage = new CouponUsage
+                {
+                    Id = Guid.NewGuid(),
+                    CouponId = coupon.CouponId,
+                    UserId = userId,
+                    OrderId = order.OrderId,
+                    DiscountAmount = discountAmount,
+                    UsedAt = DateTime.UtcNow
+                };
+                uow.CouponUsages.Insert(usage);
+                await uow.SaveAsync(cancellationToken);
+            }
+        }
+
         // Gửi email xác nhận đơn hàng
-        _ = emailNotification.SendOrderConfirmedEmail(order.OrderId);
+        await emailNotification.SendOrderConfirmedEmail(order.OrderId);
 
         var detail = await GetByIdAsync(order.OrderId, userId, cancellationToken);
         if (detail == null)
@@ -164,6 +215,7 @@ public class OrderService(
             .Include(o => o.OrderItems)
             .ThenInclude(oi => oi.Product)
             .ThenInclude(p => p.Images)
+            .Include(o => o.ReturnRequests)
             .AsQueryable();
 
         if (userId.HasValue && userId.Value != Guid.Empty)
@@ -228,11 +280,11 @@ public class OrderService(
         // Gửi email thông báo trạng thái mới
         if (order.Status == OrderStatus.Shipping) // shipping
         {
-            _ = emailNotification.SendOrderShippingEmail(order.OrderId);
+            await emailNotification.SendOrderShippingEmail(order.OrderId);
         }
         else if (order.Status == OrderStatus.Delivered) // delivered
         {
-            _ = emailNotification.SendOrderDeliveredEmail(order.OrderId);
+            await emailNotification.SendOrderDeliveredEmail(order.OrderId);
         }
 
         return true;
@@ -352,7 +404,7 @@ public class OrderService(
 
     private static string GenerateOrderCode()
     {
-        return $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+        return $"ORD-{DateTime.UtcNow:yyMMddHHmmssfff}";
     }
 
     private async Task<Guid> ResolveUserIdAsync(Guid? requestedUserId, CancellationToken cancellationToken)
@@ -406,9 +458,6 @@ public class OrderService(
             Province = string.IsNullOrWhiteSpace(dto.ShippingAddress.Province)
                 ? "-"
                 : dto.ShippingAddress.Province.Trim(),
-            District = string.IsNullOrWhiteSpace(dto.ShippingAddress.District)
-                ? "-"
-                : dto.ShippingAddress.District.Trim(),
             Ward = string.IsNullOrWhiteSpace(dto.ShippingAddress.Ward)
                 ? "-"
                 : dto.ShippingAddress.Ward.Trim(),

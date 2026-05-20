@@ -16,7 +16,6 @@ public class UserService(IUnitOfWork uow, IMapper mapper) : IUserService
     public async Task<List<UserDto>> GetAllAsync(CancellationToken ct)
     {
         var users = await uow.Users.Query()
-            .Where(u => u.IsActive)
             .ProjectTo<UserDto>(mapper.ConfigurationProvider)
             .ToListAsync(ct);
         return users;
@@ -29,7 +28,9 @@ public class UserService(IUnitOfWork uow, IMapper mapper) : IUserService
         if (existing.Any()) return null;
 
         var entity = mapper.Map<User>(dto);
+        entity.UserId = Guid.NewGuid();
         entity.PasswordHash = HashPassword(dto.Password);
+        entity.IsEmailVerified = true;
         
         uow.Users.Insert(entity);
         await uow.SaveAsync(ct);
@@ -46,7 +47,13 @@ public class UserService(IUnitOfWork uow, IMapper mapper) : IUserService
             if (existing != null && existing.UserId != id) return null;
         }
 
-        mapper.Map(dto, entity);
+        if (dto.Email != null) entity.Email = dto.Email;
+        if (dto.FullName != null) entity.FullName = dto.FullName;
+        if (dto.Phone != null) entity.Phone = dto.Phone;
+        if (dto.Role != null) entity.Role = dto.Role.Value;
+        if (dto.IsActive != null) entity.IsActive = dto.IsActive.Value;
+        
+        entity.UpdatedAt = DateTime.UtcNow;
         uow.Users.Update(entity);
         await uow.SaveAsync(ct);
         return mapper.Map<UserDto>(entity);

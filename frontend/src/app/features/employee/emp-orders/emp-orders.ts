@@ -6,6 +6,8 @@ import { OrderService } from '../../../core/services/order.service';
 import { OrderDto, OrderDetailDto, UpdateOrderDto } from '../../../core/models/order.model';
 import { QcModalComponent } from './qc-modal.component';
 import { Router } from '@angular/router';
+import { ShipmentService, ShipmentDto } from '../../../core/services/shipment.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-emp-orders',
@@ -15,8 +17,18 @@ import { Router } from '@angular/router';
 })
 export class EmpOrders implements OnInit {
   private orderService = inject(OrderService);
+  private shipmentService = inject(ShipmentService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private authService = inject(AuthService);
+
+  get isWarehouse(): boolean {
+    return this.authService.currentUserValue?.role?.toLowerCase() === 'warehouse';
+  }
+
+  get isStaff(): boolean {
+    return this.authService.currentUserValue?.role?.toLowerCase() === 'staff';
+  }
 
   // States
   isLoading = signal(true);
@@ -25,15 +37,17 @@ export class EmpOrders implements OnInit {
   selectedStatus = signal<string | undefined>(undefined);
   orders = signal<OrderDto[]>([]);
   showDetail = signal<OrderDetailDto | null>(null);
+  currentShipment = signal<ShipmentDto | null>(null);
   showQCModal = signal<string | null>(null); // Lưu orderId khi mở QC
   searchQuery = signal('');
 
-  // Employee chỉ được cập nhật trạng thái theo quy trình tuần tự
+  // Employee chỉ được cập nhật trạng thái theo quy trình tuần tự.
+  // Các bước processing và shipping sẽ bị khóa lại vì chúng được tự động chuyển đổi thông qua luồng Tạo Shipment và Cập nhật Mã Vận Đơn
   statusFlow: Record<string, NonNullable<UpdateOrderDto['status']>[]> = {
     pending: ['confirmed', 'cancelled'],
-    confirmed: ['processing', 'cancelled'],
-    processing: ['shipping'],
-    shipping: ['delivered'],
+    confirmed: ['cancelled'], // Không tự chỉnh sang processing, phải thông qua admin tạo Shipment
+    processing: [], // Không tự chỉnh sang shipping, phải thông qua việc có TrackingCode + QC Passed
+    shipping: [], // Chỉ Admin mới được xác nhận "Đã giao"
     delivered: [],
     cancelled: [],
   };
@@ -112,13 +126,20 @@ export class EmpOrders implements OnInit {
 
   openDetail(order: OrderDto) {
     this.orderService.getById(order.orderId).subscribe({
-      next: (detail) => this.showDetail.set(detail),
+      next: (detail) => {
+        this.showDetail.set(detail);
+        this.shipmentService.getByOrderId(order.orderId).subscribe({
+          next: (shipment) => this.currentShipment.set(shipment),
+          error: () => this.currentShipment.set(null),
+        });
+      },
       error: () => this.toast.error('Không thể tải chi tiết đơn hàng'),
     });
   }
 
   closeDetail() {
     this.showDetail.set(null);
+    this.currentShipment.set(null);
   }
 
   // Employee chỉ được chuyển trạng thái theo quy trình
@@ -169,8 +190,29 @@ export class EmpOrders implements OnInit {
     this.router.navigate(['/employee/packing-slip'], { queryParams: { id: orderId } });
   }
 
-  onQCSubmitted(data: any) {
-    this.toast.success('Đã lưu kết quả kiểm tra chất lượng');
-    // Thực tế sẽ gọi API cập nhật trạng thái đơn hàng sang 'processing' hoặc 'shipping'
+  onQCSubmitted(data: { notes: string }) {
+    const shipment = this.currentShipment();
+    if (!shipment) return;
+
+    // 1. Đánh dấu QC Passed
+    this.shipmentService.markQcPassed(shipment.shipmentId, true, data.notes).subscribe({
+      next: (s1) => {
+        // 2. Đánh dấu Đóng gói
+        this.shipmentService.markPacked(s1.shipmentId).subscribe({
+          next: (s2) => {
+            this.currentShipment.set(s2);
+            this.toast.success('Đã lưu kết quả kiểm tra chất lượng và đóng gói');
+            
+            // Reload order to get new status if backend auto-transitions to shipping
+            if (this.showDetail()) {
+              this.openDetail(this.showDetail()!);
+              this.loadOrders();
+            }
+          },
+          error: () => this.toast.error('Lỗi đóng gói'),
+        });
+      },
+      error: () => this.toast.error('Lỗi QC'),
+    });
   }
 }

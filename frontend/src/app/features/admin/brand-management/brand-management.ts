@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BrandService } from '../../../core/services/brand.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
 import { Brand, CreateBrand, UpdateBrand } from '../../../core/models/brand.model';
 
 @Component({
@@ -14,6 +15,7 @@ import { Brand, CreateBrand, UpdateBrand } from '../../../core/models/brand.mode
 export class BrandManagement implements OnInit {
   private brandService = inject(BrandService);
   private toastService = inject(ToastService);
+  private cloudinary = inject(CloudinaryService);
 
   brands = signal<Brand[]>([]);
   isLoading = signal(true);
@@ -22,6 +24,24 @@ export class BrandManagement implements OnInit {
   isCreating = signal(false);
   editingBrand = signal<Brand | null>(null);
   form: Partial<Brand> = {};
+
+  isUploadingFile = signal(false);
+  selectedImageFile = signal<File | null>(null);
+  isSubmitting = signal(false);
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      const error = this.cloudinary.validateImageFile(file);
+      if (error) {
+        this.toastService.error(error);
+        return;
+      }
+      this.selectedImageFile.set(file);
+      this.form.logoUrl = URL.createObjectURL(file);
+    }
+  }
 
   ngOnInit() {
     this.loadBrands();
@@ -43,6 +63,8 @@ export class BrandManagement implements OnInit {
 
   openCreate() {
     this.editingBrand.set(null);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = { name: '', slug: '', logoUrl: '', description: '' };
     this.isCreating.set(true);
     this.showModal.set(true);
@@ -50,6 +72,8 @@ export class BrandManagement implements OnInit {
 
   openEdit(brand: Brand) {
     this.editingBrand.set(brand);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = { ...brand };
     this.isCreating.set(false);
     this.showModal.set(true);
@@ -74,6 +98,26 @@ export class BrandManagement implements OnInit {
       return;
     }
 
+    if (this.isUploadingFile() && this.selectedImageFile()) {
+      this.isSubmitting.set(true);
+      this.cloudinary.uploadImage('brands', this.selectedImageFile()!).subscribe({
+        next: (res) => {
+          this.form.logoUrl = res.imageUrl;
+          this.submitData();
+        },
+        error: () => {
+          this.toastService.error('Lỗi khi upload ảnh');
+          this.isSubmitting.set(false);
+        }
+      });
+    } else {
+      this.submitData();
+    }
+  }
+
+  private submitData() {
+    this.isSubmitting.set(true);
+
     if (this.editingBrand()) {
       const brandId = this.editingBrand()!.brandId;
       const updateData: UpdateBrand = {
@@ -89,11 +133,13 @@ export class BrandManagement implements OnInit {
           this.brands.update((list) => list.map((b) => (b.brandId === brandId ? updated : b)));
           this.closeModal();
           this.toastService.success('Cập nhật thương hiệu thành công!');
+          this.isSubmitting.set(false);
         },
         error: (err) => {
           let msg = 'Lỗi khi cập nhật thương hiệu';
           if (err.status === 409) msg = 'Slug đã tồn tại';
           this.toastService.error(msg);
+          this.isSubmitting.set(false);
         },
       });
     } else {
@@ -109,11 +155,13 @@ export class BrandManagement implements OnInit {
           this.brands.update((list) => [...list, created]);
           this.closeModal();
           this.toastService.success('Thêm thương hiệu thành công!');
+          this.isSubmitting.set(false);
         },
         error: (err) => {
           let msg = 'Lỗi khi tạo thương hiệu';
           if (err.status === 409) msg = 'Slug đã tồn tại';
           this.toastService.error(msg);
+          this.isSubmitting.set(false);
         },
       });
     }

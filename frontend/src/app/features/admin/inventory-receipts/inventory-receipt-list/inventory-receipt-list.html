@@ -35,7 +35,7 @@
           </tr>
           <tr *ngFor="let r of receipts()" class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
             <td class="p-4 font-bold text-blue-600">{{ r.receiptCode }}</td>
-            <td class="p-4 text-gray-800 font-medium">{{ r.supplier?.name || 'Không rõ' }}</td>
+            <td class="p-4 text-gray-800 font-medium">{{ r.supplierName || 'Không rõ' }}</td>
             <td class="p-4 text-right font-medium">{{ r.totalAmount | number }} đ</td>
             <td class="p-4 text-center">
               <span *ngIf="r.status === 1" class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Nháp</span>

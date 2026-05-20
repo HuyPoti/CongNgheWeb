@@ -45,8 +45,7 @@ public class NewsCategoryService(IUnitOfWork uow, IMapper mapper) : INewsCategor
         var entity = await uow.NewsCategories.Query().FirstOrDefaultAsync(c => c.CategoryId == id, ct);
         if (entity == null) return false;
 
-        entity.IsActive = false;
-        uow.NewsCategories.Update(entity);
+        uow.NewsCategories.Delete(entity);
         await uow.SaveAsync(ct);
         return true;
     }

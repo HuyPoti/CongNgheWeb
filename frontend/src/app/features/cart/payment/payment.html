@@ -71,39 +71,55 @@
                             </div>
                         </label>
 
-                        <!-- VNPay (Disabled for now) -->
-                        <label class="flex items-center p-4 border rounded-xl cursor-not-allowed opacity-50"
+                        <!-- VNPay -->
+                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+                            [class.border-primary]="paymentMethod === 'vnpay'"
+                            [class.bg-primary]="paymentMethod === 'vnpay'"
+                            [class.bg-opacity-5]="paymentMethod === 'vnpay'"
                             [class.border-slate-200]="paymentMethod !== 'vnpay'"
-                            [class.dark:border-white]="paymentMethod !== 'vnpay'">
-                            <input type="radio" name="paymentMethod" value="vnpay" [(ngModel)]="paymentMethod" disabled class="w-5 h-5 text-primary focus:ring-primary">
+                            [class.dark:border-white]="paymentMethod !== 'vnpay'"
+                            style="--tw-border-opacity: 0.1;">
+                            <input type="radio" name="paymentMethod" value="vnpay" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
                             <div class="ml-4 flex items-center gap-3">
                                 <span class="material-symbols-outlined text-2xl text-slate-500">credit_card</span>
                                 <div>
                                     <p class="font-medium text-slate-900 dark:text-white">Thanh toán qua VNPAY / Thẻ Visa, Master</p>
-                                    <p class="text-sm text-slate-500">Chuyển hướng đến cổng thanh toán an toàn. (Tạm dừng)</p>
+                                    <p class="text-sm text-slate-500">Chuyển hướng đến cổng thanh toán trực tuyến an toàn.</p>
                                 </div>
                             </div>
                         </label>
                     </div>
 
-                    <!-- Bank Info Display -->
+                    <!-- Bank Info Display with Premium VietQR -->
                     @if (showBankInfo && paymentResult?.bankInfo) {
-                        <div class="mt-6 p-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                            <h3 class="text-lg font-bold text-emerald-800 dark:text-emerald-400 mb-4 flex items-center gap-2">
-                                <span class="material-symbols-outlined">info</span>
-                                Thông tin chuyển khoản
+                        <div class="mt-6 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl">
+                            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2 tracking-tight">
+                                <span class="material-symbols-outlined text-primary text-2xl">qr_code_2</span>
+                                Thanh Toán Chuyển Khoản VietQR
                             </h3>
-                            <div class="bg-white dark:bg-surface-dark p-4 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
-                                <pre class="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-medium">{{ paymentResult?.bankInfo }}</pre>
+                            
+                            <div class="flex flex-col items-center justify-center space-y-6">
+                                <!-- VietQR Code -->
+                                @if (paymentResult?.qrUrl) {
+                                    <div class="w-full max-w-sm flex flex-col items-center justify-center p-6 bg-white dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                                        <img [src]="paymentResult?.qrUrl" alt="VietQR Code" class="w-64 h-64 object-contain rounded-xl transition-transform group-hover:scale-105 duration-300">
+                                        <span class="mt-4 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary">Mở App Ngân Hàng Quét Mã QR</span>
+                                    </div>
+                                }
+                                
+                                <p class="max-w-sm text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-xl">info</span>
+                                    <span>Hệ thống sẽ tự động xác nhận đơn hàng sau khi quét mã thanh toán thành công.</span>
+                                </p>
                             </div>
-                            <p class="mt-4 text-sm text-emerald-700 dark:text-emerald-400">
-                                <span class="material-symbols-outlined text-sm align-middle">info</span>
-                                Sau khi chuyển khoản, đơn hàng sẽ được xác nhận trong vòng 24-48 giờ.
-                            </p>
-                            <button (click)="goHome()" 
-                                class="mt-4 px-6 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors">
-                                Về trang chủ
-                            </button>
+                            
+                            <div class="mt-6 flex flex-wrap gap-4 justify-end border-t border-slate-100 dark:border-slate-800 pt-6">
+                                <button (click)="goHome()" 
+                                    class="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-primary hover:text-slate-900 transition-all shadow-md shadow-slate-200 dark:shadow-none flex items-center gap-2 group">
+                                    <span>Về trang chủ</span>
+                                    <span class="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                </button>
+                            </div>
                         </div>
                     }
 
@@ -128,7 +144,7 @@
                     </h3>
                     
                     <div class="space-y-4 mb-6 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                        @for (item of cartService.getCartItems(); track item.id) {
+                        @for (item of cartService.checkoutItems(); track item.id) {
                             <div class="flex gap-3">
                                 <div class="w-14 h-14 rounded-lg border border-slate-200 dark:border-white/10 p-1 flex-shrink-0 bg-white relative">
                                     <img [src]="item.image" [alt]="item.name" class="w-full h-full object-contain">
@@ -136,17 +152,35 @@
                                 </div>
                                 <div class="flex-1 min-w-0 flex flex-col justify-center">
                                     <h4 class="text-xs font-medium text-slate-900 dark:text-white line-clamp-2 mb-1">{{ item.name }}</h4>
-                                    <span class="font-semibold text-primary text-sm">${{ item.price | number:'1.2-2' }}</span>
+                                    <span class="font-semibold text-primary text-sm">{{ item.price | number:'1.0-0' }}đ</span>
                                 </div>
                             </div>
                         }
                     </div>
 
+                    <!-- Promo Code Input -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">Mã ưu đãi / Giảm giá</p>
+                        <app-coupon-input 
+                            [totalAmount]="cartService.checkoutSubtotal()"
+                            [userId]="shippingAddress?.recipientName"
+                            [items]="getCouponValidationItems()"
+                            (couponApplied)="onCouponApplied($event)"
+                            (couponRemoved)="onCouponRemoved()"
+                        ></app-coupon-input>
+                    </div>
+
                     <div class="space-y-3 pt-4 border-t border-slate-100 dark:border-white/10 text-sm">
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                             <span>Tạm tính</span>
-                            <span class="font-medium text-slate-900 dark:text-white">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+                            <span class="font-medium text-slate-900 dark:text-white">{{ cartService.checkoutSubtotal() | number:'1.0-0' }}đ</span>
                         </div>
+                        @if (discountAmount > 0) {
+                            <div class="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-medium">
+                                <span>Khuyến mãi</span>
+                                <span>-{{ discountAmount | number:'1.0-0' }}đ</span>
+                            </div>
+                        }
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                             <span>Phí vận chuyển</span>
                             <span class="font-medium text-emerald-600">Miễn phí</span>
@@ -155,7 +189,7 @@
 
                     <div class="flex justify-between items-center pt-4 mt-4 border-t border-slate-100 dark:border-white/10">
                         <span class="font-bold text-slate-900 dark:text-white text-base">Cần thanh toán</span>
-                        <span class="text-3xl font-bold text-red-500">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+                        <span class="text-3xl font-bold text-red-500">{{ getFinalAmount() | number:'1.0-0' }}đ</span>
                     </div>
 
                     <button (click)="placeOrder()" [disabled]="isPlacingOrder"

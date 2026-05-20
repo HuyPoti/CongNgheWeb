@@ -50,10 +50,16 @@ export interface UpdateCouponDto {
   isActive?: boolean;
 }
 
+export interface CouponValidationItemDto {
+  productId: string;
+  quantity: number;
+}
+
 export interface CouponValidationRequestDto {
   code: string;
   totalAmount: number;
   userId?: string;
+  items?: CouponValidationItemDto[];
 }
 
 export interface CouponValidationResultDto {
@@ -118,6 +124,12 @@ export class CouponService {
   validate(req: CouponValidationRequestDto): Observable<CouponValidationResultDto> {
     return this.http
       .post<ApiResponse<CouponValidationResultDto>>(`${this.baseUrl}/validate`, req)
+      .pipe(map((res) => res.data));
+  }
+
+  getActiveCoupons(): Observable<PagedResult<CouponDto>> {
+    return this.http
+      .get<ApiResponse<PagedResult<CouponDto>>>(`${this.baseUrl}/active`)
       .pipe(map((res) => res.data));
   }
 }

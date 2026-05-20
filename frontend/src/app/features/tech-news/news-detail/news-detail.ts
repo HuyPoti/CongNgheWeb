@@ -23,14 +23,14 @@ export class NewsDetail implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      if (!id) {
-        this.error.set('ID bài viết không hợp lệ.');
+      const slug = params.get('slug');
+      if (!slug) {
+        this.error.set('Đường dẫn bài viết không hợp lệ.');
         this.loading.set(false);
         return;
       }
 
-      this.fetchArticle(id);
+      this.fetchArticle(slug);
     });
   }
 

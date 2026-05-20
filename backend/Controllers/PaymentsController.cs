@@ -64,4 +64,16 @@ public class PaymentsController : ControllerBase
     {
         return BadRequest(ApiResponse.Fail("VNPay integration not yet implemented"));
     }
+    /// Lấy danh sách giao dịch
+    [HttpGet("transactions")]
+    [Authorize(Roles = "admin,staff,warehouse")]
+    public async Task<ActionResult<ApiResponse<PagedResult<PaymentTransactionDto>>>> GetAllTransactions(
+        [FromQuery] string? keyword,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _paymentService.GetAllTransactionsAsync(keyword, page, pageSize, cancellationToken);
+        return Ok(ApiResponse.Ok(result));
+    }
 }

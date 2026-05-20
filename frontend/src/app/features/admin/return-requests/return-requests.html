@@ -1,24 +1,18 @@
 <div class="p-8 h-full flex flex-col gap-8 animate-in fade-in duration-700">
   <!-- Header -->
-  <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-background-light dark:bg-background-dark/50 p-6 rounded-[2rem] border border-primary/10 shadow-2xl">
+  <div class="flex items-end justify-between mb-2">
     <div>
-      <div class="flex items-center gap-3 mb-1">
-        <div class="size-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_rgba(0,229,255,0.8)]"></div>
-        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-primary">After-Sales System</span>
-      </div>
-      <h2 class="text-3xl font-neon text-slate-900 dark:text-white font-bold tracking-tight">QUẢN LÝ <span class="text-primary italic">ĐỔI TRẢ</span></h2>
+      <h2 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">Quản lý Đổi trả</h2>
+      <p class="text-slate-500">Tổng: {{ requests().length }} yêu cầu</p>
     </div>
-    
-    <div class="flex items-center gap-3">
-      <button (click)="loadRequests()" class="size-12 bg-slate-100 dark:bg-white/5 hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary rounded-2xl border border-slate-200 dark:border-white/10 transition-all flex items-center justify-center group">
-        <span class="material-symbols-outlined transition-transform group-hover:rotate-180 duration-500">refresh</span>
-      </button>
-    </div>
-  </header>
+    <button (click)="loadRequests()" class="flex items-center gap-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:text-primary text-slate-600 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+      <span class="material-symbols-outlined text-sm">refresh</span> Tải lại
+    </button>
+  </div>
 
   <div class="flex-1 flex flex-col lg:flex-row gap-8 overflow-hidden">
     <!-- List Section -->
-    <div class="lg:w-1/3 flex flex-col bg-background-light dark:bg-background-dark/30 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden">
+    <div class="lg:w-1/3 flex flex-col bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
       <div class="p-6 border-b border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/5">
         <h3 class="text-xs font-black uppercase tracking-widest text-slate-500">Danh sách yêu cầu</h3>
       </div>
@@ -58,7 +52,7 @@
     </div>
 
     <!-- Detail Section -->
-    <div class="flex-1 flex flex-col bg-background-light dark:bg-background-dark/30 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden">
+    <div class="flex-1 flex flex-col bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
       @if (selectedRequest(); as req) {
         <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
           <div class="flex flex-col md:flex-row justify-between gap-6 mb-8 pb-8 border-b border-slate-200 dark:border-white/5">
@@ -119,36 +113,88 @@
           </div>
 
           <!-- Processing Form -->
-          <div class="bg-slate-100 dark:bg-white/5 p-8 rounded-[2.5rem] border border-primary/20 shadow-2xl shadow-primary/5">
-            <h4 class="text-xs font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
+          <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-white/10 mt-6">
+            <h4 class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2">
               <span class="material-symbols-outlined text-sm">settings</span>
               Xử lý yêu cầu
             </h4>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div class="space-y-2">
-                <label for="statusSelect" class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Trạng thái xử lý</label>
-                <select id="statusSelect" [(ngModel)]="processingStatus" class="w-full bg-background-light dark:bg-background-dark border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white focus:border-primary transition-all outline-none">
-                  <option value="Approved">Chấp nhận (Approved)</option>
-                  <option value="Rejected">Từ chối (Rejected)</option>
-                  <option value="Completed">Hoàn tất (Completed)</option>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+              <div class="space-y-1.5">
+                <label for="statusSelect" class="text-xs font-semibold text-slate-600 dark:text-slate-400">Trạng thái xử lý</label>
+                <select id="statusSelect" [(ngModel)]="processingStatus"
+                  [disabled]="selectedRequest()?.status?.toLowerCase() === 'completed'"
+                  class="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                  <option value="Approved"
+                    [disabled]="selectedRequest()?.status?.toLowerCase() === 'rejected' || selectedRequest()?.status?.toLowerCase() === 'completed'">
+                    Chấp nhận
+                  </option>
+                  <option value="Rejected"
+                    [disabled]="selectedRequest()?.status?.toLowerCase() === 'approved' || selectedRequest()?.status?.toLowerCase() === 'completed'">
+                    Từ chối
+                  </option>
+                  <option value="Completed"
+                    [disabled]="selectedRequest()?.status?.toLowerCase() === 'rejected' || selectedRequest()?.status?.toLowerCase() === 'pending'">
+                    Hoàn tất
+                  </option>
                 </select>
+                @if (selectedRequest()?.status?.toLowerCase() === 'completed') {
+                  <p class="text-xs text-slate-400 mt-1">⚠️ Yêu cầu đã hoàn tất, không thể thay đổi trạng thái</p>
+                } @else if (processingStatus === 'Completed') {
+                  <p class="text-xs text-sky-500 mt-1">ℹ️ Hoàn tất: đã nhận lại hàng và hoàn tiền xong</p>
+                }
               </div>
 
-              <div class="space-y-2">
-                <label for="refundInput" class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Số tiền hoàn lại (VNĐ)</label>
-                <input id="refundInput" type="number" [(ngModel)]="refundAmount" class="w-full bg-background-light dark:bg-background-dark border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white focus:border-primary transition-all outline-none" placeholder="Nhập số tiền...">
+              <div class="space-y-1.5">
+                <label for="refundInput" class="text-xs font-semibold text-slate-600 dark:text-slate-400">Số tiền hoàn lại (VNĐ)</label>
+                <input
+                  id="refundInput"
+                  type="number"
+                  min="0"
+                  [(ngModel)]="refundAmount"
+                  [disabled]="processingStatus === 'Rejected'"
+                  class="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="0"
+                >
+                @if (processingStatus === 'Rejected') {
+                  <p class="text-xs text-slate-400 mt-1">Không hoàn tiền khi từ chối</p>
+                }
               </div>
             </div>
 
-            <div class="space-y-2 mb-8">
-              <label for="adminNoteArea" class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4">Ghi chú của Admin</label>
-              <textarea id="adminNoteArea" [(ngModel)]="adminNote" rows="3" class="w-full bg-background-light dark:bg-background-dark border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white focus:border-primary transition-all outline-none resize-none" placeholder="Nhập phản hồi cho khách hàng..."></textarea>
+            <div class="space-y-1.5 mb-5">
+              <label for="adminNoteArea" class="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Ghi chú phản hồi
+                @if (processingStatus === 'Rejected') {
+                  <span class="text-red-500 ml-1">*</span>
+                }
+              </label>
+              <textarea
+                id="adminNoteArea"
+                [(ngModel)]="adminNote"
+                rows="3"
+                class="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
+                [class.border-red-400]="processingStatus === 'Rejected' && !adminNote.trim()"
+                placeholder="Nhập phản hồi cho khách hàng..."
+              ></textarea>
+              @if (processingStatus === 'Rejected' && !adminNote.trim()) {
+                <p class="text-xs text-red-500 mt-1">Bắt buộc khi từ chối yêu cầu</p>
+              }
             </div>
 
-            <div class="flex justify-end gap-4">
-              <button (click)="updateStatus()" class="px-10 py-4 bg-primary text-background-dark font-black text-[10px] uppercase tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(0,229,255,0.3)]">
-                Lưu cập nhật
+            <div class="flex justify-end">
+              <button
+                (click)="updateStatus()"
+                [disabled]="isSubmitting()"
+                class="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-slate-900 dark:text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                @if (isSubmitting()) {
+                  <span class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                  Đang lưu...
+                } @else {
+                  <span class="material-symbols-outlined text-sm">save</span>
+                  Lưu cập nhật
+                }
               </button>
             </div>
           </div>

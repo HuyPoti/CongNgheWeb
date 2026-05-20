@@ -36,6 +36,25 @@ public class CouponsController : ControllerBase
         return Ok(ApiResponse.Ok(res));
     }
 
+    [AllowAnonymous]
+    [HttpGet("active")]
+    public async Task<ActionResult<ApiResponse<PagedResult<CouponDto>>>> GetActive(CancellationToken cancellationToken)
+    {
+        var res = await _couponService.GetAllAsync(page: 1, pageSize: 50, isActive: true, keyword: null, cancellationToken);
+        // Lọc bớt các mã coupon đã hết hạn
+        var now = DateTime.UtcNow;
+        res.Items = res.Items.Where(c => c.StartDate <= now && c.EndDate >= now).ToList();
+        return Ok(ApiResponse.Ok(res));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<CouponDto>>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var res = await _couponService.GetByIdAsync(id, cancellationToken);
+        return Ok(ApiResponse.Ok(res));
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<CouponDto>>> Update(Guid id, [FromBody] UpdateCouponDto dto, CancellationToken cancellationToken)
     {
@@ -54,7 +73,7 @@ public class CouponsController : ControllerBase
     [HttpPost("validate")]
     public async Task<ActionResult<ApiResponse<CouponValidationResultDto>>> Validate([FromBody] CouponValidationRequestDto dto, CancellationToken cancellationToken)
     {
-        var r = await _couponService.ValidateAsync(dto.Code, dto.TotalAmount, dto.UserId, cancellationToken);
+        var r = await _couponService.ValidateAsync(dto.Code, dto.TotalAmount, dto.UserId, dto.Items, cancellationToken);
         return Ok(ApiResponse.Ok(r));
     }
 }

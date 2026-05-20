@@ -101,6 +101,9 @@ export class WishlistToggleComponent implements OnInit {
       return;
     }
 
+    // Optimistic UI Update
+    this.isInWishlist = !this.isInWishlist;
+
     this.wishlistService.toggle(this.productId).subscribe({
       next: (res) => {
         this.isInWishlist = res.isAdded;
@@ -109,8 +112,12 @@ export class WishlistToggleComponent implements OnInit {
         }
       },
       error: (err) => {
+        // Rollback
+        this.isInWishlist = !this.isInWishlist;
         if (err.status === 400) {
           this.toast.warning('Danh sách yêu thích đã đầy (tối đa 50 sản phẩm)');
+        } else {
+          this.toast.error('Có lỗi xảy ra khi cập nhật yêu thích');
         }
       }
     });

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { forkJoin, of } from 'rxjs'; // Thêm 'of'
@@ -11,6 +11,8 @@ import { ComparisonService } from '../../core/services/comparison.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
 import { CategoryService } from '../../core/services/category.service';
 import { Category } from '../../core/models/category.model';
+import { BrandService } from '../../core/services/brand.service';
+import { Brand } from '../../core/models/brand.model';
 import { WishlistToggleComponent } from '../../shared/components/wishlist-toggle/wishlist-toggle';
 
 export interface ClientBanner {
@@ -30,10 +32,11 @@ export interface ClientBanner {
   imports: [RouterLink, CommonModule, TranslatePipe, WishlistToggleComponent],
   templateUrl: './home.html',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   private readonly bannerService = inject(BannerService);
   private readonly productService = inject(ProductService);
   private readonly categoryService = inject(CategoryService);
+  private readonly brandService = inject(BrandService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   readonly comparisonService = inject(ComparisonService);
@@ -48,8 +51,13 @@ export class HomeComponent implements OnInit {
     mainboard: [],
   };
   dbCategories: Category[] = [];
+  dbBrands: Brand[] = [];
   isLoading = true;
   isBannersLoading = true;
+
+  // Slider State
+  currentSlide = 0;
+  slideInterval: ReturnType<typeof setInterval> | undefined;
 
   // ── Lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -58,8 +66,13 @@ export class HomeComponent implements OnInit {
     setTimeout(() => {
       this.loadBanners();
       this.loadCategories();
+      this.loadBrands();
       this.loadAllProducts();
     }, 0);
+  }
+
+  ngOnDestroy(): void {
+    this.stopSlideTimer();
   }
 
   // ── Loaders ───────────────────────────────────────────────────────
@@ -73,6 +86,20 @@ export class HomeComponent implements OnInit {
         next: (data) => {
           this.dbCategories = data.filter((c) => c.isActive && !c.parentId);
           this.cdr.markForCheck(); // Báo cho Angular biết state đã đổi
+        },
+      });
+  }
+
+  private loadBrands(): void {
+    this.brandService
+      .getAll()
+      .pipe(
+        catchError(() => of([])),
+      )
+      .subscribe({
+        next: (data) => {
+          this.dbBrands = data.filter((b) => b.isActive);
+          this.cdr.markForCheck();
         },
       });
   }
@@ -92,9 +119,11 @@ export class HomeComponent implements OnInit {
       .subscribe({
         next: (banners) => {
           this.banners = banners.map((b) => this.toClientBanner(b));
+          this.startSlideTimer();
         },
         error: () => {
           this.banners = [];
+          this.stopSlideTimer();
         },
       });
   }
@@ -180,8 +209,8 @@ export class HomeComponent implements OnInit {
   }
 
   // ── Banner helpers ────────────────────────────────────────────────
-  get heroBanner(): ClientBanner | undefined {
-    return this.banners.find((b) => b.position === 'HOME_HERO' && b.status === 'Live');
+  get heroBanners(): ClientBanner[] {
+    return this.banners.filter((b) => b.position === 'HOME_HERO' && b.status === 'Live');
   }
 
   get midTopBanner(): ClientBanner | undefined {
@@ -217,6 +246,41 @@ export class HomeComponent implements OnInit {
       status: b.isActive ? 'Live' : 'Draft',
       position: this.mapPosition(b.position),
     };
+  }
+
+  // ── Slider Methods ────────────────────────────────────────────────
+  nextSlide(): void {
+    const total = this.heroBanners.length;
+    if (total === 0) return;
+    this.currentSlide = (this.currentSlide + 1) % total;
+    this.cdr.markForCheck();
+  }
+
+  prevSlide(): void {
+    const total = this.heroBanners.length;
+    if (total === 0) return;
+    this.currentSlide = (this.currentSlide - 1 + total) % total;
+    this.cdr.markForCheck();
+  }
+
+  setSlide(index: number): void {
+    this.currentSlide = index;
+    this.cdr.markForCheck();
+  }
+
+  startSlideTimer(): void {
+    this.stopSlideTimer();
+    if (typeof window !== 'undefined') {
+      this.slideInterval = setInterval(() => {
+        this.nextSlide();
+      }, 5000); // Tự động slide mỗi 5s
+    }
+  }
+
+  stopSlideTimer(): void {
+    if (this.slideInterval) {
+      clearInterval(this.slideInterval);
+    }
   }
 
   private mapPosition(pos: string | number): string {

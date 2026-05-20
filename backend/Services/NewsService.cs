@@ -27,6 +27,12 @@ public class NewsService(IUnitOfWork uow, IMapper mapper) : INewsService
         return mapper.Map<NewsDto>(item);
     }
 
+    public async Task<NewsDto?> GetBySlugAsync(string slug, CancellationToken cancellationToken)
+    {
+        var item = await uow.News.Query().Include(n => n.Category).Include(n => n.Author).FirstOrDefaultAsync(n => n.Slug == slug, cancellationToken);
+        return mapper.Map<NewsDto>(item);
+    }
+
     public async Task<NewsDto> CreateAsync(CreateNewsDto dto, CancellationToken cancellationToken)
     {
         var entity = mapper.Map<News>(dto);
@@ -51,9 +57,7 @@ public class NewsService(IUnitOfWork uow, IMapper mapper) : INewsService
         var entity = await uow.News.Query().FirstOrDefaultAsync(n => n.NewsId == id, cancellationToken);
         if (entity == null) return false;
 
-        entity.IsActive = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-        uow.News.Update(entity);
+        uow.News.Delete(entity);
         await uow.SaveAsync(cancellationToken);
         return true;
     }

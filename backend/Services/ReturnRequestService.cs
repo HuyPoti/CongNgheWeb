@@ -11,11 +11,13 @@ public class ReturnRequestService : IReturnRequestService
 {
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly IEmailNotificationService _emailNotification;
 
-    public ReturnRequestService(IUnitOfWork uow, IMapper mapper)
+    public ReturnRequestService(IUnitOfWork uow, IMapper mapper, IEmailNotificationService emailNotification)
     {
         _uow = uow;
         _mapper = mapper;
+        _emailNotification = emailNotification;
     }
 
     public async Task<IEnumerable<ReturnRequestDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -146,6 +148,26 @@ public class ReturnRequestService : IReturnRequestService
 
         if (request == null) throw new KeyNotFoundException("Không tìm thấy yêu cầu đổi trả.");
 
+        // Kiểm tra chuyển trạng thái hợp lệ
+        var newStatus = dto.Status.ToLower();
+        var currentStatus = request.Status.ToLower();
+
+        var invalidTransitions = new Dictionary<string, HashSet<string>>
+        {
+            // Approved chỉ được chuyển sang Completed
+            [ReturnRequestStatus.Approved] = new() { ReturnRequestStatus.Rejected },
+            // Rejected không được chuyển sang trạng thái khác
+            [ReturnRequestStatus.Rejected] = new() { ReturnRequestStatus.Approved, ReturnRequestStatus.Completed },
+            // Completed là trạng thái cuối
+            [ReturnRequestStatus.Completed] = new() { ReturnRequestStatus.Pending, ReturnRequestStatus.Approved, ReturnRequestStatus.Rejected },
+        };
+
+        if (invalidTransitions.TryGetValue(currentStatus, out var blocked) && blocked.Contains(newStatus))
+        {
+            throw new InvalidOperationException(
+                $"Không thể chuyển trạng thái từ '{currentStatus}' sang '{newStatus}'.");
+        }
+
         var oldStatus = request.Status;
         request.Status = dto.Status;
         request.RefundAmount = dto.RefundAmount;
@@ -172,6 +194,7 @@ public class ReturnRequestService : IReturnRequestService
         }
 
         await _uow.SaveAsync(cancellationToken);
+
         return await GetByIdAsync(returnId, cancellationToken) ?? _mapper.Map<ReturnRequestDto>(request);
     }
 }

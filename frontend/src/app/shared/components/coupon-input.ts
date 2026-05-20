@@ -1,7 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CouponService, CouponValidationResultDto } from '../../core/services/coupon.service';
+import { CouponService, CouponValidationResultDto, CouponValidationItemDto } from '../../core/services/coupon.service';
+import { CartService } from '../../core/services/cart.service';
 
 export interface AppliedCoupon {
   code: string;
@@ -47,7 +48,7 @@ export interface AppliedCoupon {
               @if (validating()) {
                 <span class="loader"></span>
               }
-              {{ validating() ? 'Đang kiểm...' : 'Áp dụng' }}
+              {{ validating() ? 'Đang áp...' : 'Áp dụng' }}
             </button>
           </div>
         </form>
@@ -87,48 +88,55 @@ export interface AppliedCoupon {
 
     .coupon-input {
       flex: 1;
-      padding: 12px;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
       font-size: 14px;
       font-family: inherit;
-      transition: border-color 0.3s;
+      font-weight: 600;
+      color: #1e293b;
+      transition: all 0.25s ease;
+      background: #f8fafc;
     }
 
     .coupon-input:focus {
       outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      border-color: #6366f1;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
 
     .coupon-input:disabled {
-      background: #f5f5f5;
+      background: #f1f5f9;
       cursor: not-allowed;
     }
 
     .btn-apply {
-      padding: 12px 24px;
-      background: #007bff;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
       color: white;
       border: none;
-      border-radius: 6px;
-      font-weight: 600;
+      border-radius: 10px;
+      font-weight: 700;
       cursor: pointer;
       font-size: 14px;
       display: flex;
       align-items: center;
       gap: 6px;
       justify-content: center;
-      transition: background 0.3s;
+      transition: all 0.2s ease;
       white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15);
     }
 
     .btn-apply:hover:not(:disabled) {
-      background: #0056b3;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(79, 70, 229, 0.25);
     }
 
     .btn-apply:disabled {
-      background: #ccc;
+      background: #cbd5e1;
+      box-shadow: none;
       cursor: not-allowed;
     }
 
@@ -150,10 +158,10 @@ export interface AppliedCoupon {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px;
-      background: #e8f5e9;
-      border: 2px solid #4caf50;
-      border-radius: 6px;
+      padding: 12px 16px;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 12px;
     }
 
     .coupon-info {
@@ -165,11 +173,12 @@ export interface AppliedCoupon {
 
     .coupon-badge {
       display: inline-block;
-      padding: 6px 12px;
-      background: #4caf50;
+      padding: 4px 10px;
+      background: #10b981;
       color: white;
-      border-radius: 4px;
-      font-weight: 600;
+      border-radius: 8px;
+      font-weight: 700;
+      font-family: monospace;
       font-size: 13px;
       white-space: nowrap;
     }
@@ -182,30 +191,31 @@ export interface AppliedCoupon {
 
     .discount-label {
       margin: 0;
-      font-size: 12px;
-      color: #666;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
     }
 
     .discount-amount {
       margin: 0;
       font-size: 14px;
-      font-weight: 600;
-      color: #2e7d32;
+      font-weight: 750;
+      color: #15803d;
     }
 
     .btn-remove {
       padding: 6px 10px;
       background: none;
-      border: 1px solid #4caf50;
-      color: #4caf50;
-      border-radius: 4px;
+      border: 1px solid #10b981;
+      color: #10b981;
+      border-radius: 8px;
       cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s;
+      font-weight: 700;
+      transition: all 0.2s;
     }
 
     .btn-remove:hover {
-      background: #4caf50;
+      background: #10b981;
       color: white;
     }
 
@@ -213,16 +223,17 @@ export interface AppliedCoupon {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 12px;
-      background: #ffebee;
-      border: 1px solid #ef5350;
-      border-radius: 4px;
-      color: #c62828;
+      padding: 8px 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #b91c1c;
       font-size: 13px;
+      font-weight: 500;
     }
 
     .error-icon {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
     }
 
@@ -230,16 +241,17 @@ export interface AppliedCoupon {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 12px;
-      background: #f1f8e9;
-      border: 1px solid #558b2f;
-      border-radius: 4px;
-      color: #33691e;
+      padding: 8px 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      color: #15803d;
       font-size: 13px;
+      font-weight: 500;
     }
 
     .success-icon {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
     }
   `]
@@ -247,6 +259,7 @@ export interface AppliedCoupon {
 export class CouponInputComponent implements OnInit {
   @Input() totalAmount = 0;
   @Input() userId?: string;
+  @Input() items: CouponValidationItemDto[] = [];
   @Output() couponApplied = new EventEmitter<AppliedCoupon>();
   @Output() couponRemoved = new EventEmitter<void>();
 
@@ -258,9 +271,11 @@ export class CouponInputComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private couponService = inject(CouponService);
+  private cartService = inject(CartService);
 
   ngOnInit() {
     this.initForm();
+    this.autoApplySavedCoupon();
   }
 
   private initForm() {
@@ -269,20 +284,30 @@ export class CouponInputComponent implements OnInit {
     });
   }
 
+  private autoApplySavedCoupon() {
+    const savedCode = this.cartService.appliedCoupon();
+    if (savedCode) {
+      this.applyCode(savedCode);
+    }
+  }
+
   onApply() {
     if (!this.couponForm.valid) return;
+    const code = this.couponForm.get('code')?.value?.trim();
+    if (!code) return;
+    this.applyCode(code);
+  }
 
+  private applyCode(code: string) {
     this.validating.set(true);
     this.error.set(null);
     this.success.set(null);
 
-    const code = this.couponForm.get('code')?.value?.trim();
-    if (!code) return;
-
     this.couponService.validate({
       code,
       totalAmount: this.totalAmount,
-      userId: this.userId
+      userId: this.userId,
+      items: this.items
     }).subscribe({
       next: (result: CouponValidationResultDto) => {
         this.validating.set(false);
@@ -297,14 +322,17 @@ export class CouponInputComponent implements OnInit {
           this.appliedCoupon.set(applied);
           this.success.set('Mã giảm giá đã áp dụng thành công!');
           this.couponForm.reset();
+          this.cartService.setAppliedCoupon(applied.code);
           this.couponApplied.emit(applied);
         } else {
           this.error.set(result.message || 'Mã không hợp lệ');
+          this.cartService.setAppliedCoupon(null);
         }
       },
       error: (err) => {
         this.validating.set(false);
         this.error.set(err?.error?.message || 'Lỗi kiểm tra mã');
+        this.cartService.setAppliedCoupon(null);
       }
     });
   }
@@ -314,6 +342,7 @@ export class CouponInputComponent implements OnInit {
     this.error.set(null);
     this.success.set(null);
     this.couponForm.reset();
+    this.cartService.setAppliedCoupon(null);
     this.couponRemoved.emit();
   }
 }

@@ -31,7 +31,7 @@ import { ShipmentDto } from '../../../core/services/shipment.service';
           <p class="font-bold text-lg">{{ order.shippingAddress.recipientName }}</p>
           <p class="mt-1">{{ order.shippingAddress.phone }}</p>
           <p class="mt-1">{{ order.shippingAddress.addressLine }}</p>
-          <p>{{ order.shippingAddress.ward }}, {{ order.shippingAddress.district }}, {{ order.shippingAddress.province }}</p>
+          <p>{{ order.shippingAddress.ward }}, {{ order.shippingAddress.province }}</p>
         </div>
         
         <div class="border border-gray-300 p-4 rounded">

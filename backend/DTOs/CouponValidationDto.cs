@@ -1,10 +1,19 @@
+using System.Collections.Generic;
+
 namespace backend.DTOs;
+
+public class CouponValidationItemDto
+{
+    public Guid ProductId { get; set; }
+    public int Quantity { get; set; }
+}
 
 public class CouponValidationRequestDto
 {
     public string Code { get; set; } = string.Empty;
     public decimal TotalAmount { get; set; }
     public Guid? UserId { get; set; }
+    public List<CouponValidationItemDto>? Items { get; set; }
 }
 
 public class CouponValidationResultDto

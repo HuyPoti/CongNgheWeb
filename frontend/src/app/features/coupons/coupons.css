@@ -1,0 +1,19 @@
+/* Style cho trang Voucher của khách hàng - Đã tối ưu hóa sử dụng Tailwind CSS */
+
+:host {
+  display: block;
+}
+
+/* Hiệu ứng zoom nhẹ khi hover card */
+.group:hover {
+  transform: translateY(-4px);
+}
+
+/* Fix chiều cao spinner */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

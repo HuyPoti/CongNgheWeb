@@ -22,8 +22,8 @@ export const routes: Routes = [
   {
     path: 'employee',
     loadComponent: () => import('./layouts/employee-layout/employee-layout').then((m) => m.EmployeeLayout),
-    canActivate: [roleGuard], // Bật bảo vệ route
-    data: { roles: ['staff'] }, // Chỉ cho phép role staff (admin không vào đây)
+    canActivate: [roleGuard],
+    data: { roles: ['staff', 'warehouse'] }, // Cho phép nhân viên thường và nhân viên kho
     children: [
       {
         path: '',
@@ -45,7 +45,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tech-news/tech-news').then((m) => m.TechNews),
       },
       {
-        path: 'tech-news/:id',
+        path: 'tech-news/:slug',
         loadComponent: () =>
           import('./features/tech-news/news-detail/news-detail').then((m) => m.NewsDetail),
       },
@@ -82,6 +82,12 @@ export const routes: Routes = [
         path: 'payment/vnpay-return',
         loadComponent: () =>
           import('./features/cart/vnpay-return/vnpay-return').then((m) => m.VnPayReturnComponent),
+      },
+      {
+        path: 'coupons',
+        canActivate: [roleGuard],
+        data: { roles: ['customer'] },
+        loadComponent: () => import('./features/coupons/coupons').then((m) => m.CouponsComponent),
       },
     ],
   },

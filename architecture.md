@@ -54,20 +54,20 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
   - `GetStockStatusAsync` — Tổng quan tồn kho toàn bộ sản phẩm.
 
 - `OrderService` / `IOrderService`: Vòng đời đơn hàng.
-  - `CreateAsync` — Tạo đơn hàng từ giỏ hàng.
+  - `CreateAsync` — Tạo đơn hàng từ giỏ hàng (sử dụng await khi gửi email để bảo vệ DbContext không bị concurrency).
   - `GetAllAsync` — Danh sách đơn hàng (phân trang + lọc theo status/userId).
   - `GetByIdAsync` — Chi tiết đơn hàng.
-  - `UpdateAsync` — Cập nhật trạng thái/thanh toán (ghi nhận `changedByUserId` để lưu vào lịch sử trạng thái).
+  - `UpdateAsync` — Cập nhật trạng thái/thanh toán (sử dụng await khi gửi email để bảo vệ DbContext không bị concurrency).
   - `CancelAsync` — Hủy đơn hàng.
   - `GetStatusHistoryAsync` — Lịch sử thay đổi trạng thái.
 
 - `PaymentService` / `IPaymentService`: Xử lý thanh toán.
-  - `CreatePaymentAsync` — Tạo payment (COD, bank_transfer, VnPay).
+  - `CreatePaymentAsync` — Tạo payment (COD, bank_transfer, VnPay). Tự động sinh link thanh toán VNPAY từ Backend và sinh mã QR chuyển khoản VietQR động cho bank_transfer.
   - `GetByOrderIdAsync` — Lấy thông tin thanh toán theo đơn.
   - `ConfirmBankTransferAsync` — Admin xác nhận chuyển khoản ngân hàng.
   - `CompleteCodPaymentAsync` — Hoàn tất thanh toán COD khi giao hàng.
 
-- `VnPayService` / `IVnPayService`: Stub interface cho tích hợp VnPay (chưa implement).
+- `VnPayService` / `IVnPayService`: Tích hợp và xử lý cổng thanh toán trực tuyến VNPAY (sinh URL thanh toán an toàn và xác thực chữ ký khi nhận kết quả giao dịch).
 
 - `ReviewService` / `IReviewService`: Xử lý nghiệp vụ đánh giá.
   - **Reviews**: `GetAllAsync`, `GetByIdAsync`, `UpdateActiveAsync`, `DeleteAsync`.
@@ -81,7 +81,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 
 - `ProfileService` / `IProfileService`: Quản lý thông tin cá nhân và sổ địa chỉ.
 
-- `UserService` / `IUserService`: Quản lý tài khoản người dùng (Admin CRUD).
+- `UserService` / `IUserService`: Quản lý tài khoản người dùng (Admin CRUD, hỗ trợ khóa/mở khóa tài khoản thay vì xóa cứng).
 
 - `ProductService` / `IProductService`: Quản lý danh mục sản phẩm và tìm kiếm nâng cao.
   - **CRUD**: `GetAllAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync` (Soft delete).
@@ -94,7 +94,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 
 - `ReturnRequestService` / `IReturnRequestService`: Đổi trả hàng (kiểm tra 7 ngày, trạng thái Delivered, tự động hoàn kho khi Admin duyệt).
 
-- `CouponService` / `ICouponService`: Quản lý mã giảm giá.
+- `CouponService` / `ICouponService`: Quản lý mã giảm giá (Hỗ trợ validate, áp dụng, và lấy thông tin chi tiết qua ID).
 
 - `FlashSaleService` / `IFlashSaleService`: Khuyến mãi Flash Sale.
 
@@ -122,9 +122,9 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 
 - `DashboardService` / `IDashboardService`: Dữ liệu tổng hợp cho dashboard admin.
 
-### 🗂️ MapperProfiles (14)
+### 🗂️ MapperProfiles (15)
 
-`AfterSalesProfile`, `BannerProfile`, `BrandProfile`, `CategoryProfile`, `InventoryProfile`, `MarketingProfile`, `NewsCategoryProfile`, `NewsProfile`, `OrderProfile`, `ProductImageProfile`, `ProductProfile`, `ReviewProfile`, `SupplierProfile`, `UserProfile`.
+`AfterSalesProfile`, `BannerProfile`, `BrandProfile`, `CategoryProfile`, `InventoryProfile`, `MarketingProfile`, `NewsCategoryProfile`, `NewsProfile`, `OrderProfile`, `PaymentProfile`, `ProductImageProfile`, `ProductProfile`, `ReviewProfile`, `SupplierProfile`, `UserProfile`.
 
 ### ⚙️ Quy trình xử lý (Data Flow)
 
@@ -142,22 +142,22 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
   - `guards/`: `auth-guard.ts` (xác thực đăng nhập), `role.guard.ts` (phân quyền admin/staff).
   - `interceptors/`: `auth-interceptor.ts`, `jwt.interceptor.ts` (tự động gắn token).
   - `mocks/`: `product.mock.ts` — Dữ liệu mock cho development.
-  - `models/` (11 files): TypeScript interfaces/types cho toàn bộ entities.
+  - `models/` (12 files): TypeScript interfaces/types cho toàn bộ entities.
   - `pipes/`: `translate.pipe.ts` — Pipe đa ngôn ngữ.
   - `services/` (25 files): Tất cả HTTP services gọi API backend.
   - `utils/`: (3 files) Chứa các helper và utilities: `auth.util.ts`, `theme.util.ts`, `comparison.service.ts` (helper service).
 
 - `src/app/shared/`: Chứa các UI Components dùng lại ở nhiều nơi:
-  - **Components**: `navbar/`, `footer/`, `mega-menu/`, `search-overlay/`, `toast/`, `loading/`, `review-modal/`, `wishlist-toggle/`, `verified-badge/`, `coupon-input.ts`, `flash-sale-badge.ts`, `flash-sale-section.ts`.
+  - **Components**: `navbar/`, `footer/`, `mega-menu/`, `search-overlay/`, `toast/`, `confirm/`, `loading/`, `review-modal/`, `wishlist-toggle/`, `verified-badge/`, `coupon-input.ts`, `flash-sale-badge.ts`, `flash-sale-section.ts`.
   - **Services**: `modal.service.ts`.
   - **Directives**: (trống — dự phòng).
   - **Pipes**: (trống — dự phòng).
 
 - `src/app/features/`: Chia theo từng phân hệ chức năng (11 modules):
-  - `admin/` (18 sub-modules): Dashboard, Manage Product, Manage Order, Inventory, Category Hierarchy, Customer CRM, Employee Management, CMS Banner, Brand Management, CMS News, Reviews, Coupons, Flash Sales, Activity Logs, Return Requests, Supplier Management, Inventory Receipts (list/form/detail), Packing Slip (component).
+  - `admin/` (19 sub-modules): Dashboard, Manage Product, Manage Order, Payment Transactions, Inventory, Category Hierarchy, Customer CRM, Employee Management, CMS Banner, Brand Management, CMS News, Reviews, Coupons, Flash Sales, Activity Logs, Return Requests, Supplier Management, Inventory Receipts (list/form/detail), Packing Slip (component).
   - `employee/` (5 sub-modules): Emp Orders, Emp Products, Emp Reviews, Emp Customers, Packing Slip.
-  - `home/`: Trang chủ với banner, sản phẩm nổi bật, flash sale.
-  - `product/` (4 sub-modules): Product List, Product Detail, Category, Reviews.
+  - `home/`: Trang chủ với banner, sản phẩm nổi bật, flash sale, **Danh mục nổi bật (Featured Categories Grid tròn)** và **Thương hiệu đồng hành (Brand Partners Carousel)**.
+  - `product/` (4 sub-modules): Product List (hỗ trợ lọc trực quan bằng **Logo thương hiệu** tại Sidebar), Product Detail (hỗ trợ hiển thị **Brand Logo Badge** chính hãng phía trên tên sản phẩm), Category, Reviews.
   - `user/` (7 sub-modules): Profile, Orders, Order Tracking, Return Request, Wishlist, Settings, User Layout.
   - `auth/` (5 sub-modules): Login, Register, Forgot Password, Verify Email, Internal Login (portal).
   - `cart/` (4 sub-modules): Cart Page, Checkout, Payment, VnPay Return.
@@ -181,7 +181,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `CartService`: Quản lý giỏ hàng (RxJS BehaviorSubject).
 - `WishlistService`: Sản phẩm yêu thích (Angular Signals).
 - `ProductService`: Danh sách, chi tiết, tìm kiếm, lọc sản phẩm.
-- `ReviewService`: Lấy đánh giá, tạo, phản hồi, vote.
+- `ReviewService`: Lấy đánh giá, tạo, phản hồi, vote (Đồng bộ hóa sử dụng AuthService để lấy chính xác thông tin Admin/Employee phản hồi).
 - `PaymentService`: Tạo thanh toán, xác nhận chuyển khoản.
 - `InventoryService`: CRUD phiếu nhập kho, complete, cancel, adjust stock, stock-status.
 - `ShipmentService`: Tạo shipment, cập nhật, mark QC, mark packed, get by orderId.
@@ -201,6 +201,7 @@ Dự án sử dụng mô hình **N-Layer Architecture** (kiến trúc đa tầng
 - `LanguageService`: Quản lý ngôn ngữ giao diện.
 - `ThemeService` (`core/utils/theme.util.ts`): Chế độ sáng/tối.
 - `ToastService`: Hiển thị thông báo toast.
+- `ConfirmService` (`core/services/confirm.service.ts`): Quản lý hộp thoại xác nhận (modal confirm) bất đồng bộ.
 - `ComparisonService` (`core/services/comparison.service.ts`): So sánh sản phẩm.
 - `ModalService` (`shared/services/modal.service.ts`): Quản lý modal dialogs.
 - `AuthUtils` (`core/utils/auth.util.ts`): Quản lý token và login state.
@@ -285,48 +286,49 @@ Hệ thống sử dụng **PostgreSQL 16** với **34 bảng** được tổ ch�
 - `/product/list`: Danh sách sản phẩm.
 - `/product/category/:id`: Sản phẩm theo danh mục.
 - `/product/:slug`: Chi tiết sản phẩm.
+- `/coupons`: Ví Voucher cá nhân của người dùng (bảo vệ bằng `roleGuard`: chỉ cho phép vai trò `customer` truy cập; Admin/Employee và Khách vãng lai chưa đăng nhập sẽ bị ngăn chặn/chuyển hướng thông minh). Cho phép nhập mã giảm giá đặc quyền để lưu trữ vào ví cá nhân (localStorage) và tự động áp dụng khi mua sắm.
 - `/build-pc`: Cấu hình PC tương thích.
 - `/comparison`: So sánh sản phẩm.
-- `/cart`: Giỏ hàng.
-- `/cart/checkout`: Thanh toán (authGuard).
-- `/cart/payment`: Xử lý thanh toán (authGuard).
+- `/cart`: Giỏ hàng (Tích hợp tính năng "Bẫy giỏ hàng" - Cart Threshold Nudge tự động gợi ý mua thêm để đủ điều kiện áp mã Coupon).
+- `/cart/checkout`: Thanh toán (authGuard - Tự động phát hiện và chuyển đổi giữa chế độ Giỏ hàng thông thường và Chế độ "Mua ngay" (Buy Now) thông minh mà không ảnh hưởng đến các sản phẩm cũ có sẵn trong giỏ hàng. Nhập thủ công Tỉnh/TP, Phường/Xã trực quan, an toàn và tối giản).
+- `/cart/payment`: Xử lý thanh toán (authGuard - Đồng bộ hóa hóa đơn, giảm giá Coupons, và phương thức thanh toán dựa trên các sản phẩm được chọn từ giỏ hàng hoặc từ sản phẩm Mua ngay).
 - `/cart/vnpay-return`: Callback VnPay.
 - `/payment/vnpay-return`: Callback VnPay (alias route).
 - `/user/profile`, `/user/orders`, `/user/order-tracking/:id`, `/user/return-request`, `/user/return-request/:id`, `/user/wishlist`, `/user/settings`: Trang người dùng (trong UserLayout — authGuard).
 
 #### Admin Layout (`/admin` — roleGuard: admin)
 
-- `/admin/dashboard`: Dashboard tổng quan.
+- `/admin/dashboard`: Dashboard tổng quan — fetch dữ liệu thật từ API (`/api/dashboard/overview`, `/api/dashboard/revenue`, `/api/dashboard/top-products`, `/api/dashboard/top-customers`) bằng `forkJoin`. Hiển thị KPI thật (doanh thu, đơn hàng tháng này, tổng khách hàng, khuyến mãi đang chạy), biểu đồ doanh thu SVG động từ dữ liệu 30 ngày gần nhất, bảng Top Sản phẩm bán chạy và bảng Top Khách hàng.
 - `/admin/manage-product`: Quản lý sản phẩm.
 - `/admin/manage-order`: Quản lý đơn hàng.
 - `/admin/inventory`: Tổng quan tồn kho.
-- `/admin/category-hierarchy`: Quản lý danh mục phân cấp.
-- `/admin/customer-crm`: Quản lý khách hàng.
-- `/admin/employee-management`: Quản lý nhân viên.
+- `/admin/category-hierarchy`: Quản lý danh mục phân cấp (Đồng bộ hóa 100% ConfirmService).
+- `/admin/customer-crm`: Quản lý khách hàng (chỉ hiển thị và thống kê số lượng khách hàng, ngăn chặn Admin tự khóa chính mình, đồng bộ hóa 100% ConfirmService).
+- `/admin/employee-management`: Quản lý nhân viên (áp dụng cơ chế xóa mềm - Khóa/Kích hoạt tài khoản tương tự Customer CRM, tạm thời disable tính năng chỉnh sửa vai trò tại UI, ngăn chặn Admin tự khóa chính mình, và đồng bộ hóa 100% ConfirmService).
 - `/admin/cms-banner`: Quản lý banner.
 - `/admin/brand-management`: Quản lý thương hiệu.
 - `/admin/cms-news`: Quản lý tin tức.
-- `/admin/reviews`: Quản lý đánh giá.
-- `/admin/coupons`: Quản lý mã giảm giá.
+- `/admin/reviews`: Quản lý đánh giá (đã sửa lỗi ID và tên người phản hồi của Admin sử dụng AuthService).
+- `/admin/coupons`: Quản lý mã giảm giá (Đồng bộ hóa 100% ConfirmService).
 - `/admin/flash-sales`: Quản lý Flash Sale.
 - `/admin/activity-logs`: Log hoạt động.
 - `/admin/return-requests`: Quản lý đổi trả.
-- `/admin/suppliers`: Quản lý nhà cung cấp.
-- `/admin/inventory-receipts`: Danh sách phiếu nhập kho.
-- `/admin/inventory-receipts/new`: Tạo phiếu nhập kho.
-- `/admin/inventory-receipts/:id`: Chi tiết phiếu nhập kho.
+- `/admin/suppliers`: Quản lý nhà cung cấp (Đồng bộ hóa 100% ConfirmService, ToastService, tích hợp Signals cho tìm kiếm/lọc, và phân quyền API `admin,staff,warehouse`).
+- `/admin/inventory-receipts`: Danh sách phiếu nhập kho (Đã đồng bộ hóa 100% ToastService thay cho alert, và phân quyền API `admin,staff,warehouse`).
+- `/admin/inventory-receipts/new`: Tạo phiếu nhập kho (Đã đồng bộ hóa 100% ToastService thay cho alert).
+- `/admin/inventory-receipts/:id`: Chi tiết phiếu nhập kho (Đã đồng bộ hóa 100% ToastService và ConfirmService thay cho alert và confirm).
 
 #### Employee Layout (`/employee` — roleGuard: admin, staff)
 
 - `/employee/orders`: Xử lý đơn hàng.
 - `/employee/products`: Xem kho sản phẩm.
-- `/employee/reviews`: Phản hồi đánh giá.
+- `/employee/reviews`: Phản hồi đánh giá (đã sửa lỗi ID và tên người phản hồi của Employee sử dụng AuthService).
 - `/employee/customers`: Tra cứu khách hàng.
 - `/employee/packing-slip`: In phiếu đóng gói + QC.
 
 #### Portal
 
-- `/portal`: Internal login cho admin/staff.
+- `/portal`: Internal login for admin/staff/warehouse.
 
 ---
 

@@ -44,6 +44,9 @@ export class InternalLoginComponent {
         } else if (role === 'staff') {
           this.toast.success(`Welcome back Staff, ${res.user.fullName}!`);
           this.router.navigate(['/employee/orders']);
+        } else if (role === 'warehouse') {
+          this.toast.success(`Welcome back Warehouse Staff, ${res.user.fullName}!`);
+          this.router.navigate(['/employee/warehouse-orders']);
         } else {
           // Là khách hàng, chặn truy cập
           this.authService.logout();

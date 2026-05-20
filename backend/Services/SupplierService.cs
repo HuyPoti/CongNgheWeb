@@ -12,7 +12,6 @@ public class SupplierService(IUnitOfWork uow, IMapper mapper) : ISupplierService
     public async Task<List<SupplierDto>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await uow.Suppliers.Query()
-            .Where(s => s.IsActive)
             .ProjectTo<SupplierDto>(mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
     }

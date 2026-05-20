@@ -185,22 +185,24 @@
                   >
                     <span class="material-symbols-outlined text-sm">visibility</span>
                   </button>
-                  <!-- Quick status buttons -->
-                  @for (nextStatus of getNextStatuses(order.status); track nextStatus) {
-                    <button
-                      (click)="updateOrderStatus(order, nextStatus)"
-                      class="p-2 rounded-lg transition-colors text-xs font-bold"
-                      [ngClass]="
-                        nextStatus === 'cancelled'
-                          ? 'hover:bg-red-500/10 text-slate-500 hover:text-red-400'
-                          : 'hover:bg-emerald-500/10 text-slate-500 hover:text-emerald-400'
-                      "
-                      [title]="'Chuyển sang: ' + statusLabels[nextStatus]"
-                    >
-                      <span class="material-symbols-outlined text-sm">{{
-                        statusIcons[nextStatus]
-                      }}</span>
-                    </button>
+                  <!-- Quick status buttons - Chỉ Staff -->
+                  @if (isStaff) {
+                    @for (nextStatus of getNextStatuses(order.status); track nextStatus) {
+                      <button
+                        (click)="updateOrderStatus(order, nextStatus)"
+                        class="p-2 rounded-lg transition-colors text-xs font-bold"
+                        [ngClass]="
+                          nextStatus === 'cancelled'
+                            ? 'hover:bg-red-500/10 text-slate-500 hover:text-red-400'
+                            : 'hover:bg-emerald-500/10 text-slate-500 hover:text-emerald-400'
+                        "
+                        [title]="'Chuyển sang: ' + statusLabels[nextStatus]"
+                      >
+                        <span class="material-symbols-outlined text-sm">{{
+                          statusIcons[nextStatus]
+                        }}</span>
+                      </button>
+                    }
                   }
                 </div>
               </td>
@@ -240,23 +242,32 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <!-- QC Button -->
-          <button
-            (click)="openQC(showDetail()!.orderCode)"
-            class="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all text-xs font-bold"
-          >
-            <span class="material-symbols-outlined text-sm">fact_check</span>
-            QC & Đóng gói
-          </button>
-          
-          <!-- Packing Slip Button -->
-          <button
-            (click)="printPackingSlip(showDetail()!.orderCode)"
-            class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all text-xs font-bold"
-          >
-            <span class="material-symbols-outlined text-sm">print</span>
-            In phiếu
-          </button>
+          <!-- QC & Packing Buttons - Chỉ Warehouse được dùng -->
+          @if (isWarehouse && showDetail()!.status === 'processing' && currentShipment()) {
+            @if (!currentShipment()!.packedAt) {
+              <button
+                (click)="openQC(showDetail()!.orderCode)"
+                class="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all text-xs font-bold"
+              >
+                <span class="material-symbols-outlined text-sm">fact_check</span>
+                QC & Đóng gói
+              </button>
+            } @else {
+              <span class="flex items-center gap-1 px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg text-xs font-bold border border-green-500/20">
+                <span class="material-symbols-outlined text-sm">check_circle</span>
+                Đã QC & Đóng gói
+              </span>
+            }
+            
+            <!-- Packing Slip Button -->
+            <button
+              (click)="printPackingSlip(showDetail()!.orderId)"
+              class="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all text-xs font-bold"
+            >
+              <span class="material-symbols-outlined text-sm">print</span>
+              In phiếu
+            </button>
+          }
 
           <button
             (click)="closeDetail()"
@@ -281,22 +292,24 @@
           >
             {{ paymentLabels[showDetail()!.paymentStatus] }}
           </span>
-          <!-- Action buttons in modal -->
-          @for (nextStatus of getNextStatuses(showDetail()!.status); track nextStatus) {
-            <button
-              (click)="updateOrderStatus(showDetail()!, nextStatus)"
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border"
-              [ngClass]="
-                nextStatus === 'cancelled'
-                  ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
-                  : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
-              "
-            >
-              <span class="material-symbols-outlined text-sm align-middle mr-1">{{
-                statusIcons[nextStatus]
-              }}</span>
-              {{ statusLabels[nextStatus] }}
-            </button>
+          <!-- Action buttons in modal - Chỉ Staff -->
+          @if (isStaff) {
+            @for (nextStatus of getNextStatuses(showDetail()!.status); track nextStatus) {
+              <button
+                (click)="updateOrderStatus(showDetail()!, nextStatus)"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border"
+                [ngClass]="
+                  nextStatus === 'cancelled'
+                    ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
+                    : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
+                "
+              >
+                <span class="material-symbols-outlined text-sm align-middle mr-1">{{
+                  statusIcons[nextStatus]
+                }}</span>
+                {{ statusLabels[nextStatus] }}
+              </button>
+            }
           }
         </div>
 
@@ -315,7 +328,6 @@
             <span class="text-slate-800 dark:text-slate-100 ml-2"
               >{{ showDetail()!.shippingAddress.addressLine }},
               {{ showDetail()!.shippingAddress.ward }},
-              {{ showDetail()!.shippingAddress.district }},
               {{ showDetail()!.shippingAddress.province }}</span
             >
           </div>

@@ -14,4 +14,5 @@ public class CreatePaymentResponseDto
     public string Status { get; set; } = string.Empty;
     public string? PaymentUrl { get; set; }  // URL redirect cho VNPay
     public string? BankInfo { get; set; }  // Thông tin chuyển khoản cho bank_transfer
+    public string? QrUrl { get; set; }  // Link mã QR động VietQR
 }

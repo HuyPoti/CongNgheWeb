@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { InventoryService } from '../../../../core/services/inventory.service';
 import { SupplierService } from '../../../../core/services/supplier.service';
 import { ProductService } from '../../../../core/services/product.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { Supplier } from '../../../../core/models/supplier.model';
 import { ProductDto, PagedProductResponse } from '../../../../core/models/product.model';
 
@@ -20,6 +21,7 @@ export class InventoryReceiptForm implements OnInit {
   private supplierService = inject(SupplierService);
   private productService = inject(ProductService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   receiptForm: FormGroup;
   suppliers = signal<Supplier[]>([]);
@@ -45,13 +47,13 @@ export class InventoryReceiptForm implements OnInit {
 
   loadSuppliers() {
     this.supplierService.getSuppliers().subscribe({
-      next: (data: Supplier[]) => this.suppliers.set(data.filter(s => s.status === 1)),
+      next: (data: Supplier[]) => this.suppliers.set(data.filter(s => s.isActive)),
       error: (err: unknown) => console.error('Lỗi tải NCC', err)
     });
   }
 
   loadProducts() {
-    this.productService.getAll({ pageSize: 1000 }).subscribe({
+    this.productService.getAll({ pageSize: 100 }).subscribe({
       next: (res: PagedProductResponse) => this.products.set(res.items),
       error: (err: unknown) => console.error('Lỗi tải sản phẩm', err)
     });
@@ -80,7 +82,7 @@ export class InventoryReceiptForm implements OnInit {
 
   saveReceipt() {
     if (this.receiptForm.invalid || this.items.length === 0) {
-      alert('Vui lòng kiểm tra lại thông tin. Đảm bảo chọn ít nhất 1 sản phẩm.');
+      this.toast.warning('Vui lòng kiểm tra lại thông tin. Đảm bảo chọn ít nhất 1 sản phẩm.');
       return;
     }
 
@@ -88,19 +90,19 @@ export class InventoryReceiptForm implements OnInit {
     const productIds = this.items.value.map((i: { productId: string }) => i.productId);
     const hasDuplicates = new Set(productIds).size !== productIds.length;
     if (hasDuplicates) {
-      alert('Có sản phẩm trùng lặp trong phiếu nhập. Vui lòng gộp lại.');
+      this.toast.warning('Có sản phẩm trùng lặp trong phiếu nhập. Vui lòng gộp lại.');
       return;
     }
 
     this.isSaving.set(true);
     this.inventoryService.createReceipt(this.receiptForm.value).subscribe({
       next: (res: { receiptId: string }) => {
-        alert('Tạo phiếu nháp thành công!');
+        this.toast.success('Tạo phiếu nháp thành công!');
         this.router.navigate(['/admin/inventory-receipts', res.receiptId]);
       },
       error: (err: { error?: { message?: string }; message: string }) => {
         console.error('Lỗi tạo phiếu', err);
-        alert('Lỗi: ' + (err.error?.message || err.message));
+        this.toast.error('Lỗi: ' + (err.error?.message || err.message));
         this.isSaving.set(false);
       }
     });

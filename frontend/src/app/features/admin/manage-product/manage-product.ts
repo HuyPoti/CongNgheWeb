@@ -1,11 +1,12 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, OnInit, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { CategoryService } from '../../../core/services/category.service';
 import { BrandService } from '../../../core/services/brand.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
 import {
   ProductDto,
   ProductFullDto,
@@ -14,8 +15,7 @@ import {
 } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
 import { Brand } from '../../../core/models/brand.model';
-import { forkJoin, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { forkJoin, firstValueFrom } from 'rxjs';
 
 interface ProductFormModel {
   categoryId: string;
@@ -30,7 +30,7 @@ interface ProductFormModel {
   description: string;
   status: number;
   // UI-only fields for inline image/spec management
-  imageUrls: { url: string; isPrimary: boolean }[];
+  imageUrls: { id?: string; url: string; isPrimary: boolean }[];
   specs: { key: string; value: string }[];
   newImageUrl: string;
   newSpecKey: string;
@@ -48,6 +48,9 @@ export class ManageProduct implements OnInit {
   private categoryService = inject(CategoryService);
   private brandService = inject(BrandService);
   private toast = inject(ToastService);
+  private cloudinary = inject(CloudinaryService);
+  private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
 
   products = signal<ProductDto[]>([]);
   categories = signal<Category[]>([]);
@@ -59,10 +62,15 @@ export class ManageProduct implements OnInit {
   editingProduct = signal<ProductDto | null>(null);
   editingFull = signal<ProductFullDto | null>(null);
 
+  isUploadingFile = signal(false);
+  isUploadingImage = signal(false);
+
   form: ProductFormModel = this.emptyForm();
 
   ngOnInit() {
-    this.loadData();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadData();
+    }
     console.log(this.products());
   }
 
@@ -117,11 +125,15 @@ export class ManageProduct implements OnInit {
     this.productService.getFullById(product.productId).subscribe({
       next: (full) => {
         this.editingFull.set(full);
-        this.form.categoryId = this.getCategoryIdByName(product.categoryName) ?? '';
-        this.form.imageUrls = full.images.map((img) => ({
-          url: img.imageUrl,
-          isPrimary: img.isPrimary,
-        }));
+        this.form = {
+          ...this.form,
+          categoryId: this.getCategoryIdByName(product.categoryName) ?? '',
+          imageUrls: full.images.map((img) => ({
+            id: img.imageId,
+            url: img.imageUrl,
+            isPrimary: img.isPrimary,
+          }))
+        };
         
         // Parse specs from JSON specifications field
         if (product.specifications) {
@@ -137,6 +149,7 @@ export class ManageProduct implements OnInit {
             console.warn('Failed to parse specifications JSON in Admin', e);
           }
         }
+        this.cdr.detectChanges();
       },
     });
     this.showModal.set(true);
@@ -163,6 +176,34 @@ export class ManageProduct implements OnInit {
       const isPrimary = this.form.imageUrls.length === 0;
       this.form.imageUrls.push({ url: this.form.newImageUrl.trim(), isPrimary });
       this.form.newImageUrl = '';
+    }
+  }
+
+  onImageFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      const error = this.cloudinary.validateImageFile(file);
+      if (error) {
+        this.toast.error(error);
+        return;
+      }
+      this.isUploadingImage.set(true);
+      this.cloudinary.uploadImage('products', file).subscribe({
+        next: (res) => {
+          const isPrimary = this.form.imageUrls.length === 0;
+          this.form.imageUrls.push({ url: res.imageUrl, isPrimary });
+          this.isUploadingImage.set(false);
+          // reset input file value if needed, handled by UI usually or we can ignore
+          input.value = '';
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.toast.error('Lỗi khi upload ảnh');
+          this.isUploadingImage.set(false);
+          this.cdr.detectChanges();
+        }
+      });
     }
   }
 
@@ -206,21 +247,61 @@ export class ManageProduct implements OnInit {
       this.toast.warning('Giá niêm yết phải lớn hơn 0');
       return;
     }
+    if (this.form.salePrice !== null && this.form.salePrice < 0) {
+      this.toast.warning('Giá khuyến mãi không được âm');
+      return;
+    }
     if (this.form.salePrice && this.form.salePrice >= this.form.regularPrice) {
       this.toast.warning('Giá khuyến mãi phải nhỏ hơn giá niêm yết');
+      return;
+    }
+    if (this.form.stockQuantity < 0 || !Number.isInteger(this.form.stockQuantity)) {
+      this.toast.warning('Số lượng tồn kho phải là số nguyên không âm');
+      return;
+    }
+    if (this.form.warrantyMonths < 0 || !Number.isInteger(this.form.warrantyMonths)) {
+      this.toast.warning('Thời gian bảo hành phải là số nguyên không âm');
+      return;
+    }
+    if (this.form.sku?.trim() && !/^[a-zA-Z0-9-_]+$/.test(this.form.sku.trim())) {
+      this.toast.warning('SKU chỉ được chứa ký tự chữ, số, dấu gạch ngang (-) hoặc gạch dưới (_)');
+      return;
+    }
+
+    if (!this.form.imageUrls || this.form.imageUrls.length === 0) {
+      this.toast.warning('Vui lòng thêm ít nhất một ảnh');
+      return;
+    }
+
+    if (!this.form.brandId) {
+      this.toast.warning('Vui lòng chọn thương hiệu cho sản phẩm');
       return;
     }
 
     this.isSaving.set(true);
 
-    if (this.editingProduct()) {
-      this.updateProduct();
-    } else {
-      this.createProduct();
-    }
+    this.saveAsync().then(() => {
+      this.isSaving.set(false);
+    }).catch(err => {
+      const msg = err?.error?.message || 'Có lỗi xảy ra';
+      this.toast.error(msg);
+      this.isSaving.set(false);
+    });
   }
 
-  private createProduct() {
+  private async saveAsync() {
+    if (this.editingProduct()) {
+      await this.updateProductAsync();
+      this.toast.success('Cập nhật sản phẩm thành công!');
+    } else {
+      await this.createProductAsync();
+      this.toast.success('Tạo sản phẩm thành công!');
+    }
+    this.loadData();
+    this.closeModal();
+  }
+
+  private async createProductAsync() {
     const dto: CreateProductDto = {
       categoryId: this.form.categoryId,
       brandId: this.form.brandId,
@@ -238,36 +319,22 @@ export class ManageProduct implements OnInit {
       status: Number(this.form.status) || 1, 
     };
 
-    this.productService
-      .create(dto)
-      .pipe(
-        switchMap((created) => {
-          const imageObs = this.form.imageUrls.map((img, i) =>
-            this.productService.addImage(created.productId, {
-              imageUrl: img.url,
-              isPrimary: img.isPrimary,
-              sortOrder: i,
-            }),
-          );
-          return imageObs.length ? forkJoin(imageObs) : of([]);
-        }),
-      )
-      .subscribe({
-        next: () => {
-          this.toast.success('Tạo sản phẩm thành công!');
-          this.loadData();
-          this.closeModal();
-          this.isSaving.set(false);
-        },
-        error: (err) => {
-          const msg = err?.error?.message || 'Lỗi tạo sản phẩm';
-          this.toast.error(msg);
-          this.isSaving.set(false);
-        },
-      });
+    const created = await firstValueFrom(this.productService.create(dto));
+
+    // Add images
+    for (let i = 0; i < this.form.imageUrls.length; i++) {
+      const img = this.form.imageUrls[i];
+      await firstValueFrom(
+        this.productService.addImage(created.productId, {
+          imageUrl: img.url,
+          isPrimary: img.isPrimary,
+          sortOrder: i,
+        })
+      );
+    }
   }
 
-  private updateProduct() {
+  private async updateProductAsync() {
     const id = this.editingProduct()!.productId;
     const dto: UpdateProductDto = {
       categoryId: this.form.categoryId || undefined,
@@ -286,19 +353,42 @@ export class ManageProduct implements OnInit {
       status: Number(this.form.status),
     };
 
-    this.productService.update(id, dto).subscribe({
-      next: () => {
-        this.toast.success('Cập nhật sản phẩm thành công!');
-        this.loadData();
-        this.closeModal();
-        this.isSaving.set(false);
-      },
-      error: (err) => {
-        const msg = err?.error?.message || 'Lỗi cập nhật sản phẩm';
-        this.toast.error(msg);
-        this.isSaving.set(false);
-      },
-    });
+    await firstValueFrom(this.productService.update(id, dto));
+
+    // Update images logic
+    const originalImages = this.editingFull()?.images || [];
+    const currentImages = this.form.imageUrls;
+
+    // Find deleted images
+    const deletedImages = originalImages.filter(orig => !currentImages.some(curr => curr.id === orig.imageId));
+    
+    // Find new images (no id)
+    const newImages = currentImages.filter(curr => !curr.id);
+
+    // Delete removed images
+    for (const img of deletedImages) {
+      try {
+        await firstValueFrom(this.productService.deleteImage(id, img.imageId));
+      } catch (e) {
+        console.error('Failed to delete image', e);
+      }
+    }
+
+    // Add new images
+    for (let i = 0; i < newImages.length; i++) {
+      const img = newImages[i];
+      try {
+        await firstValueFrom(
+          this.productService.addImage(id, {
+            imageUrl: img.url,
+            isPrimary: img.isPrimary,
+            sortOrder: originalImages.length + i,
+          })
+        );
+      } catch (e) {
+        console.error('Failed to add image', e);
+      }
+    }
   }
 
   // Deletion disabled as per user request

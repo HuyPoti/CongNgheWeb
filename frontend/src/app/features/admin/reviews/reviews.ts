@@ -1,8 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, inject, OnInit, signal, PLATFORM_ID } from '@angular/core';
+import { CommonModule, DatePipe, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReviewService } from '../../../core/services/review.service';
-import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ReviewDto } from '../../../core/models/review.model';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -14,8 +14,9 @@ import { ToastService } from '../../../core/services/toast.service';
 })
 export class AdminReviewsComponent implements OnInit {
   private reviewService = inject(ReviewService);
-  private userService = inject(UserService);
+  private authService = inject(AuthService);
   private toast = inject(ToastService);
+  private platformId = inject(PLATFORM_ID);
   
   reviews = signal<ReviewDto[]>([]);
   isLoading = signal(false);
@@ -29,29 +30,23 @@ export class AdminReviewsComponent implements OnInit {
   replyContent = signal('');
   isSubmittingReply = signal(false);
 
-  // ID của Admin sẽ được lấy năng động từ database
+  // ID của Admin sẽ được lấy năng động từ thông tin đăng nhập
   adminUserId = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.loadReviews();
-    this.loadAdminUser();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadReviews();
+      this.loadAdminUser();
+    }
   }
 
   loadAdminUser(): void {
-    this.userService.getAll().subscribe({
-      next: (users) => {
-        // Tìm người dùng đầu tiên có quyền admin trong database
-        const admin = users.find(u => u.role === 'admin');
-        if (admin) {
-          this.adminUserId.set(admin.userId);
-        } else {
-          this.toast.error('Hệ thống chưa có tài khoản Admin để thực hiện phản hồi.');
-        }
-      },
-      error: () => {
-        this.toast.error('Lỗi khi kiểm tra danh sách người dùng');
-      }
-    });
+    const user = this.authService.currentUserValue;
+    if (user) {
+      this.adminUserId.set(user.userId);
+    } else {
+      this.toast.error('Không tìm thấy thông tin đăng nhập của Admin.');
+    }
   }
 
   loadReviews(): void {

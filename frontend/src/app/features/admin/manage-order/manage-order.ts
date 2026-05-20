@@ -29,7 +29,7 @@ export class ManageOrder implements OnInit {
   // Shipment States
   showShipmentModal = signal(false);
   currentShipment = signal<ShipmentDto | null>(null);
-  shipmentForm = signal({ carrier: '', trackingCode: '' });
+  shipmentForm = signal({ carrier: '' });
   
   // History
   orderHistory = signal<OrderStatusHistoryDto[]>([]);
@@ -43,6 +43,18 @@ export class ManageOrder implements OnInit {
     'delivered',
     'cancelled',
   ] as const;
+
+  // Tránh Admin bấm bypass quy trình Shipment
+  getAvailableStatuses(order: OrderDto): string[] {
+    const current = order.status;
+    if (current === 'pending') return ['pending', 'confirmed', 'cancelled'];
+    if (current === 'confirmed') return ['confirmed', 'cancelled']; // Tới processing qua Tạo Shipment
+    if (current === 'processing') return ['processing']; // Tới shipping qua cập nhật Mã vận đơn
+    if (current === 'shipping') return ['shipping']; // "Đã giao" do Admin xác nhận qua nút riêng
+    if (current === 'delivered') return ['delivered'];
+    if (current === 'cancelled') return ['cancelled'];
+    return [...this.statusOptions];
+  }
   paymentStatusOptions: UpdateOrderDto['paymentStatus'][] = ['unpaid', 'paid', 'refunded'];
 
   // Labels & Colors
@@ -118,7 +130,7 @@ export class ManageOrder implements OnInit {
 
   // Shipment functions
   openShipmentModal() {
-    this.shipmentForm.set({ carrier: '', trackingCode: '' });
+    this.shipmentForm.set({ carrier: '' });
     this.showShipmentModal.set(true);
   }
 
@@ -137,8 +149,7 @@ export class ManageOrder implements OnInit {
 
     this.shipmentService.create({
       orderId: order.orderId,
-      carrier: this.shipmentForm().carrier,
-      trackingCode: this.shipmentForm().trackingCode
+      carrier: this.shipmentForm().carrier
     }).subscribe({
       next: (shipment) => {
         this.currentShipment.set(shipment);
@@ -194,6 +205,21 @@ export class ManageOrder implements OnInit {
         }
       },
       error: () => this.toast.error('Lỗi cập nhật mã vận đơn')
+    });
+  }
+
+  // Admin xác nhận đã giao hàng thành công
+  markDelivered() {
+    const order = this.showDetail();
+    if (!order) return;
+
+    this.orderService.markDelivered(order.orderId).subscribe({
+      next: () => {
+        this.toast.success(`Đơn hàng ${order.orderCode} đã được xác nhận giao thành công!`);
+        this.openDetail(order);
+        this.loadOrders();
+      },
+      error: () => this.toast.error('Lỗi xác nhận giao hàng')
     });
   }
 

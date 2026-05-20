@@ -232,6 +232,11 @@ public class ReviewService(IUnitOfWork uow, IMapper mapper) : IReviewService
                           o.Status == OrderStatus.Delivered && 
                           o.OrderItems.Any(oi => oi.ProductId == productGuid), ct);
 
+        if (!isVerified)
+        {
+            throw new BadRequestException("Bạn phải mua và nhận sản phẩm này thành công mới có quyền đánh giá.");
+        }
+
         var review = new Review
         {
             ReviewId = Guid.NewGuid(),
