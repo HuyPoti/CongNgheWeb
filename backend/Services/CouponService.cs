@@ -12,7 +12,7 @@ using backend.Constants;
 
 namespace backend.Services;
 
-public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService activityLogService) : ICouponService
+public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService activityLogService, IFlashSaleService flashSaleService) : ICouponService
 {
 	public async Task<CouponDto> CreateAsync(CreateCouponDto dto, CancellationToken cancellationToken = default)
 	{
@@ -103,6 +103,7 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 		string code,
 		decimal totalAmount,
 		Guid? userId,
+		List<CouponValidationItemDto>? items = null,
 		CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(code))
@@ -110,7 +111,7 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 			return new CouponValidationResultDto
 			{
 				IsValid = false,
-				Message = "Coupon code is required",
+				Message = "Vui lòng nhập mã giảm giá",
 				FinalAmount = totalAmount
 			};
 		}
@@ -120,7 +121,7 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 			return new CouponValidationResultDto
 			{
 				IsValid = false,
-				Message = "Order amount must be greater than zero",
+				Message = "Giá trị đơn hàng phải lớn hơn 0",
 				FinalAmount = totalAmount
 			};
 		}
@@ -131,29 +132,60 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 			.FirstOrDefaultAsync(x => x.Code == normalizedCode, cancellationToken);
 
 		if (coupon == null)
-			return InvalidResult("Coupon not found", totalAmount);
+			return InvalidResult("Không tìm thấy mã giảm giá", totalAmount);
 
 		if (!coupon.IsActive)
-			return InvalidResult("Coupon is inactive", totalAmount);
+			return InvalidResult("Mã giảm giá đã bị ngưng hoạt động", totalAmount);
 
 		if (now < coupon.StartDate || now > coupon.EndDate)
-			return InvalidResult("Coupon is out of date", totalAmount);
-
-		if (totalAmount < coupon.MinOrderAmount)
-			return InvalidResult("Order does not meet minimum amount", totalAmount);
+			return InvalidResult("Mã giảm giá đã hết hạn sử dụng", totalAmount);
 
 		if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit.Value)
-			return InvalidResult("Coupon usage limit reached", totalAmount);
+			return InvalidResult("Mã giảm giá đã hết lượt sử dụng", totalAmount);
 
 		if (userId.HasValue && userId.Value != Guid.Empty)
 		{
 			var usedByUser = await uow.CouponUsages.Query()
 				.CountAsync(x => x.CouponId == coupon.CouponId && x.UserId == userId.Value, cancellationToken);
 			if (usedByUser >= coupon.PerUserLimit)
-				return InvalidResult("You have reached usage limit for this coupon", totalAmount);
+				return InvalidResult("Bạn đã đạt giới hạn sử dụng mã giảm giá này", totalAmount);
 		}
 
-		var discountAmount = CalculateDiscount(coupon, totalAmount);
+		decimal discountableAmount = totalAmount;
+		if (items != null && items.Count > 0)
+		{
+			var productIds = items.Select(i => i.ProductId).Distinct().ToList();
+			var products = await uow.Products.Query()
+				.Where(p => productIds.Contains(p.ProductId))
+				.ToDictionaryAsync(p => p.ProductId, cancellationToken);
+
+			decimal flashSaleTotal = 0;
+			foreach (var item in items)
+			{
+				if (products.TryGetValue(item.ProductId, out var product))
+				{
+					var flashPrice = await flashSaleService.GetFlashPriceAsync(product.ProductId, cancellationToken);
+					if (flashPrice.HasValue)
+					{
+						flashSaleTotal += flashPrice.Value * item.Quantity;
+					}
+				}
+			}
+
+			if (flashSaleTotal > 0)
+			{
+				discountableAmount = totalAmount - flashSaleTotal;
+				if (discountableAmount <= 0)
+				{
+					return InvalidResult("Mã giảm giá không áp dụng cho sản phẩm Flash Sale", totalAmount);
+				}
+			}
+		}
+
+		if (discountableAmount < coupon.MinOrderAmount)
+			return InvalidResult($"Giá trị các sản phẩm thường phải đạt tối thiểu {coupon.MinOrderAmount:N0}đ để dùng mã này", totalAmount);
+
+		var discountAmount = CalculateDiscount(coupon, discountableAmount);
 		return new CouponValidationResultDto
 		{
 			IsValid = true,
@@ -161,7 +193,7 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 			Code = coupon.Code,
 			DiscountAmount = discountAmount,
 			FinalAmount = Math.Max(totalAmount - discountAmount, 0),
-			Message = "Coupon is valid"
+			Message = "Mã giảm giá hợp lệ"
 		};
 	}
 
@@ -176,6 +208,7 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 			?? throw new NotFoundException("Coupon not found");
 
 		var order = await uow.Orders.Query()
+			.Include(o => o.OrderItems)
 			.FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken)
 			?? throw new NotFoundException("Order not found");
 
@@ -187,7 +220,13 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 			? userId.Value
 			: order.UserId;
 
-		var validation = await ValidateAsync(coupon.Code, order.TotalAmount, applyUserId, cancellationToken);
+		var validationItems = order.OrderItems.Select(oi => new CouponValidationItemDto
+		{
+			ProductId = oi.ProductId,
+			Quantity = oi.Quantity
+		}).ToList();
+
+		var validation = await ValidateAsync(coupon.Code, order.TotalAmount, applyUserId, validationItems, cancellationToken);
 		if (!validation.IsValid || !validation.CouponId.HasValue)
 			throw new BadRequestException(validation.Message);
 
@@ -277,6 +316,15 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 		await uow.SaveAsync(cancellationToken);
 
 		await activityLogService.LogIfHasUserAsync(coupon.CreatedBy, "coupon.update", "coupon", coupon.CouponId, oldVal, coupon, cancellationToken);
+
+		return mapper.Map<CouponDto>(coupon);
+	}
+
+	public async Task<CouponDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+	{
+		var coupon = await uow.Coupons.Query()
+			.FirstOrDefaultAsync(x => x.CouponId == id, cancellationToken)
+			?? throw new NotFoundException("Mã giảm giá không tồn tại");
 
 		return mapper.Map<CouponDto>(coupon);
 	}

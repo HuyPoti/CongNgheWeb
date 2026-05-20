@@ -259,7 +259,9 @@
               id="p-stock"
               [(ngModel)]="form.stockQuantity"
               type="number"
-              class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"
+              [disabled]="editingProduct() !== null"
+              class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-900/50"
+              [title]="editingProduct() ? ('Sử dụng tính năng Nhập kho để thay đổi số lượng') : ''"
             />
           </div>
           <div>
@@ -310,9 +312,8 @@
 
         <!-- Hình ảnh -->
         <div>
-          <label for="p-img" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2"
-            >{{ 'admin.manage.img_label' | translate }}</label
-          >
+          <span class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2"
+            >{{ 'admin.manage.img_label' | translate }}</span>
           <div class="flex flex-wrap gap-3 mb-3">
             @for (img of form.imageUrls; track $index; let i = $index) {
               <div class="relative group">
@@ -345,20 +346,40 @@
               </div>
             }
           </div>
-          <div class="flex gap-2">
-            <input
-              [(ngModel)]="form.newImageUrl"
-              aria-label="URL hình ảnh"
-              class="flex-1 bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"
-              [placeholder]="'product.img_url' | translate"
-            />
-            <button
-              (click)="addImage()"
-              class="px-4 py-2 bg-primary/20 text-primary rounded-xl text-sm hover:bg-primary/30 transition-colors"
-            >
-              {{ 'admin.manage.add' | translate }}
-            </button>
+          <div class="flex items-center gap-4 mb-3">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="imageSourceProduct" [value]="false" [(ngModel)]="isUploadingFile" class="accent-primary" />
+              <span class="text-xs text-slate-600 dark:text-slate-300">Nhập URL</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="imageSourceProduct" [value]="true" [(ngModel)]="isUploadingFile" class="accent-primary" />
+              <span class="text-xs text-slate-600 dark:text-slate-300">Tải lên từ máy</span>
+            </label>
           </div>
+          
+          @if (!isUploadingFile()) {
+            <div class="flex gap-2 mb-3">
+              <input
+                [(ngModel)]="form.newImageUrl"
+                aria-label="URL hình ảnh"
+                class="flex-1 bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"
+                [placeholder]="'product.img_url' | translate"
+              />
+              <button
+                (click)="addImage()"
+                class="px-4 py-2 bg-primary/20 text-primary rounded-xl text-sm hover:bg-primary/30 transition-colors"
+              >
+                {{ 'admin.manage.add' | translate }}
+              </button>
+            </div>
+          } @else {
+            <div class="mb-3">
+              <input type="file" (change)="onImageFileSelected($event)" accept="image/*" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"/>
+              @if (isUploadingImage()) {
+                <p class="text-xs text-primary mt-1">Đang tải ảnh lên...</p>
+              }
+            </div>
+          }
         </div>
 
         <!-- Thông số kỹ thuật -->

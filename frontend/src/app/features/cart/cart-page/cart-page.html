@@ -47,7 +47,7 @@
                                     
                                     <div class="col-span-2 w-full sm:w-auto flex justify-between sm:justify-center items-center">
                                         <span class="sm:hidden text-sm text-slate-500">Đơn giá:</span>
-                                        <span class="font-medium text-slate-900 dark:text-white">${{ item.price | number:'1.2-2' }}</span>
+                                        <span class="font-medium text-slate-900 dark:text-white">{{ item.price | number:'1.0-0' }}đ</span>
                                     </div>
 
                                     <div class="col-span-2 w-full sm:w-auto flex justify-between sm:justify-center items-center">
@@ -65,12 +65,33 @@
 
                                     <div class="col-span-2 w-full sm:w-auto flex justify-between sm:justify-end items-center">
                                         <span class="sm:hidden text-sm text-slate-500">Thành tiền:</span>
-                                        <span class="font-bold text-primary">${{ (item.price * item.quantity) | number:'1.2-2' }}</span>
+                                        <span class="font-bold text-primary">{{ (item.price * item.quantity) | number:'1.0-0' }}đ</span>
                                     </div>
                                 </div>
                             }
                         </div>
                     </div>
+
+                    <!-- 🚀 Bẫy giỏ hàng (Cart Threshold Nudge - Upsell) -->
+                    @if (nudgeCoupon()) {
+                        <div class="mt-4 p-5 bg-gradient-to-r from-indigo-50/90 to-purple-50/90 dark:from-indigo-950/20 dark:to-purple-950/20 border border-indigo-200 dark:border-indigo-500/20 rounded-2xl shadow-md backdrop-blur-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-pulse">
+                            <div class="flex items-start gap-3">
+                                <span class="material-symbols-outlined text-3xl text-indigo-600 dark:text-indigo-400 flex-shrink-0 animate-bounce">redeem</span>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                        Cơ hội nhận thêm ưu đãi đặc biệt!
+                                    </h4>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                                        Bạn chỉ cần mua thêm <strong class="text-indigo-600 dark:text-indigo-400">{{ nudgeAmountNeeded() | number:'1.0-0' }}đ</strong> để áp dụng mã <strong class="bg-indigo-600 text-white dark:bg-indigo-500 px-2 py-0.5 rounded text-[10px] font-mono tracking-wider font-bold">{{ nudgeCoupon()!.code }}</strong> (Giảm ngay {{ nudgeCoupon()!.discountValue | number:'1.0-0' }}{{ nudgeCoupon()!.discountType === 'percentage' ? '%' : 'đ' }}).
+                                    </p>
+                                </div>
+                            </div>
+                            <a routerLink="/product/list" class="flex-shrink-0 self-end sm:self-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1 cursor-pointer">
+                                Mua Thêm Ngay
+                                <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                            </a>
+                        </div>
+                    }
                     
                     <div class="flex justify-between items-center mt-4 px-2">
                         <a class="flex items-center gap-2 text-primary font-medium hover:underline" routerLink="/product/list">
@@ -93,7 +114,7 @@
                     <div class="space-y-4 mb-6">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600 dark:text-slate-400">Tạm tính ({{ cartItems().length }} sản phẩm)</span>
-                            <span class="font-medium text-slate-900 dark:text-white">${{ subtotal() | number:'1.2-2' }}</span>
+                            <span class="font-medium text-slate-900 dark:text-white">{{ subtotal() | number:'1.0-0' }}đ</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-600 dark:text-slate-400">Phí vận chuyển</span>
@@ -104,7 +125,7 @@
                     <div class="border-t border-slate-100 dark:border-white/10 pt-6 mb-8">
                         <div class="flex justify-between items-end mb-1">
                             <span class="text-base font-bold text-slate-900 dark:text-white">Tổng cộng</span>
-                            <span class="text-3xl font-bold text-primary">${{ subtotal() | number:'1.2-2' }}</span>
+                            <span class="text-3xl font-bold text-primary">{{ subtotal() | number:'1.0-0' }}đ</span>
                         </div>
                         <p class="text-xs text-right text-slate-500">(Đã bao gồm VAT nếu có)</p>
                     </div>

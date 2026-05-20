@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
 import { OrderDetailDto, OrderStatusHistoryDto } from '../../../core/models/order.model';
 import { ToastService } from '../../../core/services/toast.service';
@@ -17,7 +17,7 @@ interface TimelineStep {
 @Component({
   selector: 'app-order-tracking',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './order-tracking.html'
 })
 export class OrderTrackingComponent implements OnInit {

@@ -6,7 +6,7 @@ export interface Supplier {
   email: string | null;
   address: string | null;
   taxCode: string | null;
-  status: number; // 1: Active, 0: Inactive
+  isActive: boolean; // true: Active, false: Inactive
   createdAt: string;
   updatedAt: string;
 }
@@ -18,7 +18,7 @@ export interface CreateSupplierDto {
   email?: string | null;
   address?: string | null;
   taxCode?: string | null;
-  status: number;
+  isActive: boolean;
 }
 
 export interface UpdateSupplierDto {
@@ -28,5 +28,5 @@ export interface UpdateSupplierDto {
   email?: string | null;
   address?: string | null;
   taxCode?: string | null;
-  status?: number;
+  isActive?: boolean;
 }

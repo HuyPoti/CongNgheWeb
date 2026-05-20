@@ -34,10 +34,6 @@ public class Address
     [Column("province")]
     public string Province { get; set; } = string.Empty;
 
-    [Required]
-    [MaxLength(100)]
-    [Column("district")]
-    public string District { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(100)]

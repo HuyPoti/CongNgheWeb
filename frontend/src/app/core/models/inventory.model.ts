@@ -1,5 +1,4 @@
 import { ProductDto } from './product.model';
-import { Supplier } from './supplier.model';
 import { User } from './user.model'; // Assumes user model exists, otherwise use any
 
 export interface InventoryReceipt {
@@ -12,8 +11,7 @@ export interface InventoryReceipt {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-  supplier?: Supplier;
-  creator?: User;
+  supplierName?: string;
   items: InventoryReceiptItem[];
 }
 
@@ -24,7 +22,8 @@ export interface InventoryReceiptItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  product?: ProductDto;
+  productName?: string;
+  productSku?: string;
 }
 
 export interface InventoryTransaction {

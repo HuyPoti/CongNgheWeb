@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Banner, CreateBanner } from '../../../core/models/banner.model';
 import { BannerService } from '../../../core/services/banner.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
 
 @Component({
   selector: 'app-cms-banner',
@@ -14,12 +15,16 @@ import { ToastService } from '../../../core/services/toast.service';
 export class CmsBanner implements OnInit {
   private bannerService = inject(BannerService);
   private toast = inject(ToastService);
+  private cloudinary = inject(CloudinaryService);
 
   banners = signal<Banner[]>([]);
   isLoading = signal(false);
 
   showModal = signal(false);
   editingBanner = signal<Banner | null>(null);
+  
+  isUploadingFile = signal(false);
+  selectedImageFile = signal<File | null>(null);
 
   positionLabels: Record<string, string> = {
     homepage_slider: 'Slider chính (Trang chủ)',
@@ -43,6 +48,20 @@ export class CmsBanner implements OnInit {
       delete newState['preview'];
       return newState;
     });
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const error = this.cloudinary.validateImageFile(file);
+      if (error) {
+        this.toast.error(error);
+        return;
+      }
+      this.selectedImageFile.set(file);
+      this.form.imageUrl = URL.createObjectURL(file);
+      this.resetPreviewError();
+    }
   }
 
   ngOnInit(): void {
@@ -71,6 +90,8 @@ export class CmsBanner implements OnInit {
   openCreateModal() {
     this.resetPreviewError();
     this.editingBanner.set(null);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = {
       title: '',
       subtitle: '',
@@ -88,6 +109,8 @@ export class CmsBanner implements OnInit {
   openEditModal(banner: Banner) {
     this.resetPreviewError();
     this.editingBanner.set(banner);
+    this.isUploadingFile.set(false);
+    this.selectedImageFile.set(null);
     this.form = {
       ...banner,
       startDate: this.toDateInputValue(banner.startDate),
@@ -102,12 +125,31 @@ export class CmsBanner implements OnInit {
   }
 
   saveForm() {
-    if (!this.form.imageUrl?.trim()) {
-      this.toast.warning('Vui lòng nhập URL hình ảnh');
+    if (!this.form.imageUrl?.trim() && !this.selectedImageFile()) {
+      this.toast.warning('Vui lòng nhập URL hình ảnh hoặc chọn file');
       return;
     }
 
+    if (this.isUploadingFile() && this.selectedImageFile()) {
+      this.isLoading.set(true);
+      this.cloudinary.uploadImage('banners', this.selectedImageFile()!).subscribe({
+        next: (res) => {
+          this.form.imageUrl = res.imageUrl;
+          this.submitData();
+        },
+        error: () => {
+          this.toast.error('Lỗi khi upload ảnh');
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      this.submitData();
+    }
+  }
+
+  private submitData() {
     const payload = this.buildPayload();
+    this.isLoading.set(true);
 
     if (this.editingBanner()) {
       this.bannerService.update(this.editingBanner()!.bannerId, payload).subscribe({
@@ -116,7 +158,10 @@ export class CmsBanner implements OnInit {
           this.loadBanners();
           this.closeModal();
         },
-        error: () => this.toast.error('Lỗi khi cập nhật banner'),
+        error: () => {
+          this.toast.error('Lỗi khi cập nhật banner');
+          this.isLoading.set(false);
+        },
       });
     } else {
       this.bannerService.create(payload).subscribe({
@@ -125,7 +170,10 @@ export class CmsBanner implements OnInit {
           this.loadBanners();
           this.closeModal();
         },
-        error: () => this.toast.error('Lỗi khi tạo banner'),
+        error: () => {
+          this.toast.error('Lỗi khi tạo banner');
+          this.isLoading.set(false);
+        },
       });
     }
   }

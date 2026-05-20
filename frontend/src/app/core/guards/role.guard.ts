@@ -21,7 +21,12 @@ export const roleGuard: CanActivateFn = (route) => {
   // 1. Kiểm tra xem user đã đăng nhập chưa
   if (!currentUser) {
     toast.error('Vui lòng đăng nhập để truy cập!');
-    router.navigate(['/portal']); // Chuyển hướng về trang đăng nhập nội bộ
+    const expectedRoles: string[] = route.data['roles'] || [];
+    if (expectedRoles.includes('customer')) {
+      router.navigate(['/auth/login']);
+    } else {
+      router.navigate(['/portal']); // Chuyển hướng về trang đăng nhập nội bộ
+    }
     return false;
   }
 

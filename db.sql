@@ -104,7 +104,6 @@ CREATE TABLE addresses (
     phone VARCHAR(20) NOT NULL,
     address_line VARCHAR(255) NOT NULL,
     province VARCHAR(100) NOT NULL,
-    district VARCHAR(100) NOT NULL,
     ward VARCHAR(100) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

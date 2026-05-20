@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject } fro
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FlashSaleService } from '../../../core/services/flash-sale.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -361,6 +362,7 @@ export class FlashSaleItemsComponent implements OnInit, OnDestroy {
 
   private fb = inject(FormBuilder);
   private flashSaleService = inject(FlashSaleService);
+  private toast = inject(ToastService);
 
   ngOnInit() {
     this.initForm();
@@ -419,7 +421,7 @@ export class FlashSaleItemsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.removeLoading = false;
-          alert(error?.error?.message || 'Lỗi khi xóa sản phẩm');
+          this.toast.error(error?.error?.message || 'Lỗi khi xóa sản phẩm');
         }
       });
   }

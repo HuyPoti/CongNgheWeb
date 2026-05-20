@@ -1,12 +1,14 @@
 // Component quản lý người dùng - ĐÃ KẾT NỐI API THẬT
 // Thay thế data mock bằng gọi API từ UserService
 
-import { Component, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { User, CreateUser, UpdateUser } from '../../../core/models/user.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
+import { User, UpdateUser } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-customer-crm',
@@ -17,15 +19,17 @@ import { User, CreateUser, UpdateUser } from '../../../core/models/user.model';
 export class CustomerCrm implements OnInit {
   private userService = inject(UserService);
   private toastService = inject(ToastService);
+  private platformId = inject(PLATFORM_ID);
+  private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
 
   users = signal<User[]>([]);        // ← Khởi tạo rỗng, sẽ load từ API
   isLoading = signal(true);          // ← Trạng thái loading
   errorMessage = signal('');         // ← Thông báo lỗi
 
   showModal = signal(false);
-  isCreating = signal(false);        // ← Phân biệt modal tạo mới / sửa
   editingUser = signal<User | null>(null);
-  form: Partial<User & { password?: string }> = {};
+  form: Partial<User> = {};
   searchQuery = '';
 
   roleLabels: Record<string, string> = {
@@ -36,7 +40,9 @@ export class CustomerCrm implements OnInit {
 
   // OnInit = lifecycle hook, chạy sau khi component được tạo
   ngOnInit() {
-    this.loadUsers();  // ← Gọi API lấy danh sách users khi component load
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadUsers();  // ← Gọi API lấy danh sách users khi component load ở browser
+    }
   }
 
   loadUsers() {
@@ -67,17 +73,8 @@ export class CustomerCrm implements OnInit {
     );
   }
 
-  // Mở modal TẠO MỚI
-  openCreate() {
-    this.isCreating.set(true);
-    this.editingUser.set(null);
-    this.form = { role: 'customer' };
-    this.showModal.set(true);
-  }
-
   // Mở modal SỬA
   openEdit(user: User) {
-    this.isCreating.set(false);
     this.editingUser.set(user);
     this.form = { ...user };
     this.showModal.set(true);
@@ -89,91 +86,68 @@ export class CustomerCrm implements OnInit {
 
   save() {
     // === VALIDATION TRƯỚC KHI GỬI ===
-    if (!this.form.fullName?.trim() || !this.form.email?.trim()) {
-      this.toastService.warning('Vui lòng điền đầy đủ Họ tên và Email');
-      return; // Dừng lại, không gọi API
+    if (!this.form.fullName?.trim()) {
+      this.toastService.warning('Vui lòng điền Họ tên');
+      return; 
     }
 
-    if (this.isCreating() && !this.form.password?.trim()) {
-      this.toastService.warning('Vui lòng nhập mật khẩu cho tài khoản mới');
-      return;
+    if (this.form.phone?.trim()) {
+      const phoneRegex = /^(0[23456789][0-9]{8})$/;
+      if (!phoneRegex.test(this.form.phone.trim())) {
+        this.toastService.warning('Số điện thoại không hợp lệ (phải gồm 10 chữ số bắt đầu bằng số 0)');
+        return;
+      }
     }
 
-    if (this.isCreating()) {
-      // TẠO MỚI → POST /api/users
-      const createData: CreateUser = {
-        email: this.form.email || '',
-        password: this.form.password || '',
-        fullName: this.form.fullName || '',
-        phone: this.form.phone || '', 
-        role: this.form.role || 'customer',
-      };
-      this.userService.create(createData).subscribe({
-        next: () => {
-          this.toastService.success('Thêm người dùng thành công');
-          this.loadUsers();
-          this.closeModal();
-          this.errorMessage.set('');
-        },
-        error: (err) => {
-          // Xử lý thông minh cho các loại lỗi 400 (Validation) từ Backend
-          let msg = 'Lỗi tạo người dùng';
-          if (err.error?.message) {
-            msg = err.error.message;
-          } else if (err.error?.errors) {
-            // Lấy lỗi đầu tiên trong mảng lỗi chi tiết
-            const keys = Object.keys(err.error.errors);
-            if (keys.length > 0) msg = err.error.errors[keys[0]][0];
-          } else if (err.error?.title) {
-            msg = err.error.title;
-          }
-          
-          this.errorMessage.set(msg);
-          this.toastService.error(msg);
-        },
-      });
-    } else {
-      // CẬP NHẬT → PUT /api/users/:id
-      const userId = this.editingUser()?.userId;
-      if (!userId) return;
-      const updateData: UpdateUser = {
-        email: this.form.email,
-        fullName: this.form.fullName,
-        phone: this.form.phone || '',
-        role: this.form.role,
-      };
-      this.userService.update(userId, updateData).subscribe({
-        next: () => {
-          this.toastService.success('Cập nhật thành công');
-          this.loadUsers();
-          this.closeModal();
-          this.errorMessage.set('');
-        },
-        error: (err) => {
-          let msg = 'Lỗi cập nhật';
-          if (err.error?.message) {
-            msg = err.error.message;
-          } else if (err.error?.errors) {
-            const keys = Object.keys(err.error.errors);
-            if (keys.length > 0) msg = err.error.errors[keys[0]][0];
-          }
+    // CẬP NHẬT → PUT /api/users/:id
+    const userId = this.editingUser()?.userId;
+    if (!userId) return;
+    const updateData: UpdateUser = {
+      fullName: this.form.fullName,
+      phone: this.form.phone || '',
+    };
+    
+    this.userService.update(userId, updateData).subscribe({
+      next: () => {
+        this.toastService.success('Cập nhật thành công');
+        this.loadUsers();
+        this.closeModal();
+        this.errorMessage.set('');
+      },
+      error: (err) => {
+        let msg = 'Lỗi cập nhật';
+        if (err.error?.message) {
+          msg = err.error.message;
+        } else if (err.error?.errors) {
+          const keys = Object.keys(err.error.errors);
+          if (keys.length > 0) msg = err.error.errors[keys[0]][0];
+        }
 
-          this.errorMessage.set(msg);
-          this.toastService.error(msg);
-        },
-      });
-    }
+        this.errorMessage.set(msg);
+        this.toastService.error(msg);
+      },
+    });
   }
 
-  deleteUser(user: User) {
-    if (confirm(`Xóa người dùng "${user.fullName}"?`)) {
-      // DELETE /api/users/:id
-      this.userService.delete(user.userId).subscribe({
+  async toggleActive(user: User) {
+    const currentUserId = this.authService.currentUserValue?.userId;
+    if (user.userId === currentUserId) {
+      this.toastService.warning('Bạn không thể tự khóa tài khoản của chính mình!');
+      return;
+    }
+    const action = user.isActive ? 'Khóa' : 'Kích hoạt';
+    const isConfirmed = await this.confirmService.confirm(
+      `Bạn có chắc chắn muốn ${action.toLowerCase()} tài khoản "${user.fullName}"?`,
+      `${action} tài khoản`,
+      user.isActive ? 'danger' : 'info'
+    );
+    if (isConfirmed) {
+      this.userService.update(user.userId, { isActive: !user.isActive }).subscribe({
         next: () => {
-          this.toastService.success('Đã xóa người dùng');
+          this.toastService.success(`${action} tài khoản thành công`);
           this.loadUsers();
         },
-        error: () => this.toastService.error('Lỗi xóa người dùng'),
+        error: () => this.toastService.error(`Lỗi khi ${action.toLowerCase()} tài khoản`),
       });
     }
   }

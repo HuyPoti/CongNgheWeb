@@ -48,36 +48,18 @@
                                 placeholder="Ví dụ: 123 Đường ABC">
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label for="province" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tỉnh/TP *</label>
-                                <select id="province" name="province" [(ngModel)]="selectedProvince" (ngModelChange)="onProvinceChange()" required
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors">
-                                    <option value="" class="text-slate-900">Chọn Tỉnh/TP</option>
-                                    @for (province of provinces; track province.code) {
-                                        <option [value]="province.code" class="text-slate-900">{{ province.name }}</option>
-                                    }
-                                </select>
-                            </div>
-                            <div>
-                                <label for="district" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Quận/Huyện *</label>
-                                <select id="district" name="district" [(ngModel)]="selectedDistrict" (ngModelChange)="onDistrictChange()" [disabled]="!selectedProvince || districts.length === 0" required
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <option value="" class="text-slate-900">{{ selectedProvince ? (districts.length > 0 ? 'Chọn Quận/Huyện' : 'Không có dữ liệu') : 'Chọn Tỉnh/TP trước' }}</option>
-                                    @for (district of districts; track district.code) {
-                                        <option [value]="district.code" class="text-slate-900">{{ district.name }}</option>
-                                    }
-                                </select>
+                                <input type="text" id="province" name="province" [(ngModel)]="province" required
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                                    placeholder="Ví dụ: Tỉnh Lâm Đồng">
                             </div>
                             <div>
                                 <label for="ward" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phường/Xã *</label>
-                                <select id="ward" name="ward" [(ngModel)]="selectedWard" [disabled]="!selectedDistrict || wards.length === 0" required
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <option value="" class="text-slate-900">{{ selectedDistrict ? (wards.length > 0 ? 'Chọn Phường/Xã' : 'Không có dữ liệu') : 'Chọn Quận/Huyện trước' }}</option>
-                                    @for (ward of wards; track ward.code) {
-                                        <option [value]="ward.code" class="text-slate-900">{{ ward.name }}</option>
-                                    }
-                                </select>
+                                <input type="text" id="ward" name="ward" [(ngModel)]="ward" required
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
+                                    placeholder="Ví dụ: Phường 2">
                             </div>
                         </div>
 
@@ -101,7 +83,7 @@
                     </h3>
                     
                     <div class="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        @for (item of cartService.getCartItems(); track item.id) {
+                        @for (item of cartService.checkoutItems(); track item.id) {
                             <div class="flex gap-4">
                                 <div class="w-16 h-16 rounded-lg border border-slate-200 dark:border-white/10 p-1 flex-shrink-0 bg-white">
                                     <img [src]="item.image" [alt]="item.name" class="w-full h-full object-contain">
@@ -110,7 +92,7 @@
                                     <h4 class="text-sm font-medium text-slate-900 dark:text-white line-clamp-1 mb-1">{{ item.name }}</h4>
                                     <div class="flex justify-between items-center text-sm">
                                         <span class="text-slate-500">SL: {{ item.quantity }}</span>
-                                        <span class="font-semibold text-primary">${{ (item.price * item.quantity) | number:'1.2-2' }}</span>
+                                        <span class="font-semibold text-primary">{{ (item.price * item.quantity) | number:'1.0-0' }}đ</span>
                                     </div>
                                 </div>
                             </div>
@@ -120,7 +102,7 @@
                     <div class="space-y-3 pt-4 border-t border-slate-100 dark:border-white/10 text-sm">
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                             <span>Tạm tính</span>
-                            <span class="font-medium text-slate-900 dark:text-white">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+                            <span class="font-medium text-slate-900 dark:text-white">{{ cartService.checkoutSubtotal() | number:'1.0-0' }}đ</span>
                         </div>
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                             <span>Phí vận chuyển</span>
@@ -130,7 +112,7 @@
 
                     <div class="flex justify-between items-center pt-4 mt-4 border-t border-slate-100 dark:border-white/10">
                         <span class="font-bold text-slate-900 dark:text-white text-base">Tổng cộng</span>
-                        <span class="text-2xl font-bold text-primary">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+                        <span class="text-2xl font-bold text-primary">{{ cartService.checkoutSubtotal() | number:'1.0-0' }}đ</span>
                     </div>
                 </div>
             </div>

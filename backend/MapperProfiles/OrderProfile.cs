@@ -21,7 +21,8 @@ public class OrderProfile : Profile
             .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => MapPaymentStatusToString(src.PaymentStatus)))
             .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.User != null ? src.User.FullName : null))
             .ForMember(dest => dest.ShippingAddress, opt => opt.MapFrom(src => src.Address))
-            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.OrderItems));
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.OrderItems))
+            .ForMember(dest => dest.ReturnRequest, opt => opt.MapFrom(src => src.ReturnRequests.FirstOrDefault()));
 
         // OrderItem -> OrderItemDto
         CreateMap<OrderItem, OrderItemDto>()

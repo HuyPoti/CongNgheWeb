@@ -39,6 +39,22 @@
           <span class="text-sm font-medium">Inventory</span>
         </a>
         <a
+          routerLink="/admin/inventory-receipts"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">receipt_long</span>
+          <span class="text-sm font-medium">Inventory Receipts</span>
+        </a>
+        <a
+          routerLink="/admin/suppliers"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span class="text-sm font-medium">Suppliers</span>
+        </a>
+        <a
           routerLink="/admin/manage-product"
           routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
           class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary transition-all cursor-pointer"
@@ -53,6 +69,14 @@
         >
           <span class="material-symbols-outlined">orders</span>
           <span class="text-sm font-medium">Orders</span>
+        </a>
+        <a
+          routerLink="/admin/payment-transactions"
+          routerLinkActive="bg-primary/10 text-primary border-l-4 border-primary"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-500 hover:text-primary transition-all cursor-pointer"
+        >
+          <span class="material-symbols-outlined">payments</span>
+          <span class="text-sm font-medium">Transactions</span>
         </a>
         <a
           routerLink="/admin/customer-crm"

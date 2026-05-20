@@ -180,7 +180,7 @@
               @for (brand of brands(); track brand.brandId) {
                 <button
                   type="button"
-                  class="w-full flex items-center gap-3 text-left group"
+                  class="w-full flex items-center gap-3 text-left group cursor-pointer"
                   (click)="toggleBrand(brand.brandId)"
                 >
                   <div
@@ -195,15 +195,22 @@
                       <div class="size-2.5 bg-white rounded-full"></div>
                     }
                   </div>
-                  <span
-                    class="text-sm font-medium transition-colors"
-                    [class]="
-                      isBrandSelected(brand.brandId)
-                        ? 'text-primary font-bold'
-                        : 'text-slate-600 dark:text-slate-400 group-hover:text-primary'
-                    "
-                    >{{ brand.name }}</span
-                  >
+                  <div class="flex items-center gap-2">
+                    @if (brand.logoUrl) {
+                      <div class="size-7 rounded-lg border border-slate-100 dark:border-white/10 bg-white dark:bg-slate-800 flex items-center justify-center p-0.5 overflow-hidden shrink-0">
+                        <img [src]="brand.logoUrl" class="w-full h-full object-contain" [alt]="brand.name" />
+                      </div>
+                    }
+                    <span
+                      class="text-sm font-medium transition-colors"
+                      [class]="
+                        isBrandSelected(brand.brandId)
+                          ? 'text-primary font-bold'
+                          : 'text-slate-600 dark:text-slate-400 group-hover:text-primary'
+                      "
+                      >{{ brand.name }}</span
+                    >
+                  </div>
                 </button>
               }
             </div>

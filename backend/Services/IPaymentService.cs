@@ -8,4 +8,5 @@ public interface IPaymentService
     Task<PaymentDto?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default);
     Task<PaymentDto> ConfirmBankTransferAsync(Guid paymentId, Guid confirmedByUserId, CancellationToken cancellationToken = default);
     Task CompleteCodPaymentAsync(Guid orderId, CancellationToken cancellationToken = default);
+    Task<PagedResult<PaymentTransactionDto>> GetAllTransactionsAsync(string? keyword, int page, int pageSize, CancellationToken cancellationToken = default);
 }

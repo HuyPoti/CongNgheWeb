@@ -37,7 +37,18 @@ public class ExceptionMiddleware
             _ => (int)HttpStatusCode.InternalServerError
         };
 
-        var response = DTOs.ApiResponse.Fail(ex.Message);
+        var message = ex.Message;
+        if (ex.InnerException != null)
+        {
+            message += " | Detail: " + ex.InnerException.Message;
+            Console.WriteLine($"[EXCEPTION] {ex.Message} | Inner: {ex.InnerException.Message}");
+        }
+        else
+        {
+            Console.WriteLine($"[EXCEPTION] {ex.Message}");
+        }
+
+        var response = DTOs.ApiResponse.Fail(message);
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var json = JsonSerializer.Serialize(response, options);
         await context.Response.WriteAsync(json);

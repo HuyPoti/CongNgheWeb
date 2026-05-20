@@ -7,6 +7,10 @@ export const EMPLOYEE_ROUTES: Routes = [
     loadComponent: () => import('./emp-orders/emp-orders').then((m) => m.EmpOrders),
   },
   {
+    path: 'warehouse-orders',
+    loadComponent: () => import('./emp-orders/emp-orders').then((m) => m.EmpOrders),
+  },
+  {
     path: 'products',
     loadComponent: () => import('./emp-products/emp-products').then((m) => m.EmpProducts),
   },

@@ -22,6 +22,8 @@ export class NotFoundComponent implements OnInit {
         this.homeUrl = '/admin/dashboard';
       } else if (role === 'staff') {
         this.homeUrl = '/employee/orders';
+      } else if (role === 'warehouse') {
+        this.homeUrl = '/employee/warehouse-orders';
       } else {
         this.homeUrl = '/';
       }

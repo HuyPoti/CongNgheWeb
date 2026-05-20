@@ -36,7 +36,7 @@ public class UploadController(
     [HttpPost("{folder}")]
     public async Task<ActionResult<ApiResponse<object>>> UploadImage(string folder, IFormFile file)
     {
-        var allowedFolders = new[] { "products", "banners", "news", "reviews", "returns" };
+        var allowedFolders = new[] { "products", "banners", "news", "reviews", "returns", "brands", "categories" };
         if (!allowedFolders.Contains(folder.ToLower()))
             return BadRequest(ApiResponse.Fail($"Folder '{folder}' khong hop le. "));
 

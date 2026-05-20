@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReviewService } from '../../../core/services/review.service';
-import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ReviewDto } from '../../../core/models/review.model';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -14,7 +14,7 @@ import { ToastService } from '../../../core/services/toast.service';
 })
 export class EmpReviews implements OnInit {
   private reviewService = inject(ReviewService);
-  private userService = inject(UserService);
+  private authService = inject(AuthService);
   private toast = inject(ToastService);
 
   reviews = signal<ReviewDto[]>([]);
@@ -25,7 +25,7 @@ export class EmpReviews implements OnInit {
   replyContent = signal('');
   isSubmittingReply = signal(false);
 
-  // Staff user ID (lấy từ DB)
+  // Staff user ID (lấy từ thông tin đăng nhập)
   staffUserId = signal<string | null>(null);
 
   // Filter
@@ -38,20 +38,12 @@ export class EmpReviews implements OnInit {
   }
 
   loadStaffUser(): void {
-    this.userService.getAll().subscribe({
-      next: (users) => {
-        // Tìm user staff hoặc admin để reply
-        const staff = users.find((u) => u.role === 'staff' || u.role === 'admin');
-        if (staff) {
-          this.staffUserId.set(staff.userId);
-        } else {
-          this.toast.error('Không tìm thấy tài khoản nhân viên');
-        }
-      },
-      error: () => {
-        this.toast.error('Lỗi khi tải thông tin nhân viên');
-      },
-    });
+    const user = this.authService.currentUserValue;
+    if (user) {
+      this.staffUserId.set(user.userId);
+    } else {
+      this.toast.error('Không tìm thấy thông tin đăng nhập của nhân viên.');
+    }
   }
 
   loadReviews(): void {

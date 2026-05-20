@@ -137,8 +137,8 @@ export class Orders implements OnInit {
       return 'Không có địa chỉ giao hàng';
     }
 
-    const { addressLine, ward, district, province } = detail.shippingAddress;
-    return [addressLine, ward, district, province].filter(Boolean).join(', ');
+    const { addressLine, ward, province } = detail.shippingAddress;
+    return [addressLine, ward, province].filter(Boolean).join(', ');
   }
 
   protected trackByOrderId(_: number, order: OrderDto): string {

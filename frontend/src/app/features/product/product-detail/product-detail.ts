@@ -6,12 +6,17 @@ import { CommonModule } from '@angular/common';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
 import { ProductCard, ProductFullDto } from '../../../core/models/product.model';
+import { BrandService } from '../../../core/services/brand.service';
+import { Brand } from '../../../core/models/brand.model';
 import { ReviewService } from '../../../core/services/review.service';
 import { ReviewDto } from '../../../core/models/review.model';
 import { ToastService } from '../../../core/services/toast.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { WishlistToggleComponent } from '../../../shared/components/wishlist-toggle/wishlist-toggle';
 import { VerifiedBadgeComponent } from '../../../shared/components/verified-badge/verified-badge';
+import { AuthService } from '../../../core/services/auth.service';
+import { CloudinaryService } from '../../../core/services/cloudinary.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-product-detail',
@@ -25,7 +30,10 @@ export class ProductDetail implements OnInit {
   private cartService = inject(CartService);
   private productService = inject(ProductService);
   private reviewsService = inject(ReviewService);
+  private brandService = inject(BrandService);
   private toastService = inject(ToastService);
+  private authService = inject(AuthService);
+  private cloudinaryService = inject(CloudinaryService);
 
   activeTab = signal<string>('specs');
   activeImageIndex = signal<number>(0);
@@ -39,6 +47,10 @@ export class ProductDetail implements OnInit {
   isLoading = signal(true);
   errorMsg = signal('');
   showStickyBar = signal(false);
+
+  selectedImages = signal<{ file: File; preview: string }[]>([]);
+  isReviewImageModalOpen = signal(false);
+  activeReviewImageUrl = signal('');
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
@@ -70,6 +82,7 @@ export class ProductDetail implements OnInit {
   description = signal<string | null>(null);
   warrantyMonths = signal(0);
 
+  productBrand = signal<Brand | null>(null);
   reviews = signal<ReviewDto[]>([]);
 
   averageRating = signal(0);
@@ -135,6 +148,21 @@ export class ProductDetail implements OnInit {
           specs: specsMap,
         });
 
+        if (dto.brandId) {
+          this.brandService.getById(dto.brandId).subscribe({
+            next: (brand) => {
+              this.productBrand.set(brand);
+              this.product.update((p) => ({ ...p, brand: brand.name }));
+            },
+            error: (err) => {
+              console.warn('Lỗi tải thông tin thương hiệu:', err);
+              this.productBrand.set(null);
+            }
+          });
+        } else {
+          this.productBrand.set(null);
+        }
+
         this.productImages.set(full.images.map((i) => i.imageUrl));
         this.productSpecs.set(finalSpecs);
         this.regularPrice.set(dto.regularPrice);
@@ -181,6 +209,43 @@ export class ProductDetail implements OnInit {
     this.isWriteReviewOpen.update((v) => !v);
     this.selectedRating.set(0);
     this.hoverRating.set(0);
+    this.reviewBody.set('');
+    this.selectedImages.set([]);
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const currentCount = this.selectedImages().length;
+    const remaining = 3 - currentCount;
+    const filesToAdd = Array.from(input.files).slice(0, remaining);
+
+    for (const file of filesToAdd) {
+      const error = this.cloudinaryService.validateImageFile(file, 5);
+      if (error) {
+        this.toastService.warning(error);
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.selectedImages.update(imgs => [...imgs, {
+          file,
+          preview: e.target?.result as string
+        }]);
+      };
+      reader.readAsDataURL(file);
+    }
+    input.value = '';
+  }
+
+  removeImage(index: number) {
+    this.selectedImages.update(imgs => imgs.filter((_, i) => i !== index));
+  }
+
+  openReviewImage(url: string) {
+    this.activeReviewImageUrl.set(url);
+    this.isReviewImageModalOpen.set(true);
   }
 
   setRating(rating: number): void {
@@ -201,7 +266,7 @@ export class ProductDetail implements OnInit {
   }
 
   buyNow(): void {
-    this.cartService.addToCart(this.product());
+    this.cartService.setBuyNow(this.product());
     this.router.navigate(['/cart/checkout']);
   }
 
@@ -231,11 +296,16 @@ export class ProductDetail implements OnInit {
     this.ratingDistribution.set(distribution);
   }
 
-  private readonly DEMO_USER_ID = '22222222-2222-2222-2222-222222222222';
   toggleHelpfulVote(review: ReviewDto, event: Event) {
     event.stopPropagation();
+    
+    const user = this.authService.currentUserValue;
+    if (!user) {
+      this.toastService.warning('Vui lòng đăng nhập để đánh giá hữu ích');
+      return;
+    }
 
-    this.reviewsService.toggleVote(review.reviewId, { userId: this.DEMO_USER_ID }).subscribe({
+    this.reviewsService.toggleVote(review.reviewId, { userId: user.userId }).subscribe({
       next: (response) => {
         // Cập nhật lại review trong list
         const updatedReviews = this.reviews().map((r) => {
@@ -252,42 +322,64 @@ export class ProductDetail implements OnInit {
     });
   }
 
-  submitReview() {
+  async submitReview() {
+    const user = this.authService.currentUserValue;
+    if (!user) {
+      this.toastService.warning('Vui lòng đăng nhập để gửi đánh giá');
+      return;
+    }
+
     const rating = this.selectedRating();
     const comment = this.reviewBody().trim();
 
     if (rating === 0) {
-      alert('Vui lòng chọn số sao đánh giá');
+      this.toastService.warning('Vui lòng chọn số sao đánh giá');
       return;
     }
 
     if (!comment) {
-      alert('Vui lòng nhập nội dung đánh giá');
+      this.toastService.warning('Vui lòng nhập nội dung đánh giá');
       return;
     }
     this.isSubmittingReview.set(true);
 
     const dto = {
       productId: this.product().id,
-      userId: this.DEMO_USER_ID,
+      userId: user.userId,
       rating: rating,
       comment: comment,
       isVerifiedPurchase: true,
     };
-    this.reviewsService.createReview(dto).subscribe({
-      next: (newReview) => {
+
+    try {
+      const newReview = await firstValueFrom(this.reviewsService.createReview(dto));
+      
+      const imagesToUpload = this.selectedImages();
+      if (imagesToUpload.length > 0) {
+        for (const img of imagesToUpload) {
+          try {
+            const uploadRes = await firstValueFrom(this.cloudinaryService.uploadImage('reviews', img.file));
+            await firstValueFrom(this.reviewsService.addImage(newReview.reviewId, { imageUrl: uploadRes.imageUrl }));
+          } catch (err) {
+            console.error('Lỗi upload ảnh review:', err);
+            this.toastService.warning('Có lỗi tải ảnh lên, nhưng đánh giá đã được ghi nhận.');
+          }
+        }
+        const fullReview = await firstValueFrom(this.reviewsService.getById(newReview.reviewId));
+        this.reviews.update((reviews) => [fullReview, ...reviews]);
+      } else {
         this.reviews.update((reviews) => [newReview, ...reviews]);
-        this.calculateRatingRate(this.reviews());
-        this.reviewTitle.set('');
-        this.reviewBody.set('');
-        this.selectedRating.set(0);
-        this.isWriteReviewOpen.set(false);
-        this.isSubmittingReview.set(false);
-      },
-      error: (err) => {
-        console.error('Lỗi gửi đánh giá:', err);
-        this.isSubmittingReview.set(false);
-      },
-    });
+      }
+
+      this.calculateRatingRate(this.reviews());
+      this.toastService.success('Cảm ơn bạn đã gửi đánh giá!');
+      this.toggleWriteReview();
+    } catch (err: any) {
+      console.error('Lỗi gửi đánh giá:', err);
+      const errorMessage = err?.error?.message || 'Có lỗi xảy ra khi gửi đánh giá';
+      this.toastService.error(errorMessage);
+    } finally {
+      this.isSubmittingReview.set(false);
+    }
   }
 }

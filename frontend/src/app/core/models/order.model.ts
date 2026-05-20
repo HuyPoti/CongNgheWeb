@@ -16,7 +16,6 @@ export interface AddressDto {
   phone: string;
   addressLine: string;
   province: string;
-  district: string;
   ward: string;
 }
 
@@ -81,6 +80,7 @@ export interface ReturnRequestDto {
   reason: string;
   status: string;
   createdAt: string;
+  adminNote?: string;
 }
 
 export interface WishlistItemDto {
@@ -119,7 +119,6 @@ export interface CreateOrderShippingAddressDto {
   phone: string;
   addressLine: string;
   province?: string;
-  district?: string;
   ward?: string;
 }
 

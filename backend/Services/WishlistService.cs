@@ -20,6 +20,7 @@ public class WishlistService : IWishlistService
     public async Task<IEnumerable<WishlistItemDto>> GetByUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var wishlists = await _uow.Wishlists.Query()
+            .AsNoTracking()
             .Include(w => w.Product)
                 .ThenInclude(p => p!.Images)
             .Where(w => w.UserId == userId)
@@ -27,6 +28,15 @@ public class WishlistService : IWishlistService
             .ToListAsync(cancellationToken);
 
         return _mapper.Map<IEnumerable<WishlistItemDto>>(wishlists);
+    }
+
+    public async Task<IEnumerable<Guid>> GetMyWishlistIdsAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _uow.Wishlists.Query()
+            .AsNoTracking()
+            .Where(w => w.UserId == userId)
+            .Select(w => w.ProductId)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> ToggleAsync(Guid userId, Guid productId, CancellationToken cancellationToken = default)

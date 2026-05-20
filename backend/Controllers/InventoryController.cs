@@ -8,7 +8,7 @@ namespace backend.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles = "1,2")] // Admin & Employee
+[Authorize(Roles = "admin,staff,warehouse")] // Admin, Staff & Warehouse
 public class InventoryController(IInventoryService inventoryService) : ControllerBase
 {
     private Guid GetUserId()

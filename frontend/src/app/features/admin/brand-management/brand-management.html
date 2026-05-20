@@ -67,28 +67,51 @@
 
 <!-- Modal -->
 @if (showModal()) {
-  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="closeModal()">
-    <div class="bg-white dark:bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-lg" (click)="$event.stopPropagation()">
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" 
+    (click)="closeModal()" 
+    (keydown.escape)="closeModal()" 
+    role="button" 
+    tabindex="-1">
+    <div class="bg-white dark:bg-surface-dark border border-primary/20 rounded-2xl w-full max-w-lg" 
+      (click)="$event.stopPropagation()" 
+      (keydown)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true">
       <div class="p-6 border-b border-primary/10 flex items-center justify-between">
         <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">{{ editingBrand() ? 'Sửa Thương hiệu' : 'Thêm Thương hiệu' }}</h3>
         <button (click)="closeModal()" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"><span class="material-symbols-outlined">close</span></button>
       </div>
       <div class="p-6 space-y-5">
         <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Tên thương hiệu *</label>
-          <input [(ngModel)]="form.name" (ngModelChange)="autoSlug()" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary" placeholder="VD: ASUS"/>
+          <label for="brandName" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Tên thương hiệu *</label>
+          <input id="brandName" [(ngModel)]="form.name" (ngModelChange)="autoSlug()" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary" placeholder="VD: ASUS"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Slug *</label>
-          <input [(ngModel)]="form.slug" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary font-mono" placeholder="asus"/>
+          <label for="brandSlug" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Slug *</label>
+          <input id="brandSlug" [(ngModel)]="form.slug" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary font-mono" placeholder="asus"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">URL Logo</label>
-          <input [(ngModel)]="form.logoUrl" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary" placeholder="https://..."/>
+          <span class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Logo *</span>
+          <div class="flex items-center gap-4 mb-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="imageSourceBrand" [value]="false" [(ngModel)]="isUploadingFile" class="accent-primary" />
+              <span class="text-xs text-slate-600 dark:text-slate-300">Nhập URL</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="imageSourceBrand" [value]="true" [(ngModel)]="isUploadingFile" class="accent-primary" />
+              <span class="text-xs text-slate-600 dark:text-slate-300">Tải lên từ máy</span>
+            </label>
+          </div>
+          
+          @if (!isUploadingFile()) {
+            <input [(ngModel)]="form.logoUrl" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary" placeholder="https://..."/>
+          } @else {
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary"/>
+          }
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Mô tả</label>
-          <textarea [(ngModel)]="form.description" rows="3" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary resize-none" placeholder="Mô tả ngắn về thương hiệu..."></textarea>
+          <label for="brandDesc" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Mô tả</label>
+          <textarea id="brandDesc" [(ngModel)]="form.description" rows="3" class="w-full bg-white dark:bg-slate-800 border border-primary/10 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-primary resize-none" placeholder="Mô tả ngắn về thương hiệu..."></textarea>
         </div>
         <div class="flex items-center gap-2 pt-2">
             <input type="checkbox" [(ngModel)]="form.isActive" id="brandActive" class="w-4 h-4 accent-primary"/>

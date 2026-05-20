@@ -104,7 +104,7 @@ public class NewsCategoryServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteAsync_Found_MarksInactive()
+    public async Task DeleteAsync_Found_HardDeletes()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -117,6 +117,6 @@ public class NewsCategoryServiceTests : IDisposable
         // Assert
         result.Should().BeTrue();
         var entity = await _context.NewsCategories.FindAsync(id);
-        entity!.IsActive.Should().BeFalse();
+        entity.Should().BeNull();
     }
 }

@@ -1,0 +1,228 @@
+<div class="min-h-screen bg-slate-50 dark:bg-background-dark py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+  <div class="max-w-6xl mx-auto">
+    
+    <!-- Banner Hero lộng lẫy (Design System Unified Style) -->
+    <div class="relative overflow-hidden mb-12 rounded-3xl bg-gradient-to-br from-indigo-600 via-primary to-accent-cyan p-8 md:p-12 shadow-xl">
+      <!-- Decor Circles -->
+      <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10 blur-xl"></div>
+      <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-white/5 blur-3xl"></div>
+      
+      <div class="relative z-10 max-w-2xl">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-md mb-4 uppercase tracking-wider">
+          🔥 Siêu ưu đãi khủng
+        </span>
+        <h1 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">
+          KHO VOUCHER CỰC XỊN
+        </h1>
+        <p class="text-white/80 text-base md:text-lg font-medium leading-relaxed">
+          Săn ngàn mã giảm giá siêu hấp dẫn, tối ưu hóa chi phí và nhận đặc quyền mua sắm ngay hôm nay!
+        </p>
+      </div>
+    </div>
+
+    <!-- Centered Coupon Code Input (Loại bỏ cột bên trái, thiết kế sang trọng & thoáng đãng ở giữa) -->
+    <div class="max-w-3xl mx-auto mb-12">
+      <div class="bg-white dark:bg-surface-dark p-8 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4 justify-center">
+          <span class="text-3xl">🎁</span>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Nhập mã ưu đãi đặc quyền</h2>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center max-w-md mx-auto leading-relaxed">
+          Bạn có mã giảm giá bí mật từ sự kiện hoặc email? Nhập vào đây để kích hoạt và lưu vào ví cá nhân của bạn ngay lập tức!
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+          <div class="relative flex-1">
+            <input 
+              type="text" 
+              [(ngModel)]="inputCode" 
+              placeholder="VÍ DỤ: TRIAN50K, CHUYENNGHIEP..." 
+              [disabled]="isValidating()"
+              (keyup.enter)="checkCoupon()"
+              class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-mono tracking-wider uppercase text-center sm:text-left text-base"
+            />
+          </div>
+          <button 
+            (click)="checkCoupon()" 
+            [disabled]="isValidating() || !inputCode.trim()"
+            class="px-8 py-4 bg-primary text-white rounded-2xl font-bold transition-all shadow-md shadow-primary/20 hover:bg-primary/95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 text-base shrink-0"
+          >
+            @if (!isValidating()) {
+              <span>Kiểm tra & Nhận</span>
+            } @else {
+              <span class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span>Đang xử lý...</span>
+            }
+          </button>
+        </div>
+
+        <!-- Kết quả kiểm tra mã dạng Ticket sang xịn -->
+        @if (validatedCoupon()) {
+          <div class="mt-8 max-w-xl mx-auto p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/20 animate-fade-in">
+            <div class="flex justify-between items-start mb-3">
+              <span class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-sm font-mono font-bold tracking-wider">
+                {{ validatedCoupon()!.code }}
+              </span>
+              <span class="text-sm text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                ✓ Hợp lệ!
+              </span>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mt-2">
+              {{ validatedCoupon()!.discountType.toLowerCase() === 'percentage' || validatedCoupon()!.discountType.toLowerCase() === 'percent' 
+                  ? 'Giảm giá ' + validatedCoupon()!.discountValue + '%' 
+                  : 'Giảm ngay ' + formatCurrency(validatedCoupon()!.discountValue) }}
+            </h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
+              {{ validatedCoupon()!.description || 'Đặc quyền giảm giá dành riêng cho đơn hàng của bạn.' }}
+            </p>
+            <div class="mt-5 pt-4 border-t border-emerald-100 dark:border-emerald-800/40 flex justify-between items-center text-xs">
+              <span class="text-slate-500 dark:text-slate-400 font-medium">Hạn dùng: {{ validatedCoupon()!.endDate | date:'dd/MM/yyyy' }}</span>
+              <button 
+                [disabled]="isExpired(validatedCoupon()!.endDate)"
+                (click)="saveToCart(validatedCoupon()!)" 
+                class="px-4 py-2 rounded-xl font-bold transition-all shadow-sm text-xs cursor-pointer"
+                [ngClass]="{
+                  'bg-slate-200 text-slate-400 dark:bg-white/5 cursor-not-allowed': isExpired(validatedCoupon()!.endDate),
+                  'bg-emerald-600 hover:bg-emerald-700 text-white': !isExpired(validatedCoupon()!.endDate)
+                }"
+              >
+                {{ isExpired(validatedCoupon()!.endDate) ? 'Đã hết hạn' : 'Áp dụng ngay' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Danh Sách Voucher Hiện Có trong ví (Dạng Grid 3 cột cực kỳ thoáng và cân đối) -->
+    <div class="space-y-6">
+      <div class="flex justify-between items-center px-1">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🎟️</span>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Ví Voucher của tôi ({{ myCoupons().length }})</h2>
+        </div>
+        <button (click)="loadMyCoupons()" class="text-sm font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer">
+          <span class="material-symbols-outlined text-base">refresh</span>
+          Cập nhật
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 p-12 text-center rounded-3xl shadow-sm">
+          <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-slate-500 dark:text-slate-400 font-medium">Đang đồng bộ ví voucher cá nhân...</p>
+        </div>
+      }
+
+      <!-- Empty State (Khi chưa tự nhập mã nhận coupon nào) -->
+      @if (!isLoading() && myCoupons().length === 0) {
+        <div class="bg-white dark:bg-surface-dark p-16 text-center rounded-3xl shadow-sm border border-slate-200 dark:border-white/10 transition-all">
+          <span class="material-symbols-outlined text-7xl text-slate-300 dark:text-white/20 mb-4">account_balance_wallet</span>
+          <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Ví Voucher của bạn đang trống</h3>
+          <p class="text-slate-500 dark:text-slate-400 max-w-md mx-auto text-sm leading-relaxed">
+            Bạn chưa có voucher nào được thu thập. Hãy nhập mã giảm giá đặc quyền ở khung phía trên để kích hoạt và lưu trữ các ưu đãi đặc biệt!
+          </p>
+        </div>
+      }
+
+      <!-- Grid Danh Sách Vé Giảm Giá (Style Vé Tàu Glassmorphism Độc Đáo) -->
+      @if (!isLoading() && myCoupons().length > 0) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (coupon of myCoupons(); track coupon.couponId) {
+            <div 
+              class="relative rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border bg-white dark:bg-surface-dark group"
+              [class.border-indigo-500]="isCouponApplied(coupon.code)"
+              [class.border-slate-200]="!isCouponApplied(coupon.code)"
+              [class.dark:border-white/10]="!isCouponApplied(coupon.code)"
+            >
+              <!-- Thông tin chi tiết -->
+              <div class="p-5 flex flex-col justify-between dark:text-white min-h-[170px]">
+                <div>
+                  <div class="flex justify-between items-start gap-2 mb-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <button 
+                        (click)="copyCode(coupon.code)" 
+                        title="Click để sao chép"
+                        class="px-2.5 py-1 bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/20 rounded-md font-mono text-xs font-bold tracking-wider transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        {{ coupon.code }}
+                        <span class="material-symbols-outlined text-xs">content_copy</span>
+                      </button>
+
+                      <!-- Badge Giá Trị Giảm Giá -->
+                      <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400">
+                        {{ coupon.discountType.toLowerCase() === 'percentage' || coupon.discountType.toLowerCase() === 'percent' 
+                            ? 'Giảm ' + coupon.discountValue + '%' 
+                            : 'Giảm ' + formatCurrency(coupon.discountValue) }}
+                      </span>
+                    </div>
+                    
+                    @if (isCouponApplied(coupon.code)) {
+                      <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5 flex-shrink-0">
+                        ✓ Đã áp dụng
+                      </span>
+                    }
+                  </div>
+
+                  <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-2">
+                    {{ coupon.description || 'Ưu đãi mua sắm hấp dẫn từ hệ thống.' }}
+                  </h3>
+
+                  <div class="mt-3 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400">Đơn tối thiểu:</span>
+                      <strong class="text-slate-700 dark:text-slate-200">{{ formatCurrency(coupon.minOrderAmount) }}</strong>
+                    </div>
+                    @if (coupon.maxDiscount) {
+                      <div class="flex items-center gap-1">
+                        <span class="text-slate-400">Giảm tối đa:</span>
+                        <strong class="text-slate-700 dark:text-slate-200">{{ formatCurrency(coupon.maxDiscount) }}</strong>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/10 flex justify-between items-center">
+                  @if (isExpired(coupon.endDate)) {
+                    <span class="text-red-500 text-[11px] font-bold flex items-center gap-1">
+                      ❌ Đã hết hạn
+                    </span>
+                    <button 
+                      disabled
+                      class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5 cursor-not-allowed"
+                    >
+                      Hết hạn
+                    </button>
+                  } @else {
+                    <span 
+                      class="text-[11px] font-medium"
+                      [ngClass]="{
+                        'text-red-500 font-bold': getDaysLeft(coupon.endDate) <= 2,
+                        'text-slate-400': getDaysLeft(coupon.endDate) > 2
+                      }"
+                    >
+                      ⌛ Còn {{ getDaysLeft(coupon.endDate) }} ngày
+                    </span>
+                    <button 
+                      [disabled]="isCouponApplied(coupon.code)"
+                      (click)="saveToCart(coupon)" 
+                      class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer"
+                      [ngClass]="{
+                        'bg-slate-100 text-slate-400 dark:bg-white/5 cursor-not-allowed': isCouponApplied(coupon.code),
+                        'bg-primary text-white hover:bg-primary/90 shadow-sm shadow-primary/20': !isCouponApplied(coupon.code)
+                      }"
+                    >
+                      {{ isCouponApplied(coupon.code) ? 'Đã áp dụng' : 'Áp dụng' }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  </div>
+</div>

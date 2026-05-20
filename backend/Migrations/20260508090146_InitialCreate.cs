@@ -214,7 +214,6 @@ namespace backend.Migrations
                     phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     address_line = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     province = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    district = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     ward = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     is_default = table.Column<bool>(type: "boolean", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)

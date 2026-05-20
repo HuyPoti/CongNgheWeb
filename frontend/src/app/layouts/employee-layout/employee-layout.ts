@@ -21,6 +21,18 @@ export class EmployeeLayout implements OnInit, OnDestroy {
     this.themeService.setContext('employee');
   }
 
+  get currentRole(): string {
+    return this.authService.currentUserValue?.role?.toLowerCase() ?? '';
+  }
+
+  get isWarehouse(): boolean {
+    return this.currentRole === 'warehouse';
+  }
+
+  get isStaff(): boolean {
+    return this.currentRole === 'staff';
+  }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/portal']);

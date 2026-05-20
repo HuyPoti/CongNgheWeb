@@ -8,7 +8,7 @@ public class ProductQueryDtoValidator : AbstractValidator<ProductQueryDto>
     public ProductQueryDtoValidator()
     {
         RuleFor(x => x.Page).GreaterThanOrEqualTo(1).WithMessage("Page must be at least 1");
-        RuleFor(x => x.PageSize).InclusiveBetween(1, 100).WithMessage("PageSize must be between 1 and 100");
+        RuleFor(x => x.PageSize).InclusiveBetween(1, 1000).WithMessage("PageSize must be between 1 and 1000");
         
         RuleFor(x => x.MinPrice).GreaterThanOrEqualTo(0).When(x => x.MinPrice.HasValue);
         RuleFor(x => x.MaxPrice).GreaterThanOrEqualTo(0).When(x => x.MaxPrice.HasValue);

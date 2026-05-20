@@ -2,6 +2,7 @@ using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace backend.Controllers;
 
@@ -15,10 +16,18 @@ public class NewsController(INewsService service) : ControllerBase
         [FromQuery] int pageSize = 10,
         CancellationToken ct = default) => Ok(ApiResponse.Ok(await service.GetAllAsync(page, pageSize, ct)));
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<NewsDto>>> GetById(Guid id, CancellationToken ct)
+    [HttpGet("{idOrSlug}")]
+    public async Task<ActionResult<ApiResponse<NewsDto>>> GetByIdOrSlug(string idOrSlug, CancellationToken ct)
     {
-        var news = await service.GetByIdAsync(id, ct);
+        NewsDto? news;
+        if (Guid.TryParse(idOrSlug, out var id))
+        {
+            news = await service.GetByIdAsync(id, ct);
+        }
+        else
+        {
+            news = await service.GetBySlugAsync(idOrSlug, ct);
+        }
         return news == null ? NotFound(ApiResponse.Fail("Không tìm thấy tin tức")) : Ok(ApiResponse.Ok(news));
     }
 
@@ -26,8 +35,18 @@ public class NewsController(INewsService service) : ControllerBase
     [Authorize(Roles = "admin,staff")]
     public async Task<ActionResult<ApiResponse<NewsDto>>> Create([FromBody] CreateNewsDto dto, CancellationToken ct)
     {
+        var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (Guid.TryParse(idStr, out var userId))
+        {
+            dto.AuthorId = userId;
+        }
+        else
+        {
+            return BadRequest(ApiResponse.Fail("Không thể xác định người dùng đăng bài viết."));
+        }
+
         var created = await service.CreateAsync(dto, ct);
-        return CreatedAtAction(nameof(GetById), new { id = created.NewsId }, ApiResponse.Ok(created));
+        return CreatedAtAction(nameof(GetByIdOrSlug), new { idOrSlug = created.NewsId }, ApiResponse.Ok(created));
     }
 
     [HttpPut("{id}")]

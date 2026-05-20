@@ -6,20 +6,20 @@ import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
 import { PaymentService, PaymentResponse } from '../../../core/services/payment.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CouponInputComponent, AppliedCoupon } from '../../../shared/components/coupon-input';
 
 interface ShippingAddress {
   recipientName: string;
   phone: string;
   addressLine: string;
   province?: string;
-  district?: string;
   ward?: string;
 }
 
 @Component({
   selector: 'app-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, CouponInputComponent],
   templateUrl: './payment.html',
   styles: ``,
 })
@@ -40,6 +40,8 @@ export class Payment implements OnInit {
   orderId = '';
   orderCode = '';
 
+  discountAmount = 0;
+
   constructor() {
     if (typeof window !== 'undefined') {
       const state = history.state as { shippingAddress?: ShippingAddress };
@@ -50,9 +52,30 @@ export class Payment implements OnInit {
   }
 
   ngOnInit() {
-    if (!this.shippingAddress || this.cartService.getCartItems().length === 0) {
+    if (!this.shippingAddress || this.cartService.checkoutItems().length === 0) {
       void this.router.navigate(['/cart/checkout']);
     }
+  }
+
+  getCouponValidationItems() {
+    return this.cartService.checkoutItems().map(item => ({
+      productId: item.id,
+      quantity: item.quantity
+    }));
+  }
+
+  onCouponApplied(applied: AppliedCoupon) {
+    this.discountAmount = applied.discountAmount;
+    this.cdr.detectChanges();
+  }
+
+  onCouponRemoved() {
+    this.discountAmount = 0;
+    this.cdr.detectChanges();
+  }
+
+  getFinalAmount() {
+    return Math.max(this.cartService.checkoutSubtotal() - this.discountAmount, 0);
   }
 
   placeOrder() {
@@ -64,11 +87,12 @@ export class Payment implements OnInit {
       paymentMethod: this.paymentMethod,
       shippingAddress: this.shippingAddress,
       shippingFee: 30000,
-      items: this.cartService.getCartItems().map((item) => ({
+      items: this.cartService.checkoutItems().map((item) => ({
         productId: item.id,
         quantity: item.quantity,
       })),
-      notes: 'Created from web checkout flow'
+      notes: 'Created from web checkout flow',
+      couponCode: this.cartService.appliedCoupon() || undefined
     };
 
     this.orderService.create(payload).subscribe({
@@ -95,7 +119,7 @@ export class Payment implements OnInit {
               this.cdr.detectChanges();
             } else if (this.paymentMethod === 'cod') {
               this.toastService.success(`Đặt hàng thành công! Mã đơn: ${order.orderCode}`);
-              this.cartService.clearCart();
+              this.cartService.completeCheckout();
               void this.router.navigate(['/']);
             } else if (this.paymentMethod === 'vnpay' && payment.paymentUrl) {
               window.location.href = payment.paymentUrl;
@@ -119,7 +143,7 @@ export class Payment implements OnInit {
   }
 
   goHome() {
-    this.cartService.clearCart();
+    this.cartService.completeCheckout();
     void this.router.navigate(['/']);
   }
 }
