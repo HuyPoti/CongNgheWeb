@@ -80,52 +80,52 @@ INSERT INTO users (user_id, email, password_hash, full_name, phone, avatar_url, 
 -- 2. BRANDS (16 rows)
 -- ===========================================
 INSERT INTO brands (brand_id, name, slug, logo_url, description, is_active, created_at, updated_at) VALUES
-('00000002-0000-0000-0000-000000000001', 'Intel', 'intel', 'https://example.com/logos/intel.png', 'Intel Corporation - Nhà sản xuất CPU hàng đầu thế giới', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000002', 'AMD', 'amd', 'https://example.com/logos/amd.png', 'Advanced Micro Devices - CPU & GPU', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000003', 'NVIDIA', 'nvidia', 'https://example.com/logos/nvidia.png', 'NVIDIA Corporation - GPU & AI', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000004', 'ASUS', 'asus', 'https://example.com/logos/asus.png', 'ASUS - Mainboard, VGA, Laptop', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000005', 'MSI', 'msi', 'https://example.com/logos/msi.png', 'Micro-Star International - Mainboard, VGA, Laptop', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000006', 'Gigabyte', 'gigabyte', 'https://example.com/logos/gigabyte.png', 'GIGABYTE Technology - Mainboard, VGA', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000007', 'Samsung', 'samsung', 'https://example.com/logos/samsung.png', 'Samsung Electronics - SSD, RAM, Monitor', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000008', 'Kingston', 'kingston', 'https://example.com/logos/kingston.png', 'Kingston Technology - RAM, SSD', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000009', 'Corsair', 'corsair', 'https://example.com/logos/corsair.png', 'Corsair Components - RAM, PSU, Case, Cooler', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-00000000000a', 'Western Digital', 'western-digital', 'https://example.com/logos/wd.png', 'Western Digital - HDD, SSD', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-00000000000b', 'Seagate', 'seagate', 'https://example.com/logos/seagate.png', 'Seagate Technology - HDD, SSD', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-00000000000c', 'Cooler Master', 'cooler-master', 'https://example.com/logos/coolermaster.png', 'Cooler Master - Case, PSU, Cooling', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-00000000000d', 'Noctua', 'noctua', 'https://example.com/logos/noctua.png', 'Noctua - Quạt & tản nhiệt cao cấp', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-00000000000e', 'NZXT', 'nzxt', 'https://example.com/logos/nzxt.png', 'NZXT - Case, Cooling, PSU', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-00000000000f', 'Logitech', 'logitech', 'https://example.com/logos/logitech.png', 'Logitech - Chuột, Bàn phím, Tai nghe', TRUE, NOW(), NOW()),
-('00000002-0000-0000-0000-000000000010', 'Razer', 'razer', 'https://example.com/logos/razer.png', 'Razer - Gaming Gear cao cấp', TRUE, NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
+('00000002-0000-0000-0000-000000000001', 'Intel', 'intel', 'https://upload.wikimedia.org/wikipedia/commons/8/85/Intel_logo_2023.svg', 'Intel Corporation - Nhà sản xuất CPU hàng đầu thế giới', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000002', 'AMD', 'amd', 'https://upload.wikimedia.org/wikipedia/commons/7/7c/AMD_Logo.svg', 'Advanced Micro Devices - CPU & GPU', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000003', 'NVIDIA', 'nvidia', 'https://upload.wikimedia.org/wikipedia/commons/2/21/Nvidia_logo.svg', 'NVIDIA Corporation - GPU & AI', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000004', 'ASUS', 'asus', 'https://upload.wikimedia.org/wikipedia/commons/2/2e/ASUS_Logo.svg', 'ASUS - Mainboard, VGA, Laptop', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000005', 'MSI', 'msi', 'https://upload.wikimedia.org/wikipedia/commons/9/91/Micro-Star_International_logo.svg', 'Micro-Star International - Mainboard, VGA, Laptop', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000006', 'Gigabyte', 'gigabyte', 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Gigabyte_Technology_Logo.svg', 'GIGABYTE Technology - Mainboard, VGA', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000007', 'Samsung', 'samsung', 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Samsung_wordmark.svg', 'Samsung Electronics - SSD, RAM, Monitor', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000008', 'Kingston', 'kingston', 'https://upload.wikimedia.org/wikipedia/commons/8/85/Kingston_Technology_logo.svg', 'Kingston Technology - RAM, SSD', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000009', 'Corsair', 'corsair', 'https://upload.wikimedia.org/wikipedia/commons/2/2c/Corsair_2020_logo.svg', 'Corsair Components - RAM, PSU, Case, Cooler', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-00000000000a', 'Western Digital', 'western-digital', 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Western_Digital_logo.svg', 'Western Digital - HDD, SSD', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-00000000000b', 'Seagate', 'seagate', 'https://upload.wikimedia.org/wikipedia/commons/7/7f/Seagate_logo.svg', 'Seagate Technology - HDD, SSD', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-00000000000c', 'Cooler Master', 'cooler-master', 'https://upload.wikimedia.org/wikipedia/commons/1/1d/Cooler_Master_Logo.svg', 'Cooler Master - Case, PSU, Cooling', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-00000000000d', 'Noctua', 'noctua', 'https://upload.wikimedia.org/wikipedia/commons/6/68/Noctua_wordmark.svg', 'Noctua - Quạt & tản nhiệt cao cấp', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-00000000000e', 'NZXT', 'nzxt', 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Logo_NZXT.svg', 'NZXT - Case, Cooling, PSU', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-00000000000f', 'Logitech', 'logitech', 'https://upload.wikimedia.org/wikipedia/commons/1/17/Logitech_logo.svg', 'Logitech - Chuột, Bàn phím, Tai nghe', TRUE, NOW(), NOW()),
+('00000002-0000-0000-0000-000000000010', 'Razer', 'razer', 'https://upload.wikimedia.org/wikipedia/commons/5/52/Razer_wordmark.svg', 'Razer - Gaming Gear cao cấp', TRUE, NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
 
 -- ===========================================
 -- 3. CATEGORIES (22 rows - 12 parents + 10 children)
 -- ===========================================
 INSERT INTO categories (category_id, name, slug, description, parent_id, image_url, is_active, created_at, updated_at) VALUES
-('00000003-0000-0000-0000-000000000001', 'CPU', 'cpu', 'Bộ vi xử lý trung tâm - Intel, AMD', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000002', 'Mainboard', 'mainboard', 'Bo mạch chủ - Intel, AMD', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000003', 'RAM', 'ram', 'Bộ nhớ trong - DDR4, DDR5', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000004', 'VGA', 'vga', 'Card đồ họa rời - NVIDIA, AMD', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000005', 'SSD', 'ssd', 'Ổ cứng thể rắn - NVMe, SATA', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000006', 'HDD', 'hdd', 'Ổ cứng cơ - 2.5 inch, 3.5 inch', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000007', 'PSU', 'psu', 'Nguồn máy tính', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000008', 'PC Case', 'pc-case', 'Vỏ máy tính', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000009', 'Cooling', 'cooling', 'Tản nhiệt - Air Cooler, AIO', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-00000000000a', 'Monitor', 'monitor', 'Màn hình máy tính', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-00000000000b', 'Keyboard', 'keyboard', 'Bàn phím - Cơ,薄膜', NULL, NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-00000000000c', 'Mouse', 'mouse', 'Chuột máy tính - Gaming, Văn phòng', NULL, NULL, TRUE, NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
+('00000003-0000-0000-0000-000000000001', 'CPU', 'cpu', 'Bộ vi xử lý trung tâm - Intel, AMD', NULL, 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/14400f-tray.jpg?v=1773391162603', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000002', 'Mainboard', 'mainboard', 'Bo mạch chủ - Intel, AMD', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/a520.jpg?v=1723522808227', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000003', 'RAM', 'ram', 'Bộ nhớ trong - DDR4, DDR5', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/ram-pc.png?v=1723658374557', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000004', 'VGA', 'vga', 'Card đồ họa rời - NVIDIA, AMD', NULL, 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/31d77efd-0da2-4bc0-bb09-6feedaf21d1b.jpg?v=1762137959697', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000005', 'SSD', 'ssd', 'Ổ cứng thể rắn - NVMe, SATA', NULL, 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/ssd-crucial-p510-2tb-m-2-pcie-gen5-x4-nvme-ct2000p510ssd8-01.jpg?v=1769426406177', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000006', 'HDD', 'hdd', 'Ổ cứng cơ - 2.5 inch, 3.5 inch', NULL, 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/hdd-wd-purple-4tb-3-5-inch-sata-iii-256mb-cache-5400rpm-wd42purz-1-505d7283-4514-4f23-867a-2ad79245c6b0.png?v=1686640947123', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000007', 'PSU', 'psu', 'Nguồn máy tính', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/sfx.jpg?v=1721875327403', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000008', 'PC Case', 'pc-case', 'Vỏ máy tính', NULL, 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/case-may-tinh-xigmatek-xa-22-en47567.png?v=1743637388357', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000009', 'Cooling', 'cooling', 'Tản nhiệt - Air Cooler, AIO', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/fan-case.jpg?v=1719984826000', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-00000000000a', 'Monitor', 'monitor', 'Màn hình máy tính', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/man-hinh-gaming.png?v=1745426105927', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-00000000000b', 'Keyboard', 'keyboard', 'Bàn phím - Cơ', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/ban-phim-co.png?v=1731308649603', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-00000000000c', 'Mouse', 'mouse', 'Chuột máy tính - Gaming, Văn phòng', NULL, 'https://bizweb.dktcdn.net/100/329/122/collections/chuot-may-tinh.png?v=1721295252663', TRUE, NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
 
 -- Child categories
 INSERT INTO categories (category_id, name, slug, description, parent_id, image_url, is_active, created_at, updated_at) VALUES
-('00000003-0000-0000-0000-00000000000d', 'CPU Intel', 'cpu-intel', 'CPU Intel Core i3/i5/i7/i9', '00000003-0000-0000-0000-000000000001', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-00000000000e', 'CPU AMD', 'cpu-amd', 'CPU AMD Ryzen 3/5/7/9', '00000003-0000-0000-0000-000000000001', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-00000000000f', 'Mainboard Intel', 'mainboard-intel', 'Mainboard chipset Intel', '00000003-0000-0000-0000-000000000002', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000010', 'Mainboard AMD', 'mainboard-amd', 'Mainboard chipset AMD', '00000003-0000-0000-0000-000000000002', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000011', 'RAM DDR4', 'ram-ddr4', 'RAM DDR4 2400-4000MHz', '00000003-0000-0000-0000-000000000003', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000012', 'RAM DDR5', 'ram-ddr5', 'RAM DDR5 4800-8000MHz', '00000003-0000-0000-0000-000000000003', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000013', 'VGA NVIDIA', 'vga-nvidia', 'Card đồ họa NVIDIA GeForce', '00000003-0000-0000-0000-000000000004', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000014', 'VGA AMD', 'vga-amd', 'Card đồ họa AMD Radeon', '00000003-0000-0000-0000-000000000004', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000015', 'SSD NVMe', 'ssd-nvme', 'SSD NVMe PCIe 3.0/4.0/5.0', '00000003-0000-0000-0000-000000000005', NULL, TRUE, NOW(), NOW()),
-('00000003-0000-0000-0000-000000000016', 'SSD SATA', 'ssd-sata', 'SSD SATA III 2.5 inch', '00000003-0000-0000-0000-000000000005', NULL, TRUE, NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
+('00000003-0000-0000-0000-00000000000d', 'CPU Intel', 'cpu-intel', 'CPU Intel Core i3/i5/i7/i9', '00000003-0000-0000-0000-000000000001', 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/14400f-tray.jpg?v=1773391162603', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-00000000000e', 'CPU AMD', 'cpu-amd', 'CPU AMD Ryzen 3/5/7/9', '00000003-0000-0000-0000-000000000001', 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/cpu-amd-ryzen-5-8500g-up-to-5-0ghz-6-cores-12-threads-16mb-100-100001491box-1.jpg?v=1706093720193', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-00000000000f', 'Mainboard Intel', 'mainboard-intel', 'Mainboard chipset Intel', '00000003-0000-0000-0000-000000000002', 'https://bizweb.dktcdn.net/100/329/122/collections/z790.jpg?v=1723521715730', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000010', 'Mainboard AMD', 'mainboard-amd', 'Mainboard chipset AMD', '00000003-0000-0000-0000-000000000002', 'https://bizweb.dktcdn.net/100/329/122/collections/b550.jpg?v=1723522886077', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000011', 'RAM DDR4', 'ram-ddr4', 'RAM DDR4 2400-4000MHz', '00000003-0000-0000-0000-000000000003', 'https://bizweb.dktcdn.net/100/329/122/collections/ram-pc-ddr4.png?v=1722575893630', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000012', 'RAM DDR5', 'ram-ddr5', 'RAM DDR5 4800-8000MHz', '00000003-0000-0000-0000-000000000003', 'https://bizweb.dktcdn.net/100/329/122/collections/ram-pc-ddr5.png?v=1722575911817', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000013', 'VGA NVIDIA', 'vga-nvidia', 'Card đồ họa NVIDIA GeForce', '00000003-0000-0000-0000-000000000004', 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/vga-asus-geforce-rtx-3050-dual-6gb-oc-gddr6-dual-rtx3050-o6g.jpg?v=1743639462167', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000014', 'VGA AMD', 'vga-amd', 'Card đồ họa AMD Radeon', '00000003-0000-0000-0000-000000000004', 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/vga-sapphire-nitro-radeon-rx-9060-xt-gaming-oc-16gb-gddr6-01.jpg?v=1749444185233', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000015', 'SSD NVMe', 'ssd-nvme', 'SSD NVMe PCIe 3.0/4.0/5.0', '00000003-0000-0000-0000-000000000005', 'https://bizweb.dktcdn.net/thumb/grande/100/329/122/products/ssd-crucial-p510-2tb-m-2-pcie-gen5-x4-nvme-ct2000p510ssd8-01.jpg?v=1769426406177', TRUE, NOW(), NOW()),
+('00000003-0000-0000-0000-000000000016', 'SSD SATA', 'ssd-sata', 'SSD SATA III 2.5 inch', '00000003-0000-0000-0000-000000000005', 'https://product.hstatic.net/200000722513/product/-ssd-teamgroup-cx2-256gb-2-5-sata-3-1_24f2ade29f3b47518618b4f02dabd99c_9c07344d76f644dba2a489eec759ee01_master.png', TRUE, NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
 
 -- ===========================================
 -- 4. PRODUCTS (15 rows - computer hardware)
@@ -297,25 +297,25 @@ INSERT INTO products (product_id, category_id, brand_id, name, slug, sku, regula
  NOW(), NOW()) ON CONFLICT (slug) DO NOTHING;
 
 -- ===========================================
--- 5. PRODUCT IMAGES (16 rows - 1 per product)
+-- 5. PRODUCT IMAGES (16 rows - 15 primary + 1 secondary)
 -- ===========================================
 INSERT INTO product_images (image_id, product_id, image_url, is_primary, sort_order, created_at) VALUES
-('00000005-0000-0000-0000-000000000001', '00000004-0000-0000-0000-000000000001', 'https://example.com/img/products/cpu-i9-14900k-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000002', '00000004-0000-0000-0000-000000000001', 'https://example.com/img/products/cpu-i9-14900k-2.jpg', FALSE, 2, NOW()),
-('00000005-0000-0000-0000-000000000003', '00000004-0000-0000-0000-000000000002', 'https://example.com/img/products/cpu-r9-7950x-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000004', '00000004-0000-0000-0000-000000000003', 'https://example.com/img/products/mb-asus-z790e-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000005', '00000004-0000-0000-0000-000000000004', 'https://example.com/img/products/mb-msi-b650-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000006', '00000004-0000-0000-0000-000000000005', 'https://example.com/img/products/ram-corsair-d5-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000007', '00000004-0000-0000-0000-000000000006', 'https://example.com/img/products/ram-kgn-d4-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000008', '00000004-0000-0000-0000-000000000007', 'https://example.com/img/products/vga-rtx4090-fe-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000009', '00000004-0000-0000-0000-000000000008', 'https://example.com/img/products/vga-rx7900xtx-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-00000000000a', '00000004-0000-0000-0000-000000000009', 'https://example.com/img/products/ssd-sam-990pro-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-00000000000b', '00000004-0000-0000-0000-00000000000a', 'https://example.com/img/products/ssd-kgn-a400-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-00000000000c', '00000004-0000-0000-0000-00000000000b', 'https://example.com/img/products/hdd-sea-2tb-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-00000000000d', '00000004-0000-0000-0000-00000000000c', 'https://example.com/img/products/psu-cor-rm850x-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-00000000000e', '00000004-0000-0000-0000-00000000000d', 'https://example.com/img/products/case-nzxt-h7-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-00000000000f', '00000004-0000-0000-0000-00000000000e', 'https://example.com/img/products/cool-noctua-d15-1.jpg', TRUE, 1, NOW()),
-('00000005-0000-0000-0000-000000000010', '00000004-0000-0000-0000-00000000000f', 'https://example.com/img/products/mouse-logi-sl-1.jpg', TRUE, 1, NOW());
+('00000005-0000-0000-0000-000000000001', '00000004-0000-0000-0000-000000000001', 'https://upload.wikimedia.org/wikipedia/commons/1/12/Intel_i9-14900K.webp', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000002', '00000004-0000-0000-0000-000000000001', 'https://www.intel.com/content/dam/www/central-libraries/xa/en/images/intel-core-i9-badge-1920x1080.png', FALSE, 2, NOW()),
+('00000005-0000-0000-0000-000000000003', '00000004-0000-0000-0000-000000000002', 'https://www.amd.com/content/dam/amd/en/images/products/processors/ryzen/2505503-ryzen-9-7900x-og.jpg', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000004', '00000004-0000-0000-0000-000000000003', 'https://dlcdnwebimgs.asus.com/gain/A14B0E0C-2EF6-4A28-9E30-089DCE5BF278', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000005', '00000004-0000-0000-0000-000000000004', 'https://storage-asset.msi.com/global/picture/product/product_166478620721bbeb5fac5e7800fc1614cf6e023720.webp', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000006', '00000004-0000-0000-0000-000000000005', 'https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Memory/vengeance-ddr5-blk-config/Gallery/Vengeance-DDR5-2UP-16GB-BLACK_01.webp', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000007', '00000004-0000-0000-0000-000000000006', 'https://cdn.shopify.com/s/files/1/0518/5073/9904/files/etail-ktc-keyfeatures-memory-beast-ddr4-1-lg.jpg?v=1626153534', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000008', '00000004-0000-0000-0000-000000000007', 'https://www.nvidia.com/content/dam/en-zz/Solutions/geforce/ada/rtx-4090/geforce-ada-4090-web-og-1200x630.jpg', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000009', '00000004-0000-0000-0000-000000000008', 'https://www.amd.com/content/dam/amd/en/images/products/graphics/2648997-amd-radeon-7900xtx.jpg', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-00000000000a', '00000004-0000-0000-0000-000000000009', 'https://images.samsung.com/is/image/samsung/p6pim/nz/mz-v9p2t0bw/gallery/nz-990pro-nvme-m2-ssd-mz-v9p2t0bw-534155536', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-00000000000b', '00000004-0000-0000-0000-00000000000a', 'https://cdn.shopify.com/s/files/1/0518/5073/9904/files/ktc-shopify-keyfeatures-ssd-a400-1-1350x550-us.jpg?v=1680541620', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-00000000000c', '00000004-0000-0000-0000-00000000000b', 'https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6344/6344172_sd.jpg', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-00000000000d', '00000004-0000-0000-0000-00000000000c', 'https://assets.corsair.com/image/upload/c_pad,q_auto,h_1024,w_1024,f_auto/products/Power-Supply-Units/base-rmx-shift-2025-config/gallery/850/rm850x_shift_2025_01.webp', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-00000000000e', '00000004-0000-0000-0000-00000000000d', 'https://nzxt.com/cdn/shop/files/h7-flow-hero-white.png?v=1762528078', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-00000000000f', '00000004-0000-0000-0000-00000000000e', 'https://cdn.noctua.at/media/nh_d15_chromax_black_1.jpg', TRUE, 1, NOW()),
+('00000005-0000-0000-0000-000000000010', '00000004-0000-0000-0000-00000000000f', 'https://resource.logitechg.com/content/dam/gaming/en/products/pro-x-superlight/pro-x-superlight-black-gallery-6.png', TRUE, 1, NOW());
 
 -- ===========================================
 -- 6. ADDRESSES (10 rows)
@@ -467,16 +467,16 @@ INSERT INTO return_request_items (id, return_id, order_item_id, quantity, reason
 -- 15. RETURN REQUEST IMAGES (10 rows)
 -- ===========================================
 INSERT INTO return_request_images (id, return_id, image_url, created_at) VALUES
-('0000000f-0000-0000-0000-000000000001', '0000000d-0000-0000-0000-000000000001', 'https://example.com/img/returns/ram-loi-1.jpg', NOW() - INTERVAL '7 days'),
-('0000000f-0000-0000-0000-000000000002', '0000000d-0000-0000-0000-000000000001', 'https://example.com/img/returns/ram-loi-2.jpg', NOW() - INTERVAL '7 days'),
-('0000000f-0000-0000-0000-000000000003', '0000000d-0000-0000-0000-000000000003', 'https://example.com/img/returns/ssd-sai-1.jpg', NOW() - INTERVAL '2 days'),
-('0000000f-0000-0000-0000-000000000004', '0000000d-0000-0000-0000-000000000004', 'https://example.com/img/returns/psu-thieu-cap-1.jpg', NOW()),
-('0000000f-0000-0000-0000-000000000005', '0000000d-0000-0000-0000-000000000005', 'https://example.com/img/returns/mainboard-loi-1.jpg', NOW()),
-('0000000f-0000-0000-0000-000000000006', '0000000d-0000-0000-0000-000000000007', 'https://example.com/img/returns/hdd-badsector-1.jpg', NOW() - INTERVAL '3 days'),
-('0000000f-0000-0000-0000-000000000007', '0000000d-0000-0000-0000-000000000009', 'https://example.com/img/returns/fan-noisy-1.jpg', NOW() - INTERVAL '2 days'),
-('0000000f-0000-0000-0000-000000000008', '0000000d-0000-0000-0000-000000000009', 'https://example.com/img/returns/fan-noisy-2.jpg', NOW() - INTERVAL '2 days'),
-('0000000f-0000-0000-0000-000000000009', '0000000d-0000-0000-0000-00000000000a', 'https://example.com/img/returns/case-sai-mau-1.jpg', NOW() - INTERVAL '5 days'),
-('0000000f-0000-0000-0000-00000000000a', '0000000d-0000-0000-0000-00000000000a', 'https://example.com/img/returns/case-dung-mau-1.jpg', NOW() - INTERVAL '5 days');
+('0000000f-0000-0000-0000-000000000001', '0000000d-0000-0000-0000-000000000001', 'https://picsum.photos/seed/return-ram-loi-1/400/400', NOW() - INTERVAL '7 days'),
+('0000000f-0000-0000-0000-000000000002', '0000000d-0000-0000-0000-000000000001', 'https://picsum.photos/seed/return-ram-loi-2/400/400', NOW() - INTERVAL '7 days'),
+('0000000f-0000-0000-0000-000000000003', '0000000d-0000-0000-0000-000000000003', 'https://picsum.photos/seed/return-ssd-sai/400/400', NOW() - INTERVAL '2 days'),
+('0000000f-0000-0000-0000-000000000004', '0000000d-0000-0000-0000-000000000004', 'https://picsum.photos/seed/return-psu-thieu-cap/400/400', NOW()),
+('0000000f-0000-0000-0000-000000000005', '0000000d-0000-0000-0000-000000000005', 'https://picsum.photos/seed/return-mainboard-loi/400/400', NOW()),
+('0000000f-0000-0000-0000-000000000006', '0000000d-0000-0000-0000-000000000007', 'https://picsum.photos/seed/return-hdd-badsector/400/400', NOW() - INTERVAL '3 days'),
+('0000000f-0000-0000-0000-000000000007', '0000000d-0000-0000-0000-000000000009', 'https://picsum.photos/seed/return-fan-noisy-1/400/400', NOW() - INTERVAL '2 days'),
+('0000000f-0000-0000-0000-000000000008', '0000000d-0000-0000-0000-000000000009', 'https://picsum.photos/seed/return-fan-noisy-2/400/400', NOW() - INTERVAL '2 days'),
+('0000000f-0000-0000-0000-000000000009', '0000000d-0000-0000-0000-00000000000a', 'https://picsum.photos/seed/return-case-sai-mau/400/400', NOW() - INTERVAL '5 days'),
+('0000000f-0000-0000-0000-00000000000a', '0000000d-0000-0000-0000-00000000000a', 'https://picsum.photos/seed/return-case-dung-mau/400/400', NOW() - INTERVAL '5 days');
 
 -- ===========================================
 -- 16. CART ITEMS (12 rows)
@@ -583,7 +583,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Intel Core i9-14900K là flagship thế hệ Raptor Lake Refresh với 24 nhân 32 luồng, xung boost lên đến 6.0GHz. So với thế hệ trước, i9-14900K có xung nhịp cao hơn 200MHz và cải thiện hiệu năng đơn luồng đáng kể.</p><p>Trong các bài test gaming, i9-14900K cho hiệu năng vượt trội so với AMD Ryzen 9 7950X ở hầu hết các tựa game. Tuy nhiên, mức tiêu thụ điện năng khá cao, đặc biệt khi ép xung.</p>',
  'Intel Core i9-14900K với 24 nhân 32 luồng, xung boost 6.0GHz - CPU mạnh nhất của Intel cho gaming và workstation.',
  '00000001-0000-0000-0000-000000000001',
- 'https://example.com/img/news/i9-14900k-review.jpg',
+ 'https://photo2.tinhte.vn/data/attachment-files/2023/10/8155733_Picture-test-CPU-i9-14900K-8.jpg',
  TRUE, TRUE, NOW() - INTERVAL '5 days', 1520,
  'Đánh giá Intel Core i9-14900K | GearVN Blog',
  'Intel Core i9-14900K review: CPU mạnh nhất Intel với 24 nhân, 6.0GHz boost. So sánh hiệu năng gaming và workstation.',
@@ -596,7 +596,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>RTX 4090 dựa trên kiến trúc Ada Lovelace với 16384 CUDA Cores và 24GB GDDR6X. Trong các bài test 4K gaming, RTX 4090 vượt xa RTX 3090 Ti từ 60-100% hiệu năng.</p><p>Công nghệ DLSS 3 với Frame Generation là điểm nhấn lớn nhất, giúp tăng gấp đôi FPS trong các tựa game hỗ trợ.</p>',
  'RTX 4090 với 16384 CUDA Cores, 24GB GDDR6X và DLSS 3 - Card đồ họa mạnh nhất thế giới hiện nay.',
  '00000001-0000-0000-0000-000000000001',
- 'https://example.com/img/news/rtx4090-review.jpg',
+ 'https://bizweb.dktcdn.net/100/329/122/files/nvidia-rtx-4090-gpu-doi-moi-toi-thuong.jpg?v=1673114641832',
  TRUE, TRUE, NOW() - INTERVAL '3 days', 2340,
  'NVIDIA RTX 4090 Review | GearVN Blog',
  'NVIDIA GeForce RTX 4090 Founders Edition review: sức mạnh đồ họa đỉnh cao với 24GB VRAM, DLSS 3.',
@@ -609,7 +609,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Build PC gaming 30 triệu là phân khúc được nhiều game thủ quan tâm nhất hiện nay. Với số tiền này, bạn hoàn toàn có thể sở hữu một dàn máy chơi mượt mọi tựa game ở độ phân giải 1440p.</p><p>Cấu hình đề xuất: CPU Intel Core i5-14600K, VGA RTX 4070, RAM 32GB DDR5, SSD 1TB NVMe...</p>',
  'Hướng dẫn build PC gaming 30 triệu đồng với cấu hình chi tiết và giải thích từng linh kiện cho game thủ.',
  '00000001-0000-0000-0000-000000000002',
- 'https://example.com/img/news/build-pc-guide.jpg',
+ 'https://icare.center/uploads/images/Build%20PC/build-pc-30-trieu-1.jpg',
  TRUE, TRUE, NOW() - INTERVAL '7 days', 3450,
  'Build PC Gaming 30 triệu | GearVN Blog',
  'Hướng dẫn build PC gaming 30 triệu đồng - cấu hình chi tiết cho game thủ 2024.',
@@ -622,7 +622,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>DDR5 đã xuất hiện được hơn 2 năm và giá đã giảm đáng kể. Liệu có đáng để nâng cấp từ DDR4 lên DDR5? Bài viết này sẽ so sánh chi tiết về hiệu năng, giá cả và khả năng tương thích.</p><p>Trong các tựa game, DDR5 cho tốc độ khung hình cao hơn 5-10% so với DDR4 ở cùng độ trễ. Tuy nhiên, với các tác vụ văn phòng, sự khác biệt không đáng kể.</p>',
  'So sánh RAM DDR4 và DDR5: hiệu năng, giá cả, độ trễ - có nên nâng cấp lên DDR5 trong năm 2024?',
  '00000001-0000-0000-0000-000000000001',
- 'https://example.com/img/news/ddr4-vs-ddr5.jpg',
+ 'https://cdn.tgdd.vn//GameApp/1447392//ddr4-800x450.jpg',
  TRUE, TRUE, NOW() - INTERVAL '10 days', 2120,
  'So sánh DDR4 vs DDR5 | GearVN Blog',
  'So sánh RAM DDR4 và DDR5 chi tiết: hiệu năng gaming, giá bán, nên chọn loại nào cho build PC 2024?',
@@ -635,7 +635,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Nguồn máy tính là linh kiện quan trọng nhất nhưng thường bị xem nhẹ. Một bộ nguồn kém chất lượng có thể gây hại cho toàn bộ hệ thống.</p><p>Bài viết hướng dẫn cách tính công suất, chọn chứng chỉ 80+, thương hiệu uy tín và các loại modular phù hợp.</p>',
  'Hướng dẫn chọn nguồn máy tính (PSU) phù hợp: cách tính công suất, chọn 80+ Gold, modular và thương hiệu uy tín.',
  '00000001-0000-0000-0000-000000000002',
- 'https://example.com/img/news/psu-guide.jpg',
+ 'https://cdn.tgdd.vn/News/1318610/nguon-may-tinh-la-gi-cach-lua-chon-nguon-may-tinh-phu-hop-03-800x450-800x450.png',
  TRUE, TRUE, NOW() - INTERVAL '8 days', 980,
  'Cách chọn PSU phù hợp | GearVN Blog',
  'Hướng dẫn chọn nguồn máy tính PSU: tính công suất, chứng chỉ 80+, nguồn modular, thương hiệu uy tín.',
@@ -648,7 +648,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Samsung 990 Pro là SSD NVMe PCIe 4.0 hàng đầu với tốc độ đọc 7,450MB/s và ghi 6,900MB/s. Đây là lựa chọn tối ưu cho gaming và xử lý nội dung chuyên nghiệp.</p><p>Với 2TB dung lượng và TBW 1,200TB, 990 Pro đáp ứng tốt nhu cầu lưu trữ của hầu hết người dùng cao cấp.</p>',
  'Samsung 990 Pro 2TB NVMe PCIe 4.0 - Đánh giá chi tiết tốc độ, hiệu năng và độ bền của SSD flagship Samsung.',
  '00000001-0000-0000-0000-000000000001',
- 'https://example.com/img/news/samsung-990pro.jpg',
+ 'https://kieutruong.com/wp-content/uploads/2024/01/Danh-gia-o-cung-SSD-Samsung-990-Pro-2TB.jpg',
  TRUE, TRUE, NOW() - INTERVAL '4 days', 1450,
  'Đánh giá Samsung 990 Pro 2TB | GearVN Blog',
  'Samsung 990 Pro 2TB NVMe SSD review: tốc độ 7,450MB/s, hiệu năng gaming, render - có đáng mua?',
@@ -661,7 +661,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Bàn phím cơ ngày càng phổ biến nhờ cảm giác gõ tuyệt vời và độ bền cao. Dưới đây là top 10 bàn phím cơ đáng mua nhất 2024 cho cả gaming và văn phòng.</p><p>Danh sách bao gồm: Razer Huntsman V3, Logitech G Pro X, Keychron Q-series, và nhiều lựa chọn khác...</p>',
  'Top 10 bàn phím cơ tốt nhất 2024 cho gaming và văn phòng - Razer, Logitech, Keychron, ASUS ROG.',
  '00000001-0000-0000-0000-000000000002',
- 'https://example.com/img/news/top-keyboard.jpg',
+ 'https://cdn.hstatic.net/200000722513/file/top-ban-phim-co-ban-chay-tai-gearvn-1_2074098db0ee41139e8ed7e4910b8236.jpg',
  TRUE, TRUE, NOW() - INTERVAL '2 days', 3100,
  'Top 10 bàn phím cơ 2024 | GearVN Blog',
  'Top 10 bàn phím cơ tốt nhất 2024: gaming, văn phòng, dưới 1 triệu, dưới 3 triệu - đánh giá chi tiết.',
@@ -674,7 +674,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>AMD Ryzen 9 7950X là CPU 16 nhân 32 luồng mạnh nhất của AMD trên nền tảng AM5. Với kiến trúc Zen 4, hiệu năng đa luồng vượt trội so với Intel i9-14900K trong các tác vụ render, biên tập video.</p><p>Tuy nhiên, gaming thuần túy thì i9-14900K vẫn nhỉnh hơn một chút. Lựa chọn giữa hai CPU này phụ thuộc vào nhu cầu sử dụng chính của bạn.</p>',
  'AMD Ryzen 9 7950X review: CPU 16 nhân Zen 4 cho workstation, so sánh với Intel i9-14900K.',
  '00000001-0000-0000-0000-000000000001',
- 'https://example.com/img/news/r9-7950x-review.jpg',
+ 'https://i.pcmag.com/imagery/reviews/03tKNNeLfUUq6VvO3J2TG4g-1.fit_scale.size_1028x578.v1664161950.jpg',
  TRUE, TRUE, NOW() - INTERVAL '6 days', 1100,
  'AMD Ryzen 9 7950X Review | GearVN Blog',
  'AMD Ryzen 9 7950X review: 16 nhân, Zen 4, hiệu năng workstation và gaming, so sánh với Intel Core i9-14900K.',
@@ -687,7 +687,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Vệ sinh máy tính định kỳ giúp tăng tuổi thọ linh kiện và giảm nhiệt độ hoạt động. Bạn nên vệ sinh 3-6 tháng một lần tùy môi trường.</p><p>Bài viết hướng dẫn chi tiết cách vệ sinh từng bộ phận: quạt, tản nhiệt, nguồn, bo mạch chủ và các linh kiện khác.</p>',
  'Hướng dẫn vệ sinh máy tính và bảo trì PC định kỳ: các bước chi tiết, dụng cụ cần thiết và lưu ý quan trọng.',
  '00000001-0000-0000-0000-000000000002',
- 'https://example.com/img/news/pc-cleaning.jpg',
+ 'https://file.hstatic.net/1000026716/file/ve-sinh-pc-8_66011f9934be4c218a2e6c73b2ce8677.jpg',
  TRUE, TRUE, NOW() - INTERVAL '9 days', 780,
  'Vệ sinh máy tính định kỳ | GearVN Blog',
  'Hướng dẫn vệ sinh máy tính PC đúng cách: các bước vệ sinh, bảo trì linh kiện, tản nhiệt, quạt.',
@@ -700,7 +700,7 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
  '<p>Intel Core thế hệ 14 có 3 dòng chính: i5, i7 và i9. Mỗi dòng phục vụ một nhu cầu khác nhau từ cơ bản đến chuyên nghiệp.</p><p>Nếu chỉ gaming và làm việc cơ bản, i5-14600K là lựa chọn tối ưu. Nếu cần thêm hiệu năng đa nhiệm, i7-14700K với 20 nhân là đủ dùng. Còn i9-14900K dành cho những ai cần hiệu năng tuyệt đối.</p>',
  'So sánh Intel Core i5 vs i7 vs i9 chi tiết về hiệu năng, giá cả và nhu cầu sử dụng - nên chọn CPU nào?',
  '00000001-0000-0000-0000-000000000001',
- 'https://example.com/img/news/i5-vs-i7-vs-i9.jpg',
+ 'https://cdn2.fptshop.com.vn/unsafe/1920x0/filters:format(webp):quality(75)/2021_11_30_637739123678220778_intel-core-i9-so-voi-i7-va-i5-ban-nen-mua-cpu-nao.jpg',
  TRUE, TRUE, NOW() - INTERVAL '1 day', 2890,
  'So sánh Intel i5 i7 i9 | GearVN Blog',
  'So sánh Intel Core i5 vs i7 vs i9: hiệu năng gaming, render, giá bán - nên chọn CPU Intel nào phù hợp?',
@@ -710,16 +710,16 @@ INSERT INTO news (news_id, title, slug, category_id, content, excerpt, author_id
 -- 23. BANNERS (10 rows)
 -- ===========================================
 INSERT INTO banners (banner_id, title, subtitle, image_url, link_url, position, sort_order, is_active, start_date, end_date, created_at, updated_at) VALUES
-('00000017-0000-0000-0000-000000000001', 'Build PC Gaming 2024', 'Cấu hình mạnh mẽ - Giá tốt nhất', 'https://example.com/img/banners/build-pc.jpg', '/build-pc', 1, 1, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000002', 'Intel Core i9-14900K', 'CPU mạnh nhất - Giảm đến 1 triệu', 'https://example.com/img/banners/i9-14900k.jpg', '/product/intel-core-i9-14900k', 1, 2, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '15 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000003', 'RTX 4090 - Sức mạnh không giới hạn', 'Card đồ họa flagship chỉ từ 46 triệu', 'https://example.com/img/banners/rtx4090.jpg', '/product/nvidia-geforce-rtx-4090-fe', 1, 3, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '45 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000004', 'RAM DDR5 - Giảm đến 30%', 'Nâng cấp RAM cho gaming mượt mà', 'https://example.com/img/banners/ram-d5-sale.jpg', '/product/corsair-vengeance-ddr5-32gb-6000', 2, 1, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000005', 'SSD Samsung 990 Pro', 'Tốc độ đọc 7450MB/s - Giá sốc', 'https://example.com/img/banners/ssd-sale.jpg', '/product/samsung-990-pro-2tb', 2, 2, TRUE, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '10 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000006', 'GearVN Summer Sale', 'Giảm đến 40% hàng ngàn sản phẩm', 'https://example.com/img/banners/summer-sale.jpg', '/product', 1, 4, FALSE, CURRENT_DATE + INTERVAL '20 days', CURRENT_DATE + INTERVAL '30 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000007', 'Mainboard ASUS ROG', 'Bo mạch chủ cao cấp cho game thủ', 'https://example.com/img/banners/asus-rog-mb.jpg', '/product/asus-rog-strix-z790-e-gaming-wifi', 2, 3, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '20 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000008', 'Nguồn Corsair RM850x', 'Nguồn ATX 3.0 - 80+ Gold - Bảo hành 10 năm', 'https://example.com/img/banners/corsair-psu.jpg', '/product/corsair-rm850x-shift-850w', 2, 4, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '14 days', NOW(), NOW()),
-('00000017-0000-0000-0000-000000000009', 'NZXT H7 Flow Case', 'Case đẹp - Tản nhiệt tối ưu', 'https://example.com/img/banners/nzxt-h7.jpg', '/product/nzxt-h7-flow-white', 1, 5, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '25 days', NOW(), NOW()),
-('00000017-0000-0000-0000-00000000000a', 'Logitech G Pro X Superlight', 'Chuột wireless 63g - Giảm 400K', 'https://example.com/img/banners/logitech-superlight.jpg', '/product/logitech-g-pro-x-superlight', 2, 5, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '10 days', NOW(), NOW());
+('00000017-0000-0000-0000-000000000001', 'Build PC Gaming 2024', 'Cấu hình mạnh mẽ - Giá tốt nhất', 'https://store.hp.com/app/assets/images/uploads/prod/how-to-build-a-gaming-computer-hero1555706958293.jpg', '/build-pc', 1, 1, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '30 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000002', 'Intel Core i9-14900K', 'CPU mạnh nhất - Giảm đến 1 triệu', 'https://photo2.tinhte.vn/data/attachment-files/2023/10/8155733_Picture-test-CPU-i9-14900K-8.jpg', '/product/intel-core-i9-14900k', 1, 2, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '15 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000003', 'RTX 4090 - Sức mạnh không giới hạn', 'Card đồ họa flagship chỉ từ 46 triệu', 'https://bizweb.dktcdn.net/100/329/122/files/nvidia-rtx-4090-gpu-doi-moi-toi-thuong.jpg?v=1673114641832', '/product/nvidia-geforce-rtx-4090-fe', 1, 3, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '45 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000004', 'RAM DDR5 - Giảm đến 30%', 'Nâng cấp RAM cho gaming mượt mà', 'https://cdn.tgdd.vn//GameApp/1447392//ddr4-800x450.jpg', '/product/corsair-vengeance-ddr5-32gb-6000', 2, 1, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000005', 'SSD Samsung 990 Pro', 'Tốc độ đọc 7450MB/s - Giá sốc', 'https://kieutruong.com/wp-content/uploads/2024/01/Danh-gia-o-cung-SSD-Samsung-990-Pro-2TB.jpg', '/product/samsung-990-pro-2tb', 2, 2, TRUE, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '10 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000006', 'GearVN Summer Sale', 'Giảm đến 40% hàng ngàn sản phẩm', 'https://icare.center/uploads/images/Build%20PC/build-pc-30-trieu-1.jpg', '/product', 1, 4, FALSE, CURRENT_DATE + INTERVAL '20 days', CURRENT_DATE + INTERVAL '30 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000007', 'Mainboard ASUS ROG', 'Bo mạch chủ cao cấp cho game thủ', 'https://i.pcmag.com/imagery/reviews/03tKNNeLfUUq6VvO3J2TG4g-1.fit_scale.size_1028x578.v1664161950.jpg', '/product/asus-rog-strix-z790-e-gaming-wifi', 2, 3, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '20 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000008', 'Nguồn Corsair RM850x', 'Nguồn ATX 3.0 - 80+ Gold - Bảo hành 10 năm', 'https://cdn.tgdd.vn/News/1318610/nguon-may-tinh-la-gi-cach-lua-chon-nguon-may-tinh-phu-hop-03-800x450-800x450.png', '/product/corsair-rm850x-shift-850w', 2, 4, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '14 days', NOW(), NOW()),
+('00000017-0000-0000-0000-000000000009', 'NZXT H7 Flow Case', 'Case đẹp - Tản nhiệt tối ưu', 'https://file.hstatic.net/1000026716/file/ve-sinh-pc-8_66011f9934be4c218a2e6c73b2ce8677.jpg', '/product/nzxt-h7-flow-white', 1, 5, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '25 days', NOW(), NOW()),
+('00000017-0000-0000-0000-00000000000a', 'Logitech G Pro X Superlight', 'Chuột wireless 63g - Giảm 400K', 'https://cdn.hstatic.net/200000722513/file/top-ban-phim-co-ban-chay-tai-gearvn-1_2074098db0ee41139e8ed7e4910b8236.jpg', '/product/logitech-g-pro-x-superlight', 2, 5, TRUE, CURRENT_DATE, CURRENT_DATE + INTERVAL '10 days', NOW(), NOW());
 
 -- ===========================================
 -- 24. REVIEWS (10 rows)
@@ -740,16 +740,16 @@ INSERT INTO reviews (review_id, product_id, user_id, rating, comment, is_active,
 -- 25. REVIEW IMAGES (10 rows)
 -- ===========================================
 INSERT INTO review_images (image_id, review_id, image_url, created_at) VALUES
-('00000019-0000-0000-0000-000000000001', '00000018-0000-0000-0000-000000000001', 'https://example.com/img/reviews/i9-installed.jpg', NOW() - INTERVAL '9 days'),
-('00000019-0000-0000-0000-000000000002', '00000018-0000-0000-0000-000000000001', 'https://example.com/img/reviews/cinebench-score.jpg', NOW() - INTERVAL '9 days'),
-('00000019-0000-0000-0000-000000000003', '00000018-0000-0000-0000-000000000005', 'https://example.com/img/reviews/rtx4090-build.jpg', NOW() - INTERVAL '8 days'),
-('00000019-0000-0000-0000-000000000004', '00000018-0000-0000-0000-000000000005', 'https://example.com/img/reviews/cp2077-4k-fps.jpg', NOW() - INTERVAL '8 days'),
-('00000019-0000-0000-0000-000000000005', '00000018-0000-0000-0000-000000000005', 'https://example.com/img/reviews/rtx4090-temp.jpg', NOW() - INTERVAL '8 days'),
-('00000019-0000-0000-0000-000000000006', '00000018-0000-0000-0000-000000000006', 'https://example.com/img/reviews/ssd-speed-test.jpg', NOW() - INTERVAL '3 days'),
-('00000019-0000-0000-0000-000000000007', '00000018-0000-0000-0000-000000000007', 'https://example.com/img/reviews/psu-installed.jpg', NOW() - INTERVAL '5 days'),
-('00000019-0000-0000-0000-000000000008', '00000018-0000-0000-0000-000000000009', 'https://example.com/img/reviews/nh-d15-build.jpg', NOW() - INTERVAL '3 days'),
-('00000019-0000-0000-0000-000000000009', '00000018-0000-0000-0000-00000000000a', 'https://example.com/img/reviews/superlight-box.jpg', NOW() - INTERVAL '1 day'),
-('00000019-0000-0000-0000-00000000000a', '00000018-0000-0000-0000-000000000004', 'https://example.com/img/reviews/ddr5-rgb.jpg', NOW() - INTERVAL '7 days');
+('00000019-0000-0000-0000-000000000001', '00000018-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review-i9-installed/400/400', NOW() - INTERVAL '9 days'),
+('00000019-0000-0000-0000-000000000002', '00000018-0000-0000-0000-000000000001', 'https://picsum.photos/seed/review-cinebench/400/400', NOW() - INTERVAL '9 days'),
+('00000019-0000-0000-0000-000000000003', '00000018-0000-0000-0000-000000000005', 'https://picsum.photos/seed/review-rtx4090-build/400/400', NOW() - INTERVAL '8 days'),
+('00000019-0000-0000-0000-000000000004', '00000018-0000-0000-0000-000000000005', 'https://picsum.photos/seed/review-cp2077/400/400', NOW() - INTERVAL '8 days'),
+('00000019-0000-0000-0000-000000000005', '00000018-0000-0000-0000-000000000005', 'https://picsum.photos/seed/review-rtx4090-temp/400/400', NOW() - INTERVAL '8 days'),
+('00000019-0000-0000-0000-000000000006', '00000018-0000-0000-0000-000000000006', 'https://picsum.photos/seed/review-ssd-speed/400/400', NOW() - INTERVAL '3 days'),
+('00000019-0000-0000-0000-000000000007', '00000018-0000-0000-0000-000000000007', 'https://picsum.photos/seed/review-psu-installed/400/400', NOW() - INTERVAL '5 days'),
+('00000019-0000-0000-0000-000000000008', '00000018-0000-0000-0000-000000000009', 'https://picsum.photos/seed/review-nh-d15/400/400', NOW() - INTERVAL '3 days'),
+('00000019-0000-0000-0000-000000000009', '00000018-0000-0000-0000-00000000000a', 'https://picsum.photos/seed/review-superlight/400/400', NOW() - INTERVAL '1 day'),
+('00000019-0000-0000-0000-00000000000a', '00000018-0000-0000-0000-000000000004', 'https://picsum.photos/seed/review-ddr5-rgb/400/400', NOW() - INTERVAL '7 days');
 
 -- ===========================================
 -- 26. REVIEW HELPFUL VOTES (10 rows)
