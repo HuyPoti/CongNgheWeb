@@ -60,8 +60,8 @@
                 </span>
               </td>
               <td class="px-6 py-5">
-                <p class="text-slate-800 dark:text-slate-100 font-bold">{{ c.discountValue }}{{ c.discountType === 'PERCENTAGE' ? '%' : 'đ' }}</p>
-                <p class="text-[10px] text-slate-500 uppercase">{{ c.discountType === 'PERCENTAGE' ? 'Phần trăm' : 'Cố định' }}</p>
+                <p class="text-slate-800 dark:text-slate-100 font-bold">{{ c.discountValue }}{{ c.discountType === 'percentage' ? '%' : 'đ' }}</p>
+                <p class="text-[10px] text-slate-500 uppercase">{{ c.discountType === 'percentage' ? 'Phần trăm' : 'Cố định' }}</p>
               </td>
               <td class="px-6 py-5 text-sm font-medium text-slate-600 dark:text-slate-300">{{ c.minOrderAmount | number:'1.0-0' }} đ</td>
               <td class="px-6 py-5">
@@ -107,5 +107,5 @@
   [isEditMode]="isEditMode()"
   [couponData]="selectedCoupon()"
   (save)="onFormSave()"
-  (close)="closeForm()">
+  (closeForm)="closeForm()">
 </app-coupon-form>

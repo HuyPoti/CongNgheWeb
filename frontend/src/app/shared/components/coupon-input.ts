@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CouponService, CouponValidationResultDto, CouponValidationItemDto } from '../../core/services/coupon.service';
+import { CouponService, CouponValidationResultDto, CouponValidationItemDto, CouponDto } from '../../core/services/coupon.service';
 import { CartService } from '../../core/services/cart.service';
 
 export interface AppliedCoupon {
@@ -58,6 +58,36 @@ export interface AppliedCoupon {
         <div class="error-message">
           <span class="error-icon">⚠</span>
           {{ error() }}
+        </div>
+      }
+
+      @if (savedCoupons().length > 0 && !appliedCoupon()) {
+        <div class="mt-2 p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 rounded-xl">
+          <p class="text-xs font-semibold text-slate-500 mb-2">Voucher trong ví của bạn (Click để dùng):</p>
+          <div class="flex flex-wrap gap-2">
+            @for (c of savedCoupons(); track c.code) {
+               <button type="button" 
+                       (click)="selectCoupon(c.code)"
+                       [disabled]="c.minOrderAmount > totalAmount"
+                       class="px-2 py-1 rounded-md text-[11px] font-bold border transition-colors flex flex-col items-start text-left"
+                       [class.bg-indigo-50]="c.minOrderAmount <= totalAmount"
+                       [class.text-indigo-700]="c.minOrderAmount <= totalAmount"
+                       [class.border-indigo-200]="c.minOrderAmount <= totalAmount"
+                       [class.hover:bg-indigo-100]="c.minOrderAmount <= totalAmount"
+                       [class.bg-slate-50]="c.minOrderAmount > totalAmount"
+                       [class.text-slate-400]="c.minOrderAmount > totalAmount"
+                       [class.border-slate-200]="c.minOrderAmount > totalAmount"
+                       [class.cursor-not-allowed]="c.minOrderAmount > totalAmount"
+                       [title]="c.minOrderAmount > totalAmount ? 'Đơn hàng chưa đạt tối thiểu ' + (c.minOrderAmount | number) + 'đ' : ''"
+                       >
+                  <span class="font-mono text-xs">{{ c.code }}</span>
+                  <span class="text-[9px] font-normal mt-0.5 opacity-80">
+                    Giảm {{ (c.discountType || '').toLowerCase().includes('percent') ? c.discountValue + '%' : (c.discountValue | number) + 'đ' }} 
+                    (Đơn từ {{ c.minOrderAmount | number }}đ)
+                  </span>
+               </button>
+            }
+          </div>
         </div>
       }
 
@@ -268,6 +298,7 @@ export class CouponInputComponent implements OnInit {
   error = signal<string | null>(null);
   success = signal<string | null>(null);
   appliedCoupon = signal<AppliedCoupon | null>(null);
+  savedCoupons = signal<CouponDto[]>([]);
 
   private fb = inject(FormBuilder);
   private couponService = inject(CouponService);
@@ -275,7 +306,27 @@ export class CouponInputComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
+    this.loadSavedCoupons();
     this.autoApplySavedCoupon();
+  }
+
+  private loadSavedCoupons() {
+    try {
+      const stored = localStorage.getItem('collected_coupons');
+      if (stored) {
+        const list = JSON.parse(stored);
+        const now = new Date();
+        const activeList = list.filter((c: CouponDto) => new Date(c.endDate) >= now && c.isActive);
+        this.savedCoupons.set(activeList);
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  selectCoupon(code: string) {
+    this.couponForm.patchValue({ code });
+    this.onApply();
   }
 
   private initForm() {
@@ -303,10 +354,14 @@ export class CouponInputComponent implements OnInit {
     this.error.set(null);
     this.success.set(null);
 
+    // Validate userId - send only if it's a valid GUID format, otherwise undefined
+    const isValidGuid = this.isValidGuid(this.userId);
+    const userIdToSend = isValidGuid ? this.userId : undefined;
+
     this.couponService.validate({
       code,
       totalAmount: this.totalAmount,
-      userId: this.userId,
+      userId: userIdToSend,
       items: this.items
     }).subscribe({
       next: (result: CouponValidationResultDto) => {
@@ -344,5 +399,12 @@ export class CouponInputComponent implements OnInit {
     this.couponForm.reset();
     this.cartService.setAppliedCoupon(null);
     this.couponRemoved.emit();
+  }
+
+  private isValidGuid(value?: string): boolean {
+    if (!value) return false;
+    // GUID pattern: 8-4-4-4-12 hex characters
+    const guidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return guidPattern.test(value);
   }
 }

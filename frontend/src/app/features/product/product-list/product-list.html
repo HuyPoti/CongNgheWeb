@@ -362,11 +362,12 @@
                     </div>
                   }
 
-                  @if (hasSalePrice(p)) {
+                  @if (p.isFlashSale) {
                     <div
-                      class="absolute top-3 left-3 bg-red-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg"
+                      class="absolute top-3 left-3 mt-7 bg-orange-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest shadow-lg flex items-center gap-1"
                     >
-                      -{{ savingPercent(p) }}%
+                      <span class="text-[10px]">⚡</span>
+                      Flash Sale
                     </div>
                   }
 

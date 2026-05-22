@@ -55,6 +55,14 @@ public class CouponsController : ControllerBase
         return Ok(ApiResponse.Ok(res));
     }
 
+    [AllowAnonymous]
+    [HttpGet("code/{code}")]
+    public async Task<ActionResult<ApiResponse<CouponDto>>> GetByCode(string code, CancellationToken cancellationToken)
+    {
+        var res = await _couponService.GetByCodeAsync(code, cancellationToken);
+        return Ok(ApiResponse.Ok(res));
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<ApiResponse<CouponDto>>> Update(Guid id, [FromBody] UpdateCouponDto dto, CancellationToken cancellationToken)
     {

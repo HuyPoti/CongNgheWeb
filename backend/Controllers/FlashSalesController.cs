@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/flash-sales")]
 [Authorize(Roles = "admin")]
 public class FlashSalesController : ControllerBase
 {
@@ -29,6 +29,27 @@ public class FlashSalesController : ControllerBase
     {
         var res = await _flashSaleService.GetAllAsync(page, pageSize, cancellationToken);
         return Ok(ApiResponse.Ok(res));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ApiResponse<FlashSaleDto>>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var res = await _flashSaleService.GetByIdAsync(id, cancellationToken);
+        return Ok(ApiResponse.Ok(res));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<ApiResponse<FlashSaleDto>>> Update(Guid id, [FromBody] UpdateFlashSaleDto dto, CancellationToken cancellationToken)
+    {
+        var res = await _flashSaleService.UpdateAsync(id, dto, cancellationToken);
+        return Ok(ApiResponse.Ok(res));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ApiResponse<FlashSaleDto>>> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var res = await _flashSaleService.DeactivateAsync(id, cancellationToken);
+        return Ok(ApiResponse.Ok(res, "Flash sale deactivated successfully"));
     }
 
     [AllowAnonymous]

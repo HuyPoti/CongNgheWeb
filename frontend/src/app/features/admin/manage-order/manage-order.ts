@@ -208,10 +208,44 @@ export class ManageOrder implements OnInit {
     });
   }
 
+  // Kiểm tra đơn COD chưa thu tiền
+  isCodUnpaid(order: OrderDetailDto | null): boolean {
+    if (!order) return false;
+    return order.paymentMethod?.toLowerCase() === 'cod' && order.paymentStatus !== 'paid';
+  }
+
+  // Admin xác nhận đã thu tiền COD (dùng nhanh trong modal trước khi giao)
+  markAsPaidForCod() {
+    const order = this.showDetail();
+    if (!order) return;
+
+    this.orderService.updatePaymentStatus(order.orderId, 'paid').subscribe({
+      next: () => {
+        // Cập nhật local state trong modal
+        this.showDetail.set({ ...order, paymentStatus: 'paid' });
+        // Cập nhật luôn trong danh sách
+        this.orders.update(list =>
+          list.map(o => o.orderId === order.orderId
+            ? { ...o, paymentStatus: 'paid', updatedAt: new Date().toISOString() }
+            : o
+          )
+        );
+        this.toast.success(`Đã xác nhận thu tiền COD cho đơn ${order.orderCode}`);
+      },
+      error: () => this.toast.error('Lỗi cập nhật trạng thái thanh toán')
+    });
+  }
+
   // Admin xác nhận đã giao hàng thành công
   markDelivered() {
     const order = this.showDetail();
     if (!order) return;
+
+    // Guard: Đơn COD phải thu tiền trước
+    if (this.isCodUnpaid(order)) {
+      this.toast.warning('Đơn COD cần được xác nhận "Đã thu tiền" trước khi đánh dấu đã giao!');
+      return;
+    }
 
     this.orderService.markDelivered(order.orderId).subscribe({
       next: () => {
@@ -219,7 +253,7 @@ export class ManageOrder implements OnInit {
         this.openDetail(order);
         this.loadOrders();
       },
-      error: () => this.toast.error('Lỗi xác nhận giao hàng')
+      error: (err) => this.toast.error(err?.error?.message || 'Lỗi xác nhận giao hàng')
     });
   }
 

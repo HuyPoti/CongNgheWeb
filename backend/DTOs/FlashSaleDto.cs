@@ -18,6 +18,9 @@ public class FlashSaleItemDto
     public Guid FlashSaleId { get; set; }
     public Guid ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string? ThumbnailUrl { get; set; }
+    public decimal RegularPrice { get; set; }
     public decimal FlashPrice { get; set; }
     public int StockLimit { get; set; }
     public int SoldCount { get; set; }

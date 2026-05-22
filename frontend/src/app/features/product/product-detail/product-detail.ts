@@ -2,6 +2,8 @@ import { FormsModule } from '@angular/forms';
 import { Component, signal, computed, inject, OnInit, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
@@ -16,12 +18,19 @@ import { WishlistToggleComponent } from '../../../shared/components/wishlist-tog
 import { VerifiedBadgeComponent } from '../../../shared/components/verified-badge/verified-badge';
 import { AuthService } from '../../../core/services/auth.service';
 import { CloudinaryService } from '../../../core/services/cloudinary.service';
+import { FlashSaleService } from '../../../core/services/flash-sale.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, WishlistToggleComponent, VerifiedBadgeComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    WishlistToggleComponent,
+    VerifiedBadgeComponent,
+  ],
   templateUrl: './product-detail.html',
 })
 export class ProductDetail implements OnInit {
@@ -34,6 +43,7 @@ export class ProductDetail implements OnInit {
   private toastService = inject(ToastService);
   private authService = inject(AuthService);
   private cloudinaryService = inject(CloudinaryService);
+  private flashSaleService = inject(FlashSaleService);
 
   activeTab = signal<string>('specs');
   activeImageIndex = signal<number>(0);
@@ -66,6 +76,7 @@ export class ProductDetail implements OnInit {
     price: 0,
     regularPrice: 0,
     salePrice: null,
+    isFlashSale: false,
     image: '',
     category: '',
     brand: '',
@@ -116,7 +127,7 @@ export class ProductDetail implements OnInit {
         // Specs → Record de dung trong ProductCard
         const specsMap: Record<string, string> = {};
         const finalSpecs: { specKey: string; specValue: string }[] = [];
-        
+
         if (dto.specifications) {
           try {
             const parsed = JSON.parse(dto.specifications);
@@ -139,6 +150,7 @@ export class ProductDetail implements OnInit {
           price: dto.salePrice ?? dto.regularPrice,
           regularPrice: dto.regularPrice,
           salePrice: dto.salePrice,
+          isFlashSale: false,
           image: primaryImg,
           category: dto.categoryName,
           brand: '',
@@ -146,6 +158,24 @@ export class ProductDetail implements OnInit {
           stockQuantity: dto.stockQuantity,
           warrantyMonths: dto.warrantyMonths,
           specs: specsMap,
+        });
+
+        // Kiểm tra nếu sản phẩm đang có Flash Sale → override giá
+        this.flashSaleService.getActive().pipe(
+          catchError(() => of(null))
+        ).subscribe(flashSale => {
+          if (!flashSale) return;
+          const flashItem = flashSale.items.find(fi => fi.productId === dto.productId);
+          if (flashItem && !flashItem.isSoldOut) {
+            this.product.update(p => ({
+              ...p,
+              price: flashItem.flashPrice,
+              regularPrice: flashItem.regularPrice,
+              isFlashSale: true,
+            }));
+            // Cập nhật lại regularPrice signal để UI hiển thị đúng
+            this.regularPrice.set(flashItem.regularPrice);
+          }
         });
 
         if (dto.brandId) {
@@ -157,7 +187,7 @@ export class ProductDetail implements OnInit {
             error: (err) => {
               console.warn('Lỗi tải thông tin thương hiệu:', err);
               this.productBrand.set(null);
-            }
+            },
           });
         } else {
           this.productBrand.set(null);
@@ -229,10 +259,13 @@ export class ProductDetail implements OnInit {
       }
       const reader = new FileReader();
       reader.onload = (e) => {
-        this.selectedImages.update(imgs => [...imgs, {
-          file,
-          preview: e.target?.result as string
-        }]);
+        this.selectedImages.update((imgs) => [
+          ...imgs,
+          {
+            file,
+            preview: e.target?.result as string,
+          },
+        ]);
       };
       reader.readAsDataURL(file);
     }
@@ -240,7 +273,7 @@ export class ProductDetail implements OnInit {
   }
 
   removeImage(index: number) {
-    this.selectedImages.update(imgs => imgs.filter((_, i) => i !== index));
+    this.selectedImages.update((imgs) => imgs.filter((_, i) => i !== index));
   }
 
   openReviewImage(url: string) {
@@ -298,7 +331,7 @@ export class ProductDetail implements OnInit {
 
   toggleHelpfulVote(review: ReviewDto, event: Event) {
     event.stopPropagation();
-    
+
     const user = this.authService.currentUserValue;
     if (!user) {
       this.toastService.warning('Vui lòng đăng nhập để đánh giá hữu ích');
@@ -353,13 +386,17 @@ export class ProductDetail implements OnInit {
 
     try {
       const newReview = await firstValueFrom(this.reviewsService.createReview(dto));
-      
+
       const imagesToUpload = this.selectedImages();
       if (imagesToUpload.length > 0) {
         for (const img of imagesToUpload) {
           try {
-            const uploadRes = await firstValueFrom(this.cloudinaryService.uploadImage('reviews', img.file));
-            await firstValueFrom(this.reviewsService.addImage(newReview.reviewId, { imageUrl: uploadRes.imageUrl }));
+            const uploadRes = await firstValueFrom(
+              this.cloudinaryService.uploadImage('reviews', img.file),
+            );
+            await firstValueFrom(
+              this.reviewsService.addImage(newReview.reviewId, { imageUrl: uploadRes.imageUrl }),
+            );
           } catch (err) {
             console.error('Lỗi upload ảnh review:', err);
             this.toastService.warning('Có lỗi tải ảnh lên, nhưng đánh giá đã được ghi nhận.');
@@ -374,9 +411,10 @@ export class ProductDetail implements OnInit {
       this.calculateRatingRate(this.reviews());
       this.toastService.success('Cảm ơn bạn đã gửi đánh giá!');
       this.toggleWriteReview();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Lỗi gửi đánh giá:', err);
-      const errorMessage = err?.error?.message || 'Có lỗi xảy ra khi gửi đánh giá';
+      const apiError = err as { error?: { message?: string } };
+      const errorMessage = apiError?.error?.message || 'Có lỗi xảy ra khi gửi đánh giá';
       this.toastService.error(errorMessage);
     } finally {
       this.isSubmittingReview.set(false);

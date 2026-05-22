@@ -22,5 +22,6 @@ public class ProductListItemDto
 
     public int StockQuantity { get; set; }
     public int WarrantyMonths { get; set; }
+    public bool IsFlashSale { get; set; }
 }
 

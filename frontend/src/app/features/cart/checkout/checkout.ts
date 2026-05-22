@@ -58,4 +58,15 @@ export class Checkout {
       }
     });
   }
+
+  getFlashSaleDiscount() {
+    return this.cartService.checkoutItems().reduce((acc, item) => {
+      const discount = Math.max(item.regularPrice - item.price, 0) * item.quantity;
+      return acc + discount;
+    }, 0);
+  }
+
+  getOriginalSubtotal() {
+    return this.cartService.checkoutItems().reduce((acc, item) => acc + item.regularPrice * item.quantity, 0);
+  }
 }

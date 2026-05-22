@@ -54,11 +54,7 @@
                 </div>
               }
 
-              @if (item.discountPrice && item.price > item.discountPrice) {
-                <div class="absolute bottom-4 left-4 bg-red-500 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                  -{{ ((item.price - item.discountPrice) / item.price * 100) | number:'1.0-0' }}%
-                </div>
-              }
+
             </div>
 
             <!-- Content -->

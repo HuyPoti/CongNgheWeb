@@ -115,6 +115,15 @@ public class OrdersController : ControllerBase
         Guid id,
         CancellationToken cancellationToken = default)
     {
+        // Safety net: COD orders must be paid before marking delivered
+        var order = await _service.GetByIdAsync(id, null, cancellationToken);
+        if (order == null)
+            return NotFound(ApiResponse.Fail("Order not found"));
+
+        if (order.PaymentMethod?.ToLower() == "cod" && order.PaymentStatus != "paid")
+            return BadRequest(ApiResponse.Fail(
+                "Đơn COD chưa được xác nhận thu tiền. Vui lòng cập nhật trạng thái thanh toán thành \"paid\" trước."));
+
         var currentUserId = GetCurrentUserId() ?? Guid.Empty;
         var dto = new UpdateOrderDto { Status = "delivered" };
         await _service.UpdateAsync(id, dto, currentUserId, cancellationToken);

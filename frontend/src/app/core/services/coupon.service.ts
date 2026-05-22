@@ -106,6 +106,10 @@ export class CouponService {
     return this.http.get<ApiResponse<CouponDto>>(`${this.baseUrl}/${id}`).pipe(map((res) => res.data));
   }
 
+  getByCode(code: string): Observable<CouponDto> {
+    return this.http.get<ApiResponse<CouponDto>>(`${this.baseUrl}/code/${code}`).pipe(map((res) => res.data));
+  }
+
   create(dto: CreateCouponDto): Observable<CouponDto> {
     return this.http.post<ApiResponse<CouponDto>>(this.baseUrl, dto).pipe(map((res) => res.data));
   }

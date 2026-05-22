@@ -12,4 +12,5 @@ public interface ICouponService
 	Task<CouponDto> DeactivateAsync(Guid couponId, CancellationToken cancellationToken = default);
 	Task<CouponDto?> UpdateAsync(Guid id, UpdateCouponDto dto, CancellationToken cancellationToken = default);
 	Task<CouponDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+	Task<CouponDto> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
 }

@@ -2,9 +2,13 @@ import { Component, inject, OnInit, signal, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { CartService } from '../../../core/services/cart.service';
 import { CouponService, CouponDto } from '../../../core/services/coupon.service';
+import { FlashSaleService } from '../../../core/services/flash-sale.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-cart-page',
@@ -16,6 +20,8 @@ import { CouponService, CouponDto } from '../../../core/services/coupon.service'
 export class CartPage implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly couponService = inject(CouponService);
+  private readonly flashSaleService = inject(FlashSaleService);
+  private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
 
   readonly cartItems = this.cartService.getCartItems;
@@ -32,7 +38,29 @@ export class CartPage implements OnInit {
   }
 
   ngOnInit() {
+    // Re-validate giá cart trước khi hiển thị – đảm bảo flash sale / giá luôn đúng
+    this.validateCartPrices();
     this.calculateNudge();
+  }
+
+  /** Kiểm tra và đồng bộ giá flash sale với dữ liệu mới nhất từ API */
+  private validateCartPrices(): void {
+    if (this.cartItems().length === 0) return;
+
+    this.flashSaleService.getActive().pipe(
+      catchError(() => of(null))
+    ).subscribe(flashSale => {
+      const flashItems = flashSale?.items ?? [];
+      const result = this.cartService.syncFlashSalePrices(flashItems);
+
+      if (result.changed) {
+        // Hiển thị tổng hợp 1 toast thay vì nhiều cái chồng nhau
+        const summary = result.messages.length === 1
+          ? result.messages[0]
+          : `Đã cập nhật giá cho ${result.messages.length} sản phẩm trong giỏ hàng.`;
+        this.toastService.info(summary);
+      }
+    });
   }
 
   calculateNudge() {
@@ -87,5 +115,16 @@ export class CartPage implements OnInit {
 
   proceedToCheckout() {
     void this.router.navigate(['/cart/checkout']);
+  }
+
+  getFlashSaleDiscount() {
+    return this.cartItems().reduce((acc, item) => {
+      const discount = Math.max(item.regularPrice - item.price, 0) * item.quantity;
+      return acc + discount;
+    }, 0);
+  }
+
+  getOriginalSubtotal() {
+    return this.cartItems().reduce((acc, item) => acc + item.regularPrice * item.quantity, 0);
   }
 }

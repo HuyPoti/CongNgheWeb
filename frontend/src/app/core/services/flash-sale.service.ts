@@ -10,6 +10,9 @@ export interface FlashSaleItemDto {
   flashSaleId: string;
   productId: string;
   productName: string;
+  slug: string;
+  thumbnailUrl: string | null;
+  regularPrice: number;
   flashPrice: number;
   stockLimit: number;
   soldCount: number;
@@ -86,6 +89,12 @@ export class FlashSaleService {
   update(id: string, dto: UpdateFlashSaleDto): Observable<FlashSaleDto> {
     return this.http
       .put<ApiResponse<FlashSaleDto>>(`${this.baseUrl}/${id}`, dto)
+      .pipe(map((res) => res.data));
+  }
+
+  delete(id: string): Observable<FlashSaleDto> {
+    return this.http
+      .delete<ApiResponse<FlashSaleDto>>(`${this.baseUrl}/${id}`)
       .pipe(map((res) => res.data));
   }
 

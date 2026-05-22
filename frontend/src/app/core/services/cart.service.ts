@@ -1,6 +1,19 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ProductCard } from '../models/product.model';
 
+/** Mini-interface tránh circular dependency với FlashSaleService */
+export interface FlashSaleItemRef {
+  productId: string;
+  regularPrice: number;
+  flashPrice: number;
+  isSoldOut: boolean;
+}
+
+export interface CartSyncResult {
+  changed: boolean;
+  messages: string[];
+}
+
 export interface CartItem extends ProductCard {
   quantity: number;
 }
@@ -110,6 +123,62 @@ export class CartService {
     this.items.set([]);
     this.persist([]);
     this.setAppliedCoupon(null);
+  }
+
+  /**
+   * Re-validate giá cart items với dữ liệu flash sale hiện tại.
+   * Gọi khi user mở CartPage để đảm bảo giá luôn đúng.
+   */
+  syncFlashSalePrices(flashItems: FlashSaleItemRef[]): CartSyncResult {
+    const messages: string[] = [];
+    let changed = false;
+
+    this.items.update((items) => {
+      const updated = items.map((item) => {
+        const flashItem = flashItems.find((fi) => fi.productId === item.id);
+
+        if (flashItem && !flashItem.isSoldOut) {
+          // Case 1: item chưa có giá flash → áp dụng flash price
+          if (!item.isFlashSale) {
+            changed = true;
+            messages.push(`🔥 "${item.name}" đang có Flash Sale! Giá đã được cập nhật.`);
+            return {
+              ...item,
+              price: flashItem.flashPrice,
+              regularPrice: flashItem.regularPrice,
+              isFlashSale: true,
+            };
+          }
+          // Case 2: giá flash thay đổi (admin cập nhật giữa chừng)
+          if (item.price !== flashItem.flashPrice) {
+            changed = true;
+            messages.push(`ℹ️ Giá Flash Sale của "${item.name}" vừa được cập nhật.`);
+            return {
+              ...item,
+              price: flashItem.flashPrice,
+              regularPrice: flashItem.regularPrice,
+            };
+          }
+        } else if (item.isFlashSale) {
+          // Case 3: flash sale đã kết thúc → hoàn về giá gốc
+          changed = true;
+          messages.push(`⏰ Flash Sale của "${item.name}" đã kết thúc. Giá đã được cập nhật về giá gốc.`);
+          const revertPrice = item.salePrice ?? item.regularPrice;
+          return {
+            ...item,
+            price: revertPrice,
+            isFlashSale: false,
+          };
+        }
+
+        return item;
+      });
+
+      if (changed) this.persist(updated);
+      return updated;
+    });
+
+    return { changed, messages };
   }
 
   private persist(items: CartItem[]) {

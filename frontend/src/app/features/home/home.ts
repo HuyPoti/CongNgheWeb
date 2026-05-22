@@ -6,6 +6,7 @@ import { catchError, finalize } from 'rxjs/operators'; // Thêm catchError và f
 import { BannerService } from '../../core/services/banner.service';
 import { Banner } from '../../core/models/banner.model';
 import { ProductService } from '../../core/services/product.service';
+import { FlashSaleService, FlashSaleDto, FlashSaleItemDto } from '../../core/services/flash-sale.service';
 import { ProductCard, ProductListItemDto } from '../../core/models/product.model';
 import { ComparisonService } from '../../core/services/comparison.service';
 import { TranslatePipe } from '../../core/pipes/translate.pipe';
@@ -40,9 +41,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   readonly comparisonService = inject(ComparisonService);
+  private readonly flashSaleService = inject(FlashSaleService);
 
   // ── State ────────────────────────────────────────────────────────
   banners: ClientBanner[] = [];
+  activeFlashSale: FlashSaleDto | null = null;
+  flashSaleProducts: ProductCard[] = [];
+  flashSaleTimeLeft = { hours: '00', minutes: '00', seconds: '00' };
   featuredProducts: ProductCard[] = [];
   productSections: Record<'cpu' | 'gpu' | 'ram' | 'mainboard', ProductCard[]> = {
     cpu: [],
@@ -59,6 +64,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   currentSlide = 0;
   slideInterval: ReturnType<typeof setInterval> | undefined;
 
+  // Flash Sale Timer
+  private flashSaleInterval: ReturnType<typeof setInterval> | undefined;
+
   // ── Lifecycle ────────────────────────────────────────────────────
   ngOnInit(): void {
     // FIX NG0100: Sử dụng setTimeout để đợi Angular hoàn tất chu kỳ render/hydration hiện tại
@@ -73,6 +81,43 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopSlideTimer();
+    this.stopFlashSaleTimer();
+  }
+
+  private stopFlashSaleTimer(): void {
+    if (this.flashSaleInterval) {
+      clearInterval(this.flashSaleInterval);
+      this.flashSaleInterval = undefined;
+    }
+  }
+
+  private startFlashSaleTimer(endTime: string): void {
+    this.stopFlashSaleTimer();
+    const targetMs = new Date(endTime).getTime();
+
+    const tick = () => {
+      const distance = targetMs - Date.now();
+      if (distance <= 0) {
+        this.stopFlashSaleTimer();
+        this.activeFlashSale = null;
+        this.flashSaleProducts = [];
+        this.cdr.detectChanges();
+        return;
+      }
+      const totalSec = Math.floor(distance / 1000);
+      const hours   = Math.floor(totalSec / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
+      this.flashSaleTimeLeft = {
+        hours:   hours.toString().padStart(2, '0'),
+        minutes: minutes.toString().padStart(2, '0'),
+        seconds: seconds.toString().padStart(2, '0'),
+      };
+      this.cdr.detectChanges();
+    };
+
+    tick(); // render ngay lập tức
+    this.flashSaleInterval = setInterval(tick, 1000);
   }
 
   // ── Loaders ───────────────────────────────────────────────────────
@@ -137,6 +182,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     forkJoin({
       // FIX LỖI MẤT DỮ LIỆU: Thêm catchError cho từng request
+      flashSale: this.flashSaleService.getActive().pipe(catchError(() => of(null))),
       featured: this.productService
         .fetchClientProducts({ page: 1, pageSize: 20 })
         .pipe(catchError(() => of(fallback))),
@@ -167,6 +213,28 @@ export class HomeComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res) => {
+          // ── Flash Sale ──────────────────────────────────────────────
+          if (res.flashSale && res.flashSale.items?.length > 0) {
+            this.activeFlashSale = res.flashSale;
+            this.flashSaleProducts = res.flashSale.items.map((item: FlashSaleItemDto) => ({
+              id: item.productId,
+              slug: item.slug,
+              name: item.productName,
+              price: item.flashPrice,
+              regularPrice: item.regularPrice,
+              salePrice: item.flashPrice,
+              image: item.thumbnailUrl ?? '',
+              category: '',
+              brand: '',
+              brandId: '',
+              stockQuantity: item.stockLimit - item.soldCount,
+              warrantyMonths: 0,
+              specs: {},
+            } as ProductCard));
+            this.startFlashSaleTimer(res.flashSale.endTime);
+          }
+
+          // ── Featured Products ───────────────────────────────────────
           this.featuredProducts = res.featured.items
             .map((p: ProductListItemDto) => this.toCard(p))
             .filter((p: ProductCard) => p.salePrice !== null && p.regularPrice - p.salePrice > 0)
@@ -189,6 +257,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       price: p.price,
       regularPrice: p.regularPrice,
       salePrice: p.salePrice,
+      isFlashSale: p.isFlashSale,
       image: p.thumbnailUrl ?? '',
       category: p.categoryName,
       brand: p.brandName,

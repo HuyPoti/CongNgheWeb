@@ -1,209 +1,325 @@
 <div class="min-h-screen bg-slate-50 dark:bg-background-dark py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Breadcrumb -->
-        <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8 font-medium">
-            <a routerLink="/cart" class="hover:text-primary transition-colors">Giỏ hàng</a>
-            <span class="material-symbols-outlined text-sm">chevron_right</span>
-            <a routerLink="/cart/checkout" class="hover:text-primary transition-colors">Thông tin giao hàng</a>
-            <span class="material-symbols-outlined text-sm">chevron_right</span>
-            <span class="text-slate-900 dark:text-white font-semibold">Thanh toán</span>
-        </nav>
+  <div class="max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-slate-500 mb-8 font-medium">
+      <a routerLink="/cart" class="hover:text-primary transition-colors">Giỏ hàng</a>
+      <span class="material-symbols-outlined text-sm">chevron_right</span>
+      <a routerLink="/cart/checkout" class="hover:text-primary transition-colors"
+        >Thông tin giao hàng</a
+      >
+      <span class="material-symbols-outlined text-sm">chevron_right</span>
+      <span class="text-slate-900 dark:text-white font-semibold">Thanh toán</span>
+    </nav>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <!-- Left Column: Payment Methods -->
-            <div class="lg:col-span-8 flex flex-col gap-6">
-                <!-- Shipping Address Summary -->
-                <div class="bg-white dark:bg-surface-dark p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 relative">
-                    <a routerLink="/cart/checkout" class="absolute top-6 right-6 text-primary text-sm font-medium hover:underline flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">edit</span> Thay đổi
-                    </a>
-                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-emerald-500">check_circle</span>
-                        Địa chỉ nhận hàng
-                    </h2>
-                    <div class="text-slate-700 dark:text-slate-300">
-                        <p class="font-semibold text-slate-900 dark:text-white mb-1">{{ shippingAddress?.recipientName }} | {{ shippingAddress?.phone }}</p>
-                        <p class="text-sm">{{ shippingAddress?.addressLine }}</p>
-                    </div>
-                </div>
-
-                <!-- Payment Options -->
-                <div class="bg-white dark:bg-surface-dark p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10">
-                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">payments</span>
-                        Phương thức thanh toán
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <!-- COD -->
-                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
-                            [class.border-primary]="paymentMethod === 'cod'"
-                            [class.bg-primary]="paymentMethod === 'cod'"
-                            [class.bg-opacity-5]="paymentMethod === 'cod'"
-                            [class.border-slate-200]="paymentMethod !== 'cod'"
-                            [class.dark:border-white]="paymentMethod !== 'cod'"
-                            style="--tw-border-opacity: 0.1;">
-                            <input type="radio" name="paymentMethod" value="cod" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
-                            <div class="ml-4 flex items-center gap-3">
-                                <span class="material-symbols-outlined text-2xl text-slate-500">local_shipping</span>
-                                <div>
-                                    <p class="font-medium text-slate-900 dark:text-white">Thanh toán khi nhận hàng (COD)</p>
-                                    <p class="text-sm text-slate-500">Thanh toán bằng tiền mặt khi giao hàng.</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <!-- Bank Transfer -->
-                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
-                            [class.border-primary]="paymentMethod === 'bank_transfer'"
-                            [class.bg-primary]="paymentMethod === 'bank_transfer'"
-                            [class.bg-opacity-5]="paymentMethod === 'bank_transfer'"
-                            [class.border-slate-200]="paymentMethod !== 'bank_transfer'"
-                            [class.dark:border-white]="paymentMethod !== 'bank_transfer'"
-                            style="--tw-border-opacity: 0.1;">
-                            <input type="radio" name="paymentMethod" value="bank_transfer" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
-                            <div class="ml-4 flex items-center gap-3">
-                                <span class="material-symbols-outlined text-2xl text-slate-500">account_balance</span>
-                                <div>
-                                    <p class="font-medium text-slate-900 dark:text-white">Chuyển khoản ngân hàng</p>
-                                    <p class="text-sm text-slate-500">Chuyển khoản trực tiếp tới tài khoản của chúng tôi.</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <!-- VNPay -->
-                        <label class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
-                            [class.border-primary]="paymentMethod === 'vnpay'"
-                            [class.bg-primary]="paymentMethod === 'vnpay'"
-                            [class.bg-opacity-5]="paymentMethod === 'vnpay'"
-                            [class.border-slate-200]="paymentMethod !== 'vnpay'"
-                            [class.dark:border-white]="paymentMethod !== 'vnpay'"
-                            style="--tw-border-opacity: 0.1;">
-                            <input type="radio" name="paymentMethod" value="vnpay" [(ngModel)]="paymentMethod" class="w-5 h-5 text-primary focus:ring-primary">
-                            <div class="ml-4 flex items-center gap-3">
-                                <span class="material-symbols-outlined text-2xl text-slate-500">credit_card</span>
-                                <div>
-                                    <p class="font-medium text-slate-900 dark:text-white">Thanh toán qua VNPAY / Thẻ Visa, Master</p>
-                                    <p class="text-sm text-slate-500">Chuyển hướng đến cổng thanh toán trực tuyến an toàn.</p>
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Bank Info Display with Premium VietQR -->
-                    @if (showBankInfo && paymentResult?.bankInfo) {
-                        <div class="mt-6 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl">
-                            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2 tracking-tight">
-                                <span class="material-symbols-outlined text-primary text-2xl">qr_code_2</span>
-                                Thanh Toán Chuyển Khoản VietQR
-                            </h3>
-                            
-                            <div class="flex flex-col items-center justify-center space-y-6">
-                                <!-- VietQR Code -->
-                                @if (paymentResult?.qrUrl) {
-                                    <div class="w-full max-w-sm flex flex-col items-center justify-center p-6 bg-white dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                                        <img [src]="paymentResult?.qrUrl" alt="VietQR Code" class="w-64 h-64 object-contain rounded-xl transition-transform group-hover:scale-105 duration-300">
-                                        <span class="mt-4 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary">Mở App Ngân Hàng Quét Mã QR</span>
-                                    </div>
-                                }
-                                
-                                <p class="max-w-sm text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
-                                    <span class="material-symbols-outlined text-primary text-xl">info</span>
-                                    <span>Hệ thống sẽ tự động xác nhận đơn hàng sau khi quét mã thanh toán thành công.</span>
-                                </p>
-                            </div>
-                            
-                            <div class="mt-6 flex flex-wrap gap-4 justify-end border-t border-slate-100 dark:border-slate-800 pt-6">
-                                <button (click)="goHome()" 
-                                    class="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-primary hover:text-slate-900 transition-all shadow-md shadow-slate-200 dark:shadow-none flex items-center gap-2 group">
-                                    <span>Về trang chủ</span>
-                                    <span class="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                                </button>
-                            </div>
-                        </div>
-                    }
-
-                    <div class="mt-8 pt-6 border-t border-slate-100 dark:border-white/10 hidden md:block">
-                        <button (click)="placeOrder()" [disabled]="isPlacingOrder"
-                            class="px-10 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2">
-                            @if (isPlacingOrder) {
-                                <span class="material-symbols-outlined animate-spin">sync</span> Đang xử lý...
-                            } @else {
-                                <span class="material-symbols-outlined">check_circle</span> Đặt Hàng Ngay
-                            }
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Order Summary -->
-            <div class="lg:col-span-4 sticky top-24">
-                <div class="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 border-b border-slate-100 dark:border-white/10 pb-4">
-                        Thông tin đơn hàng
-                    </h3>
-                    
-                    <div class="space-y-4 mb-6 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                        @for (item of cartService.checkoutItems(); track item.id) {
-                            <div class="flex gap-3">
-                                <div class="w-14 h-14 rounded-lg border border-slate-200 dark:border-white/10 p-1 flex-shrink-0 bg-white relative">
-                                    <img [src]="item.image" [alt]="item.name" class="w-full h-full object-contain">
-                                    <span class="absolute -top-2 -right-2 bg-slate-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">{{ item.quantity }}</span>
-                                </div>
-                                <div class="flex-1 min-w-0 flex flex-col justify-center">
-                                    <h4 class="text-xs font-medium text-slate-900 dark:text-white line-clamp-2 mb-1">{{ item.name }}</h4>
-                                    <span class="font-semibold text-primary text-sm">{{ item.price | number:'1.0-0' }}đ</span>
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <!-- Promo Code Input -->
-                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
-                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">Mã ưu đãi / Giảm giá</p>
-                        <app-coupon-input 
-                            [totalAmount]="cartService.checkoutSubtotal()"
-                            [userId]="shippingAddress?.recipientName"
-                            [items]="getCouponValidationItems()"
-                            (couponApplied)="onCouponApplied($event)"
-                            (couponRemoved)="onCouponRemoved()"
-                        ></app-coupon-input>
-                    </div>
-
-                    <div class="space-y-3 pt-4 border-t border-slate-100 dark:border-white/10 text-sm">
-                        <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
-                            <span>Tạm tính</span>
-                            <span class="font-medium text-slate-900 dark:text-white">{{ cartService.checkoutSubtotal() | number:'1.0-0' }}đ</span>
-                        </div>
-                        @if (discountAmount > 0) {
-                            <div class="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-medium">
-                                <span>Khuyến mãi</span>
-                                <span>-{{ discountAmount | number:'1.0-0' }}đ</span>
-                            </div>
-                        }
-                        <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
-                            <span>Phí vận chuyển</span>
-                            <span class="font-medium text-emerald-600">Miễn phí</span>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-4 mt-4 border-t border-slate-100 dark:border-white/10">
-                        <span class="font-bold text-slate-900 dark:text-white text-base">Cần thanh toán</span>
-                        <span class="text-3xl font-bold text-red-500">{{ getFinalAmount() | number:'1.0-0' }}đ</span>
-                    </div>
-
-                    <button (click)="placeOrder()" [disabled]="isPlacingOrder"
-                        class="md:hidden w-full mt-6 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                        @if (isPlacingOrder) {
-                            <span class="material-symbols-outlined animate-spin">sync</span> Đang xử lý...
-                        } @else {
-                            ĐẶT HÀNG NGAY
-                        }
-                    </button>
-
-                    <p class="text-xs text-slate-500 mt-4 text-center">Bằng việc đặt hàng, bạn đồng ý với Điều khoản sử dụng của chúng tôi.</p>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Left Column: Payment Methods -->
+      <div class="lg:col-span-8 flex flex-col gap-6">
+        <!-- Shipping Address Summary -->
+        <div
+          class="bg-white dark:bg-surface-dark p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 relative"
+        >
+          <a
+            routerLink="/cart/checkout"
+            class="absolute top-6 right-6 text-primary text-sm font-medium hover:underline flex items-center gap-1"
+          >
+            <span class="material-symbols-outlined text-sm">edit</span> Thay đổi
+          </a>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+            Địa chỉ nhận hàng
+          </h2>
+          <div class="text-slate-700 dark:text-slate-300">
+            <p class="font-semibold text-slate-900 dark:text-white mb-1">
+              {{ shippingAddress?.recipientName }} | {{ shippingAddress?.phone }}
+            </p>
+            <p class="text-sm">{{ shippingAddress?.addressLine }}</p>
+          </div>
         </div>
+
+        <!-- Payment Options -->
+        <div
+          class="bg-white dark:bg-surface-dark p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10"
+        >
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">payments</span>
+            Phương thức thanh toán
+          </h2>
+
+          <div class="space-y-4">
+            <!-- COD -->
+            <label
+              class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+              [class.border-primary]="paymentMethod === 'cod'"
+              [class.bg-primary]="paymentMethod === 'cod'"
+              [class.bg-opacity-5]="paymentMethod === 'cod'"
+              [class.border-slate-200]="paymentMethod !== 'cod'"
+              [class.dark:border-white]="paymentMethod !== 'cod'"
+              style="--tw-border-opacity: 0.1"
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="cod"
+                [(ngModel)]="paymentMethod"
+                class="w-5 h-5 text-primary focus:ring-primary"
+              />
+              <div class="ml-4 flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl text-slate-500"
+                  >local_shipping</span
+                >
+                <div>
+                  <p class="font-medium text-slate-900 dark:text-white">
+                    Thanh toán khi nhận hàng (COD)
+                  </p>
+                  <p class="text-sm text-slate-500">Thanh toán bằng tiền mặt khi giao hàng.</p>
+                </div>
+              </div>
+            </label>
+
+            <!-- Bank Transfer -->
+            <label
+              class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+              [class.border-primary]="paymentMethod === 'bank_transfer'"
+              [class.bg-primary]="paymentMethod === 'bank_transfer'"
+              [class.bg-opacity-5]="paymentMethod === 'bank_transfer'"
+              [class.border-slate-200]="paymentMethod !== 'bank_transfer'"
+              [class.dark:border-white]="paymentMethod !== 'bank_transfer'"
+              style="--tw-border-opacity: 0.1"
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="bank_transfer"
+                [(ngModel)]="paymentMethod"
+                class="w-5 h-5 text-primary focus:ring-primary"
+              />
+              <div class="ml-4 flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl text-slate-500"
+                  >account_balance</span
+                >
+                <div>
+                  <p class="font-medium text-slate-900 dark:text-white">Chuyển khoản ngân hàng</p>
+                  <p class="text-sm text-slate-500">
+                    Chuyển khoản trực tiếp tới tài khoản của chúng tôi.
+                  </p>
+                </div>
+              </div>
+            </label>
+
+            <!-- VNPay -->
+            <label
+              class="flex items-center p-4 border rounded-xl cursor-pointer transition-all"
+              [class.border-primary]="paymentMethod === 'vnpay'"
+              [class.bg-primary]="paymentMethod === 'vnpay'"
+              [class.bg-opacity-5]="paymentMethod === 'vnpay'"
+              [class.border-slate-200]="paymentMethod !== 'vnpay'"
+              [class.dark:border-white]="paymentMethod !== 'vnpay'"
+              style="--tw-border-opacity: 0.1"
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="vnpay"
+                [(ngModel)]="paymentMethod"
+                class="w-5 h-5 text-primary focus:ring-primary"
+              />
+              <div class="ml-4 flex items-center gap-3">
+                <span class="material-symbols-outlined text-2xl text-slate-500">credit_card</span>
+                <div>
+                  <p class="font-medium text-slate-900 dark:text-white">
+                    Thanh toán qua VNPAY / Thẻ Visa, Master
+                  </p>
+                  <p class="text-sm text-slate-500">
+                    Chuyển hướng đến cổng thanh toán trực tuyến an toàn.
+                  </p>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Bank Info Display with Premium VietQR -->
+          @if (showBankInfo && paymentResult?.bankInfo) {
+            <div
+              class="mt-6 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl"
+            >
+              <h3
+                class="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2 tracking-tight"
+              >
+                <span class="material-symbols-outlined text-primary text-2xl">qr_code_2</span>
+                Thanh Toán Chuyển Khoản VietQR
+              </h3>
+
+              <div class="flex flex-col items-center justify-center space-y-6">
+                <!-- VietQR Code -->
+                @if (paymentResult?.qrUrl) {
+                  <div
+                    class="w-full max-w-sm flex flex-col items-center justify-center p-6 bg-white dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group"
+                  >
+                    <img
+                      [src]="paymentResult?.qrUrl"
+                      alt="VietQR Code"
+                      class="w-64 h-64 object-contain rounded-xl transition-transform group-hover:scale-105 duration-300"
+                    />
+                    <span
+                      class="mt-4 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary"
+                      >Mở App Ngân Hàng Quét Mã QR</span
+                    >
+                  </div>
+                }
+
+                <p
+                  class="max-w-sm text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2"
+                >
+                  <span class="material-symbols-outlined text-primary text-xl">info</span>
+                  <span
+                    >Hệ thống sẽ tự động xác nhận đơn hàng sau khi quét mã thanh toán thành
+                    công.</span
+                  >
+                </p>
+              </div>
+
+              <div
+                class="mt-6 flex flex-wrap gap-4 justify-end border-t border-slate-100 dark:border-slate-800 pt-6"
+              >
+                <button
+                  (click)="goHome()"
+                  class="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-primary hover:text-slate-900 transition-all shadow-md shadow-slate-200 dark:shadow-none flex items-center gap-2 group"
+                >
+                  <span>Về trang chủ</span>
+                  <span
+                    class="material-symbols-outlined text-xs group-hover:translate-x-1 transition-transform"
+                    >arrow_forward</span
+                  >
+                </button>
+              </div>
+            </div>
+          }
+
+          <div class="mt-8 pt-6 border-t border-slate-100 dark:border-white/10 hidden md:block">
+            <button
+              (click)="placeOrder()"
+              [disabled]="isPlacingOrder"
+              class="px-10 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              @if (isPlacingOrder) {
+                <span class="material-symbols-outlined animate-spin">sync</span> Đang xử lý...
+              } @else {
+                <span class="material-symbols-outlined">check_circle</span> Đặt Hàng Ngay
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Order Summary -->
+      <div class="lg:col-span-4 sticky top-24">
+        <div
+          class="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10"
+        >
+          <h3
+            class="text-lg font-bold text-slate-900 dark:text-white mb-4 border-b border-slate-100 dark:border-white/10 pb-4"
+          >
+            Thông tin đơn hàng
+          </h3>
+
+          <div class="space-y-4 mb-6 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+            @for (item of cartService.checkoutItems(); track item.id) {
+              <div class="flex gap-3">
+                <div
+                  class="w-14 h-14 rounded-lg border border-slate-200 dark:border-white/10 p-1 flex-shrink-0 bg-white relative"
+                >
+                  <img [src]="item.image" [alt]="item.name" class="w-full h-full object-contain" />
+                  <span
+                    class="absolute -top-2 -right-2 bg-slate-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full"
+                    >{{ item.quantity }}</span
+                  >
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                  <h4 class="text-xs font-medium text-slate-900 dark:text-white line-clamp-2 mb-1">
+                    {{ item.name }}
+                  </h4>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-primary text-sm">{{ item.price | number: '1.0-0' }}đ</span>
+                    @if (item.isFlashSale) {
+                      <span class="text-[10px] text-slate-400 line-through">{{ item.regularPrice | number:'1.0-0' }}đ</span>
+                      <span class="text-[9px] text-orange-500 font-bold flex-shrink-0">⚡ Flash</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Promo Code Input -->
+          <div class="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
+            <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
+              Mã ưu đãi / Giảm giá
+            </p>
+            <app-coupon-input
+              [totalAmount]="cartService.checkoutSubtotal()"
+              [userId]="authService.currentUserValue?.userId"
+              [items]="getCouponValidationItems()"
+              (couponApplied)="onCouponApplied($event)"
+              (couponRemoved)="onCouponRemoved()"
+            ></app-coupon-input>
+          </div>
+
+          <div class="space-y-3 pt-4 border-t border-slate-100 dark:border-white/10 text-sm">
+            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Tạm tính</span>
+              <span class="font-medium text-slate-900 dark:text-white"
+                >{{ getOriginalSubtotal() | number: '1.0-0' }}đ</span
+              >
+            </div>
+            @if (getFlashSaleDiscount() > 0) {
+              <div
+                class="flex justify-between items-center text-orange-600 dark:text-orange-400 font-medium"
+              >
+                <span>Giảm giá Flash Sale/Sản phẩm</span>
+                <span>-{{ getFlashSaleDiscount() | number: '1.0-0' }}đ</span>
+              </div>
+            }
+            @if (discountAmount > 0) {
+              <div
+                class="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-medium"
+              >
+                <span>Khuyến mãi</span>
+                <span>-{{ discountAmount | number: '1.0-0' }}đ</span>
+              </div>
+            }
+            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+              <span>Phí vận chuyển</span>
+              <span class="font-medium text-emerald-600">Miễn phí</span>
+            </div>
+          </div>
+
+          <div
+            class="flex justify-between items-center pt-4 mt-4 border-t border-slate-100 dark:border-white/10"
+          >
+            <span class="font-bold text-slate-900 dark:text-white text-base">Cần thanh toán</span>
+            <span class="text-3xl font-bold text-red-500"
+              >{{ getFinalAmount() | number: '1.0-0' }}đ</span
+            >
+          </div>
+
+          <button
+            (click)="placeOrder()"
+            [disabled]="isPlacingOrder"
+            class="md:hidden w-full mt-6 py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            @if (isPlacingOrder) {
+              <span class="material-symbols-outlined animate-spin">sync</span> Đang xử lý...
+            } @else {
+              ĐẶT HÀNG NGAY
+            }
+          </button>
+
+          <p class="text-xs text-slate-500 mt-4 text-center">
+            Bằng việc đặt hàng, bạn đồng ý với Điều khoản sử dụng của chúng tôi.
+          </p>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
