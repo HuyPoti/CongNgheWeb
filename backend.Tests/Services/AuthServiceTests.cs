@@ -16,6 +16,7 @@ public class AuthServiceTests : IDisposable
     private readonly Mock<IConfiguration> _mockConfig;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<IEmailService> _mockEmailService;
+    private readonly Mock<IEmailTemplateService> _mockEmailTemplateService;
     private readonly AuthService _service;
 
     public AuthServiceTests()
@@ -49,7 +50,10 @@ public class AuthServiceTests : IDisposable
             .Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
 
-        _service = new AuthService(_context, _mockConfig.Object, _mockMapper.Object, _mockEmailService.Object);
+        _mockEmailTemplateService = new Mock<IEmailTemplateService>();
+
+        var uow = new backend.UnitOfWork.UnitOfWork(_context, _mockMapper.Object);
+        _service = new AuthService(uow, _mockConfig.Object, _mockMapper.Object, _mockEmailService.Object, _mockEmailTemplateService.Object);
     }
 
     public void Dispose()

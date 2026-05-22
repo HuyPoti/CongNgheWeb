@@ -36,7 +36,7 @@ public class OrderService(
             .ToDictionaryAsync(p => p.ProductId, cancellationToken);
 
         if (products.Count != productIds.Count)
-            throw new BadRequestException("One or more products are invalid");
+            throw new NotFoundException("One or more products are invalid");
 
         var orderItems = new List<OrderItem>();
         decimal totalAmount = 0;
@@ -48,7 +48,7 @@ public class OrderService(
                 throw new BadRequestException($"Product {product.Name} is not available");
 
             if (product.StockQuantity < item.Quantity)
-                throw new BadRequestException($"Product {product.Name} does not have enough stock");
+                throw new BadRequestException($"Product {product.Name} has insufficient stock");
 
             var flashPrice = await flashSaleService.GetFlashPriceAsync(product.ProductId, cancellationToken);
             var unitPrice = flashPrice ?? (product.SalePrice.HasValue && product.SalePrice.Value > 0

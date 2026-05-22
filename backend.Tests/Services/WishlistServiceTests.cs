@@ -30,7 +30,8 @@ public class WishlistServiceTests : IDisposable
         var provider = services.BuildServiceProvider();
         var mapper = provider.GetRequiredService<IMapper>();
 
-        _service = new WishlistService(_context, mapper);
+        var uow = new backend.UnitOfWork.UnitOfWork(_context, mapper);
+        _service = new WishlistService(uow, mapper);
     }
 
     public void Dispose()

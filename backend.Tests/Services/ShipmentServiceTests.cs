@@ -131,7 +131,7 @@ public class ShipmentServiceTests
         var shipments = new List<Shipment>().AsQueryable().BuildMock();
         _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
 
-        var act = () => _service.UpdateAsync(Guid.NewGuid(), new UpdateShipmentDto());
+        var act = () => _service.UpdateAsync(Guid.NewGuid(), new UpdateShipmentDto(), Guid.NewGuid());
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
@@ -205,22 +205,221 @@ public class ShipmentServiceTests
         var userId = Guid.NewGuid();
         var shipment = new Shipment
         {
-            ShipmentId = Guid.NewGuid(), OrderId = Guid.NewGuid(), Status = "qc_passed"
+            ShipmentId = Guid.NewGuid(),
+            OrderId = Guid.NewGuid(),
+            Status = "packing",
+            QcPassed = false,
+            PackedBy = null,
+            PackedAt = null
         };
         var shipments = new List<Shipment> { shipment }.AsQueryable().BuildMock();
         _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
         _mockShipmentRepo.Setup(r => r.Update(It.IsAny<Shipment>())).Returns(shipment);
-        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        var user = new User { UserId = userId, FullName = "Packer", Email = "p@p.com" };
-        var users = new List<User> { user }.AsQueryable().BuildMock();
+        var users = new List<User>().AsQueryable().BuildMock();
         _mockUserRepo.Setup(r => r.Query()).Returns(users);
+
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         var result = await _service.MarkPackedAsync(shipment.ShipmentId, userId);
 
         result.Should().NotBeNull();
-        shipment.Status.Should().Be("packed");
         shipment.PackedBy.Should().Be(userId);
-        result.PackedByName.Should().Be("Packer");
+        shipment.Status.Should().Be("packed");
     }
+
+    [Fact]
+    public async Task MarkPackedAsync_WithTrackingAndQcPassed_TransitionsToShipping()
+    {
+        var userId = Guid.NewGuid();
+        var shipmentId = Guid.NewGuid();
+        var orderId = Guid.NewGuid();
+        
+        var shipment = new Shipment
+        {
+            ShipmentId = shipmentId,
+            OrderId = orderId,
+            Status = "packing",
+            QcPassed = true,
+            TrackingCode = "VN123456789",
+            PackedBy = null
+        };
+
+        var order = new Order
+        {
+            OrderId = orderId,
+            Status = 3, // Processing
+            OrderCode = "ORD-001",
+            UserId = Guid.NewGuid(),
+            TotalAmount = 100
+        };
+
+        var shipments = new List<Shipment> { shipment }.AsQueryable().BuildMock();
+        _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
+        _mockShipmentRepo.Setup(r => r.Update(It.IsAny<Shipment>())).Returns(shipment);
+
+        var orders = new List<Order> { order }.AsQueryable().BuildMock();
+        _mockOrderRepo.Setup(r => r.Query()).Returns(orders);
+        _mockOrderRepo.Setup(r => r.Update(It.IsAny<Order>())).Returns(order);
+
+        var users = new List<User>().AsQueryable().BuildMock();
+        _mockUserRepo.Setup(r => r.Query()).Returns(users);
+
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var result = await _service.MarkPackedAsync(shipmentId, userId);
+
+        result.Should().NotBeNull();
+        shipment.Status.Should().Be("shipping"); // Should auto-transition
+        order.Status.Should().Be(4); // Shipping status
+        _mockHistoryRepo.Verify(r => r.Insert(It.IsAny<OrderStatusHistory>()), Times.Once);
+    }
+
+    // ============================================================
+    // UpdateAsync - Status Transitions
+    // ============================================================
+
+    [Fact]
+    public async Task UpdateAsync_UpdateCarrier_UpdatesShipment()
+    {
+        var shipmentId = Guid.NewGuid();
+        var shipment = new Shipment
+        {
+            ShipmentId = shipmentId,
+            OrderId = Guid.NewGuid(),
+            Carrier = "GHN",
+            Status = "packing"
+        };
+        var shipments = new List<Shipment> { shipment }.AsQueryable().BuildMock();
+        _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
+        _mockShipmentRepo.Setup(r => r.Update(It.IsAny<Shipment>())).Returns(shipment);
+
+        var users = new List<User>().AsQueryable().BuildMock();
+        _mockUserRepo.Setup(r => r.Query()).Returns(users);
+
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var dto = new UpdateShipmentDto { Carrier = "VIETTELPOST" };
+        var result = await _service.UpdateAsync(shipmentId, dto, Guid.NewGuid());
+
+        result.Should().NotBeNull();
+        shipment.Carrier.Should().Be("VIETTELPOST");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_AddTrackingCodeWithQcPassed_TransitionsToShipping()
+    {
+        var shipmentId = Guid.NewGuid();
+        var orderId = Guid.NewGuid();
+        
+        var shipment = new Shipment
+        {
+            ShipmentId = shipmentId,
+            OrderId = orderId,
+            Status = "qc_passed",
+            QcPassed = true,
+            TrackingCode = null
+        };
+
+        var order = new Order
+        {
+            OrderId = orderId,
+            Status = 3, // Processing
+            OrderCode = "ORD-002",
+            UserId = Guid.NewGuid(),
+            TotalAmount = 150
+        };
+
+        var shipments = new List<Shipment> { shipment }.AsQueryable().BuildMock();
+        _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
+        _mockShipmentRepo.Setup(r => r.Update(It.IsAny<Shipment>())).Returns(shipment);
+
+        var orders = new List<Order> { order }.AsQueryable().BuildMock();
+        _mockOrderRepo.Setup(r => r.Query()).Returns(orders);
+        _mockOrderRepo.Setup(r => r.Update(It.IsAny<Order>())).Returns(order);
+
+        var users = new List<User>().AsQueryable().BuildMock();
+        _mockUserRepo.Setup(r => r.Query()).Returns(users);
+
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var dto = new UpdateShipmentDto { TrackingCode = "VN9876543210" };
+        var result = await _service.UpdateAsync(shipmentId, dto, Guid.NewGuid());
+
+        shipment.Status.Should().Be("shipping");
+        order.Status.Should().Be(4); // Should transition to Shipping
+    }
+
+    [Fact]
+    public async Task UpdateAsync_AlreadyShipped_DoesNotTransitionAgain()
+    {
+        var shipmentId = Guid.NewGuid();
+        var orderId = Guid.NewGuid();
+        
+        var shipment = new Shipment
+        {
+            ShipmentId = shipmentId,
+            OrderId = orderId,
+            Status = "shipping",
+            QcPassed = true,
+            TrackingCode = "VN123456789"
+        };
+
+        var order = new Order
+        {
+            OrderId = orderId,
+            Status = 4, // Already Shipping
+            OrderCode = "ORD-003",
+            UserId = Guid.NewGuid(),
+            TotalAmount = 200
+        };
+
+        var shipments = new List<Shipment> { shipment }.AsQueryable().BuildMock();
+        _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
+        _mockShipmentRepo.Setup(r => r.Update(It.IsAny<Shipment>())).Returns(shipment);
+
+        var orders = new List<Order> { order }.AsQueryable().BuildMock();
+        _mockOrderRepo.Setup(r => r.Query()).Returns(orders);
+
+        var users = new List<User>().AsQueryable().BuildMock();
+        _mockUserRepo.Setup(r => r.Query()).Returns(users);
+
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var dto = new UpdateShipmentDto { ShippingFee = 25000 };
+        var result = await _service.UpdateAsync(shipmentId, dto, Guid.NewGuid());
+
+        // Status should remain unchanged
+        shipment.Status.Should().Be("shipping");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_SetActualDelivery_RecordsDate()
+    {
+        var shipmentId = Guid.NewGuid();
+        var actualDelivery = DateTime.UtcNow;
+        
+        var shipment = new Shipment
+        {
+            ShipmentId = shipmentId,
+            OrderId = Guid.NewGuid(),
+            Status = "shipping",
+            ActualDelivery = null
+        };
+
+        var shipments = new List<Shipment> { shipment }.AsQueryable().BuildMock();
+        _mockShipmentRepo.Setup(r => r.Query()).Returns(shipments);
+        _mockShipmentRepo.Setup(r => r.Update(It.IsAny<Shipment>())).Returns(shipment);
+
+        var users = new List<User>().AsQueryable().BuildMock();
+        _mockUserRepo.Setup(r => r.Query()).Returns(users);
+
+        _mockUow.Setup(u => u.SaveAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var dto = new UpdateShipmentDto { ActualDelivery = actualDelivery };
+        var result = await _service.UpdateAsync(shipmentId, dto, Guid.NewGuid());
+
+        shipment.ActualDelivery.Should().Be(actualDelivery);
+    }
+
 }

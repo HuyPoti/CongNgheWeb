@@ -53,10 +53,10 @@ public class BannerServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.GetAllAsync(CancellationToken.None);
+        var result = await _service.GetAllAsync(1, 10, CancellationToken.None);
 
         // Assert
-        result.Should().HaveCount(2);
+        result.Items.Should().HaveCount(2);
     }
 
     // ============================================================
@@ -75,11 +75,11 @@ public class BannerServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.GetPublicAsync(CancellationToken.None);
+        var result = await _service.GetPublicAsync(1, 10, CancellationToken.None);
 
         // Assert
-        result.Should().HaveCount(1);
-        result.First().Title.Should().Be("Valid");
+        result.Items.Should().HaveCount(1);
+        result.Items.First().Title.Should().Be("Valid");
     }
 
     // ============================================================

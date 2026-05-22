@@ -29,7 +29,8 @@ public class ProfileServiceTests : IDisposable
         var provider = services.BuildServiceProvider();
         _mapper = provider.GetRequiredService<IMapper>();
 
-        _service = new ProfileService(_context, _mapper);
+        var uow = new backend.UnitOfWork.UnitOfWork(_context, _mapper);
+        _service = new ProfileService(uow, _mapper);
     }
 
     public void Dispose()
