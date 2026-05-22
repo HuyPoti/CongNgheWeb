@@ -70,7 +70,7 @@ public class ProductServiceTests : IDisposable
         _context.Products.Add(new Product { ProductId = Guid.NewGuid(), Name = "P2", Slug = "p2", Sku = "S2", Status = 2, RegularPrice = 200, CategoryId = categoryId, BrandId = brandId });
         await _context.SaveChangesAsync();
 
-        var result = await _service.GetAllAsync(null, null, null, null, CancellationToken.None, 1, 10);
+        var result = await _service.GetAllAsync(new ProductQueryDto { Page = 1, PageSize = 10 }, CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
     }
@@ -219,7 +219,7 @@ public class ProductServiceTests : IDisposable
         _context.Products.Add(new Product { ProductId = Guid.NewGuid(), Name = "P2", Slug = "p2", Sku = "S2", Status = 1, RegularPrice = 200, CategoryId = categoryId, BrandId = brandId }); // Status 1 (draft) shouldn't show
         await _context.SaveChangesAsync();
 
-        var result = await _service.GetProductListAsync(CancellationToken.None, 1, 10);
+        var result = await _service.GetProductListAsync(new ProductQueryDto { Page = 1, PageSize = 10 }, CancellationToken.None);
 
         result.Items.Should().HaveCount(1);
         result.Items.First().Name.Should().Be("P1");

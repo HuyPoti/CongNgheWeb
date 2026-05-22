@@ -58,12 +58,12 @@ public class NewsServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.GetAllAsync(CancellationToken.None);
+        var result = await _service.GetAllAsync(1, 10, CancellationToken.None);
 
         // Assert
-        result.Should().HaveCount(2);
-        result.First().CategoryName.Should().Be("Cat1");
-        result.First().AuthorName.Should().Be("Author1");
+        result.Items.Should().HaveCount(2);
+        result.Items.First().CategoryName.Should().Be("Cat1");
+        result.Items.First().AuthorName.Should().Be("Author1");
     }
 
     [Fact]
