@@ -329,6 +329,16 @@ public class CouponService(IUnitOfWork uow, IMapper mapper, IActivityLogService 
 		return mapper.Map<CouponDto>(coupon);
 	}
 
+	public async Task<CouponDto> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
+	{
+		var normalizedCode = code.Trim().ToUpperInvariant();
+		var coupon = await uow.Coupons.Query()
+			.FirstOrDefaultAsync(x => x.Code == normalizedCode, cancellationToken)
+			?? throw new NotFoundException("Mã giảm giá không tồn tại");
+
+		return mapper.Map<CouponDto>(coupon);
+	}
+
 	private static CouponValidationResultDto InvalidResult(string message, decimal totalAmount) =>
 		new()
 		{

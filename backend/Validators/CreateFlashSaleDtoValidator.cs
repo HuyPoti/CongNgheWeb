@@ -7,8 +7,16 @@ public class CreateFlashSaleDtoValidator : AbstractValidator<CreateFlashSaleDto>
 {
     public CreateFlashSaleDtoValidator()
     {
-        RuleFor(x => x.Title).NotEmpty();
-        RuleFor(x => x.StartTime).NotEmpty();
-        RuleFor(x => x.EndTime).GreaterThan(x => x.StartTime);
+        RuleFor(x => x.Title)
+            .NotEmpty()
+            .MinimumLength(3)
+            .MaximumLength(100);
+
+        RuleFor(x => x.StartTime)
+            .NotEmpty();
+
+        RuleFor(x => x.EndTime)
+            .NotEmpty()
+            .GreaterThan(x => x.StartTime);
     }
 }

@@ -23,7 +23,7 @@ export class CouponsComponent implements OnInit {
 
   myCoupons = signal<CouponDto[]>([]);
   isLoading = signal(true);
-  
+
   // Nhập mã nhận coupon
   inputCode = '';
   isValidating = signal(false);
@@ -38,7 +38,7 @@ export class CouponsComponent implements OnInit {
 
   loadMyCoupons(): void {
     this.isLoading.set(true);
-    
+
     // Bảo vệ khi render ở phía Server (Node.js / SSR)
     if (!isPlatformBrowser(this.platformId)) {
       this.myCoupons.set([]);
@@ -52,7 +52,7 @@ export class CouponsComponent implements OnInit {
         const list = JSON.parse(stored) as CouponDto[];
         // Filter out expired coupons
         const now = new Date();
-        const activeList = list.filter(c => new Date(c.endDate) >= now);
+        const activeList = list.filter((c) => new Date(c.endDate) >= now);
         this.myCoupons.set(activeList);
         localStorage.setItem('collected_coupons', JSON.stringify(activeList));
       } else {
@@ -76,31 +76,28 @@ export class CouponsComponent implements OnInit {
     this.isValidating.set(true);
     const code = this.inputCode.trim().toUpperCase();
 
-    // Dùng subtotal giỏ hàng hiện tại hoặc giả lập 100,000đ nếu giỏ trống để test
-    const subtotal = this.cartService.subtotal() || 100000;
-    const userId = this.auth.currentUserValue?.userId;
-
-    this.couponService.validate({
-      code: code,
-      totalAmount: subtotal,
-      userId: userId
-    }).subscribe({
-      next: (res) => {
+    this.couponService.getByCode(code).subscribe({
+      next: (coupon) => {
         this.isValidating.set(false);
-        if (res.isValid && res.couponId) {
-          // Lấy thông tin chi tiết coupon để lưu vào ví
-          this.couponService.getById(res.couponId).subscribe({
-            next: (coupon) => {
-              this.validatedCoupon.set(coupon);
-              this.addCouponToWallet(coupon);
-            },
-            error: () => {
-              this.toast.error('Lỗi khi tải thông tin chi tiết coupon');
-            }
-          });
-        } else {
-          this.toast.error(res.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn');
-          this.validatedCoupon.set(null);
+        if (coupon) {
+          // Check if it's active and not expired
+          const now = new Date();
+          const endDate = new Date(coupon.endDate);
+          const startDate = new Date(coupon.startDate);
+
+          if (!coupon.isActive || now > endDate) {
+            this.toast.error('Mã giảm giá đã hết hạn hoặc không còn hoạt động');
+            this.validatedCoupon.set(null);
+            return;
+          }
+          if (now < startDate) {
+            this.toast.error('Mã giảm giá này chưa đến thời gian sử dụng');
+            this.validatedCoupon.set(null);
+            return;
+          }
+
+          this.validatedCoupon.set(coupon);
+          this.addCouponToWallet(coupon);
         }
       },
       error: (err) => {
@@ -108,45 +105,29 @@ export class CouponsComponent implements OnInit {
         const errMsg = err?.error?.message || 'Không thể kiểm tra mã lúc này';
         this.toast.error(errMsg);
         this.validatedCoupon.set(null);
-      }
+      },
     });
   }
 
   // Thêm Coupon vào ví cá nhân và lưu trữ
   addCouponToWallet(coupon: CouponDto): void {
     const list = [...this.myCoupons()];
-    const exists = list.some(c => c.code === coupon.code);
+    const exists = list.some((c) => c.code === coupon.code);
     if (!exists) {
       list.unshift(coupon);
       this.myCoupons.set(list);
       if (isPlatformBrowser(this.platformId)) {
         localStorage.setItem('collected_coupons', JSON.stringify(list));
       }
-      this.toast.success(`Chúc mừng! Bạn đã nhận và lưu thành công mã giảm giá [${coupon.code}] vào ví.`);
+      this.toast.success(
+        `Chúc mừng! Bạn đã nhận và lưu thành công mã giảm giá [${coupon.code}] vào ví.`,
+      );
     } else {
       this.toast.info(`Mã giảm giá [${coupon.code}] đã có sẵn trong ví của bạn.`);
     }
   }
 
-  // Lưu Coupon trực tiếp vào giỏ hàng
-  saveToCart(coupon: CouponDto): void {
-    if (this.isExpired(coupon.endDate)) {
-      this.toast.error('Mã giảm giá này đã hết hạn, không thể áp dụng!');
-      return;
-    }
-    this.cartService.setAppliedCoupon(coupon.code);
-    this.toast.success(`Đã lưu mã [${coupon.code}]! Mã sẽ tự động áp dụng khi thanh toán.`);
-    
-    // Xóa ô nhập và thông tin validated
-    if (this.validatedCoupon()?.code === coupon.code) {
-      this.validatedCoupon.set(null);
-      this.inputCode = '';
-    }
-  }
 
-  isCouponApplied(code: string): boolean {
-    return this.cartService.appliedCoupon() === code;
-  }
 
   // Sao chép mã coupon
   copyCode(code: string): void {

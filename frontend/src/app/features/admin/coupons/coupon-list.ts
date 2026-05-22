@@ -80,6 +80,10 @@ export class CouponListComponent implements OnInit {
   }
 
   onFormSave() {
+    const msg = this.isEditMode()
+      ? 'Cập nhật mã giảm giá thành công!'
+      : 'Tạo mã giảm giá mới thành công!';
+    this.toast.success(msg);
     this.loadCoupons();
   }
 

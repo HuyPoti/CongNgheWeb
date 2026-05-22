@@ -6,6 +6,7 @@ import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
 import { PaymentService, PaymentResponse } from '../../../core/services/payment.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { CouponInputComponent, AppliedCoupon } from '../../../shared/components/coupon-input';
 
 interface ShippingAddress {
@@ -28,6 +29,7 @@ export class Payment implements OnInit {
   private orderService = inject(OrderService);
   private paymentService = inject(PaymentService);
   private toastService = inject(ToastService);
+  authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
   cartService = inject(CartService);
 
@@ -58,9 +60,9 @@ export class Payment implements OnInit {
   }
 
   getCouponValidationItems() {
-    return this.cartService.checkoutItems().map(item => ({
+    return this.cartService.checkoutItems().map((item) => ({
       productId: item.id,
-      quantity: item.quantity
+      quantity: item.quantity,
     }));
   }
 
@@ -74,8 +76,20 @@ export class Payment implements OnInit {
     this.cdr.detectChanges();
   }
 
+  getFlashSaleDiscount() {
+    return this.cartService.checkoutItems().reduce((acc, item) => {
+      const discount = Math.max(item.regularPrice - item.price, 0) * item.quantity;
+      return acc + discount;
+    }, 0);
+  }
+
+  getOriginalSubtotal() {
+    return this.cartService.checkoutItems().reduce((acc, item) => acc + item.regularPrice * item.quantity, 0);
+  }
+
   getFinalAmount() {
-    return Math.max(this.cartService.checkoutSubtotal() - this.discountAmount, 0);
+    const flashSaleDiscount = this.getFlashSaleDiscount();
+    return Math.max(this.getOriginalSubtotal() - flashSaleDiscount - this.discountAmount, 0);
   }
 
   placeOrder() {
@@ -92,7 +106,7 @@ export class Payment implements OnInit {
         quantity: item.quantity,
       })),
       notes: 'Created from web checkout flow',
-      couponCode: this.cartService.appliedCoupon() || undefined
+      couponCode: this.cartService.appliedCoupon() || undefined,
     };
 
     this.orderService.create(payload).subscribe({
@@ -103,9 +117,10 @@ export class Payment implements OnInit {
         const paymentRequest = {
           orderId: order.orderId,
           paymentMethod: this.paymentMethod,
-          returnUrl: this.paymentMethod === 'vnpay'
-            ? window.location.origin + '/cart/vnpay-return'
-            : undefined,
+          returnUrl:
+            this.paymentMethod === 'vnpay'
+              ? window.location.origin + '/cart/vnpay-return'
+              : undefined,
         };
 
         this.paymentService.create(paymentRequest).subscribe({
@@ -115,7 +130,9 @@ export class Payment implements OnInit {
 
             if (this.paymentMethod === 'bank_transfer') {
               this.showBankInfo = true;
-              this.toastService.success('Đơn hàng đã tạo! Vui lòng chuyển khoản theo thông tin bên dưới.');
+              this.toastService.success(
+                'Đơn hàng đã tạo! Vui lòng chuyển khoản theo thông tin bên dưới.',
+              );
               this.cdr.detectChanges();
             } else if (this.paymentMethod === 'cod') {
               this.toastService.success(`Đặt hàng thành công! Mã đơn: ${order.orderCode}`);

@@ -16,11 +16,7 @@ public class FlashSaleService(IUnitOfWork uow, IMapper mapper, IActivityLogServi
 		CreateFlashSaleDto dto,
 		CancellationToken cancellationToken = default)
 	{
-		if (string.IsNullOrWhiteSpace(dto.Title))
-			throw new BadRequestException("Flash sale title is required");
-
-		if (dto.EndTime <= dto.StartTime)
-			throw new BadRequestException("EndTime must be greater than StartTime");
+		ValidateFlashSaleWindow(dto.Title, dto.StartTime, dto.EndTime);
 
 		// M5: chỉ một flash sale active tại cùng một thời điểm.
 		if (dto.IsActive)
@@ -80,13 +76,145 @@ public class FlashSaleService(IUnitOfWork uow, IMapper mapper, IActivityLogServi
 			.ToPagedResultAsync(page, pageSize, cancellationToken);
 	}
 
+	public async Task<FlashSaleDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+	{
+		var flashSale = await uow.FlashSales.Query()
+			.Include(x => x.Items)
+			.ThenInclude(i => i.Product)
+			.FirstOrDefaultAsync(x => x.FlashSaleId == id, cancellationToken)
+			?? throw new NotFoundException("Flash sale not found");
+
+		return mapper.Map<FlashSaleDto>(flashSale);
+	}
+
+	public async Task<FlashSaleDto> UpdateAsync(
+		Guid id,
+		UpdateFlashSaleDto dto,
+		CancellationToken cancellationToken = default)
+	{
+		var flashSale = await uow.FlashSales.Query()
+			.FirstOrDefaultAsync(x => x.FlashSaleId == id, cancellationToken)
+			?? throw new NotFoundException("Flash sale not found");
+
+		var nextTitle = string.IsNullOrWhiteSpace(dto.Title) ? flashSale.Title : dto.Title.Trim();
+		var nextStartTime = dto.StartTime.HasValue
+			? DateTime.SpecifyKind(dto.StartTime.Value, DateTimeKind.Utc)
+			: flashSale.StartTime;
+		var nextEndTime = dto.EndTime.HasValue
+			? DateTime.SpecifyKind(dto.EndTime.Value, DateTimeKind.Utc)
+			: flashSale.EndTime;
+		var nextIsActive = dto.IsActive ?? flashSale.IsActive;
+
+		ValidateFlashSaleWindow(nextTitle, nextStartTime, nextEndTime);
+
+		if (nextIsActive)
+		{
+			var hasOverlappingActiveSale = await uow.FlashSales.Query()
+				.AnyAsync(x => x.FlashSaleId != id
+					&& x.IsActive
+					&& x.StartTime < nextEndTime
+					&& nextStartTime < x.EndTime,
+					cancellationToken);
+
+			if (hasOverlappingActiveSale)
+				throw new BadRequestException("There is already an active flash sale in the selected time range");
+		}
+
+		var oldValue = new
+		{
+			flashSale.FlashSaleId,
+			flashSale.Title,
+			flashSale.StartTime,
+			flashSale.EndTime,
+			flashSale.IsActive
+		};
+
+		flashSale.Title = nextTitle;
+		flashSale.StartTime = nextStartTime;
+		flashSale.EndTime = nextEndTime;
+		flashSale.IsActive = nextIsActive;
+
+		await uow.SaveAsync(cancellationToken);
+
+		await activityLogService.LogIfHasUserAsync(
+			flashSale.CreatedBy,
+			"flashsale.update",
+			"flash_sale",
+			flashSale.FlashSaleId,
+			oldValue,
+			new
+			{
+				flashSale.FlashSaleId,
+				flashSale.Title,
+				flashSale.StartTime,
+				flashSale.EndTime,
+				flashSale.IsActive
+			},
+			cancellationToken);
+
+		var updated = await uow.FlashSales.Query()
+			.Include(x => x.Items)
+			.ThenInclude(i => i.Product)
+			.FirstAsync(x => x.FlashSaleId == id, cancellationToken);
+
+		return mapper.Map<FlashSaleDto>(updated);
+	}
+
+	public async Task<FlashSaleDto> DeactivateAsync(Guid id, CancellationToken cancellationToken = default)
+	{
+		var flashSale = await uow.FlashSales.Query()
+			.Include(x => x.Items)
+			.ThenInclude(i => i.Product)
+			.FirstOrDefaultAsync(x => x.FlashSaleId == id, cancellationToken)
+			?? throw new NotFoundException("Flash sale not found");
+
+		if (!flashSale.IsActive)
+			return mapper.Map<FlashSaleDto>(flashSale);
+
+		var oldValue = new
+		{
+			flashSale.FlashSaleId,
+			flashSale.Title,
+			flashSale.StartTime,
+			flashSale.EndTime,
+			flashSale.IsActive
+		};
+
+		flashSale.IsActive = false;
+		if (flashSale.EndTime > DateTime.UtcNow)
+		{
+			flashSale.EndTime = DateTime.UtcNow;
+		}
+
+		await uow.SaveAsync(cancellationToken);
+
+		await activityLogService.LogIfHasUserAsync(
+			flashSale.CreatedBy,
+			"flashsale.deactivate",
+			"flash_sale",
+			flashSale.FlashSaleId,
+			oldValue,
+			new
+			{
+				flashSale.FlashSaleId,
+				flashSale.Title,
+				flashSale.StartTime,
+				flashSale.EndTime,
+				flashSale.IsActive
+			},
+			cancellationToken);
+
+		return mapper.Map<FlashSaleDto>(flashSale);
+	}
+
 	public async Task<FlashSaleDto?> GetActiveAsync(CancellationToken cancellationToken = default)
 	{
 		var now = DateTime.UtcNow;
 
 		var active = await uow.FlashSales.Query()
 			.Include(x => x.Items)
-			.ThenInclude(i => i.Product)
+				.ThenInclude(i => i.Product)
+					.ThenInclude(p => p.Images)
 			.Where(x => x.IsActive && x.StartTime <= now && x.EndTime >= now)
 			.OrderBy(x => x.StartTime)
 			.FirstOrDefaultAsync(cancellationToken);
@@ -170,20 +298,33 @@ public class FlashSaleService(IUnitOfWork uow, IMapper mapper, IActivityLogServi
 		uow.FlashSaleItems.Insert(item);
 		await uow.SaveAsync(cancellationToken);
 
-		await activityLogService.LogIfHasUserAsync(
-			flashSale.CreatedBy,
-			"flashsale.item.add",
-			"flash_sale_item",
-			item.Id,
-			null,
-			item,
-			cancellationToken);
+		try
+		{
+			await activityLogService.LogIfHasUserAsync(
+				flashSale.CreatedBy,
+				"flashsale.item.add",
+				"flash_sale_item",
+				item.Id,
+				null,
+				item,
+				cancellationToken);
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"[FLASHSALE_ITEM_LOG_ERROR] {ex.Message}");
+		}
 
-		var saved = await uow.FlashSaleItems.Query()
-			.Include(x => x.Product)
-			.FirstAsync(x => x.Id == item.Id, cancellationToken);
-
-		return mapper.Map<FlashSaleItemDto>(saved);
+		return new FlashSaleItemDto
+		{
+			Id = item.Id,
+			FlashSaleId = item.FlashSaleId,
+			ProductId = item.ProductId,
+			ProductName = product.Name,
+			FlashPrice = item.FlashPrice,
+			StockLimit = item.StockLimit,
+			SoldCount = item.SoldCount,
+			IsSoldOut = item.SoldCount >= item.StockLimit
+		};
 	}
 
 	public async Task RemoveItemAsync(
@@ -243,5 +384,17 @@ public class FlashSaleService(IUnitOfWork uow, IMapper mapper, IActivityLogServi
 			cancellationToken);
 
 		return affectedRows > 0;
+	}
+
+	private static void ValidateFlashSaleWindow(string? title, DateTime startTime, DateTime endTime)
+	{
+		if (string.IsNullOrWhiteSpace(title))
+			throw new BadRequestException("Flash sale title is required");
+
+		if (title.Trim().Length < 3 || title.Trim().Length > 100)
+			throw new BadRequestException("Flash sale title must be between 3 and 100 characters");
+
+		if (endTime <= startTime)
+			throw new BadRequestException("EndTime must be greater than StartTime");
 	}
 }

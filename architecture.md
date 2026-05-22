@@ -407,3 +407,10 @@ Hệ thống tuân thủ các quy chuẩn thiết kế Class Diagram chuyên ngh
 - `1...*`: Ít nhất phải có 1.
 
 > Chi tiết cấu trúc các lớp theo chuẩn này được trình bày tại [class_diagram.md](file:///d:/Workspace/Cong_Nghe_Web/class_diagram.md).
+
+---
+
+## 10. Frontend Maintenance Notes
+
+- `src/app/features/coupons/coupons.html`: Trang coupon cua user dung Angular control flow (`@if`, `@for`). Khi chinh sua template can giu so block mo/dong chinh xac; fragment template bi lap hoac block dong du se gay loi bien dich `NG5002`.
+- `src/app/features/product/product-detail/product-detail.ts`: Component `ProductDetail` phu trach tai du lieu san pham theo `slug`, dong bo brand, reviews va flash sale. Chi nen duy tri mot implementation cho `loadProduct(slug)` de tranh loi `TS2393`.

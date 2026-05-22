@@ -1,7 +1,9 @@
-import { Component, inject, signal, effect, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FlashSaleService, FlashSaleDto, PagedResult } from '../../../core/services/flash-sale.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
+import { FlashSaleDto, FlashSaleService, PagedResult } from '../../../core/services/flash-sale.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { FlashSaleFormComponent } from './flash-sale-form';
 import { FlashSaleItemsComponent } from './flash-sale-items';
 
@@ -12,11 +14,13 @@ import { FlashSaleItemsComponent } from './flash-sale-items';
   templateUrl: './flash-sale-list.html'
 })
 export class FlashSaleListComponent implements OnInit {
-  private flashSaleService = inject(FlashSaleService);
+  private readonly flashSaleService = inject(FlashSaleService);
+  private readonly toast = inject(ToastService);
+  private readonly confirmService = inject(ConfirmService);
+  private readonly platformId = inject(PLATFORM_ID);
 
   flashSales = signal<FlashSaleDto[]>([]);
   loading = signal(false);
-  error = signal<string | null>(null);
   page = signal(1);
   pageSize = signal(10);
   totalCount = signal(0);
@@ -26,20 +30,16 @@ export class FlashSaleListComponent implements OnInit {
   selectedFlashSale = signal<FlashSaleDto | null>(null);
   isItemsOpen = signal(false);
 
-  constructor() {
-    effect(() => {
-      this.loadFlashSales();
-    });
-  }
-
   ngOnInit() {
+    if (!isPlatformBrowser(this.platformId)) return;
     this.loadFlashSales();
   }
 
   loadFlashSales() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.loading.set(true);
-    this.error.set(null);
-    
+
     this.flashSaleService.getAll({
       page: this.page(),
       pageSize: this.pageSize()
@@ -50,8 +50,8 @@ export class FlashSaleListComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set('Lỗi tải dữ liệu: ' + (err?.message || 'Unknown error'));
         this.loading.set(false);
+        this.toast.error(err?.error?.message || 'Khong the tai danh sach flash sale');
       }
     });
   }
@@ -84,24 +84,41 @@ export class FlashSaleListComponent implements OnInit {
   }
 
   onFormSave() {
+    this.closeForm();
     this.loadFlashSales();
   }
 
   getStatus(fs: FlashSaleDto): string {
+    if (!fs.isActive) return 'Da tat';
+
     const now = new Date();
     const start = new Date(fs.startTime);
     const end = new Date(fs.endTime);
-    
-    if (now < start) return 'Sắp diễn ra';
-    if (now > end) return 'Đã kết thúc';
-    return 'Đang diễn ra';
+
+    if (now < start) return 'Sap dien ra';
+    if (now > end) return 'Da ket thuc';
+    return 'Dang dien ra';
   }
 
-  deleteFlashSale(id: string) {
-    if(confirm('Bạn có chắc muốn xóa chương trình này?')) {
-      // Backend doesn't have delete endpoint yet - can implement PUT to mark inactive or add DELETE
-      alert('Chức năng xóa chưa hỗ trợ - vui lòng liên hệ admin');
-    }
+  async deleteFlashSale(id: string) {
+    const isConfirmed = await this.confirmService.confirm(
+      'Ban co chac muon xoa mem chuong trinh flash sale nay?',
+      'Xoa mem flash sale',
+      'danger'
+    );
+    if (!isConfirmed) return;
+
+    this.loading.set(true);
+
+    this.flashSaleService.delete(id).subscribe({
+      next: () => {
+        this.toast.success('Da xoa mem flash sale thanh cong');
+        this.loadFlashSales();
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.toast.error(err?.error?.message || 'Khong the xoa mem flash sale');
+      }
+    });
   }
 }
-

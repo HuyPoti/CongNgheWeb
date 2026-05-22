@@ -67,6 +67,7 @@ export class WishlistComponent implements OnInit {
       price: item.discountPrice || item.price,
       regularPrice: item.price,
       salePrice: item.discountPrice || null,
+      isFlashSale: false,
       image: item.productImage || '',
       category: '',
       brand: '',

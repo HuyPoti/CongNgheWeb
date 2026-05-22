@@ -531,6 +531,7 @@ export class BuildPc {
       price: p.price,
       regularPrice: p.regularPrice,
       salePrice: p.salePrice,
+      isFlashSale: p.isFlashSale,
       image: p.thumbnailUrl ?? '',
       category: p.categoryName,
       brand: p.brandName,

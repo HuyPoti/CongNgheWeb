@@ -1,41 +1,48 @@
 <div class="p-8">
-  <div class="flex items-end justify-between mb-8">
+  <div class="mb-8 flex items-end justify-between">
     <div>
-      <h2 class="text-3xl font-black text-slate-800 dark:text-slate-100 mb-2">Chiến dịch Flash Sale</h2>
-      <p class="text-slate-500">Tổng: {{ flashSales().length }} chiến dịch</p>
+      <h2 class="mb-2 text-3xl font-black text-slate-800 dark:text-slate-100">Chien dich Flash Sale</h2>
+      <p class="text-slate-500">Tong: {{ flashSales().length }} chien dich</p>
     </div>
-    <button (click)="openCreateForm()" class="flex items-center gap-2 bg-primary hover:bg-primary/80 text-slate-900 dark:text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
-      <span class="material-symbols-outlined text-sm">add</span> Tạo chiến dịch
+    <button
+      (click)="openCreateForm()"
+      class="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-primary/80 dark:text-white">
+      <span class="material-symbols-outlined text-sm">add</span>
+      Tao chien dich
     </button>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
     @if (loading()) {
-      <div class="col-span-full text-center py-10 text-slate-500 dark:text-slate-400">Đang tải...</div>
+      <div class="col-span-full py-10 text-center text-slate-500 dark:text-slate-400">Dang tai...</div>
     } @else if (flashSales().length === 0) {
-      <div class="col-span-full text-center py-10 text-slate-500 dark:text-slate-400">Không có dữ liệu</div>
+      <div class="col-span-full py-10 text-center text-slate-500 dark:text-slate-400">Khong co du lieu</div>
     } @else {
       @for (fs of flashSales(); track fs.flashSaleId) {
-        <div class="bg-white dark:bg-surface-dark border border-primary/10 rounded-3xl overflow-hidden shadow-sm hover:shadow-primary/5 transition-all group">
+        <div class="group overflow-hidden rounded-3xl border border-primary/10 bg-white shadow-sm transition-all hover:shadow-primary/5 dark:bg-surface-dark">
           <div class="p-8">
-            <div class="flex items-center justify-between mb-6">
-              <span [class]="fs.isActive ? 'bg-primary/10 text-primary border-primary/20' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-700'" 
-                    class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border">
+            <div class="mb-6 flex items-center justify-between">
+              <span
+                [class]="fs.isActive ? 'border-primary/20 bg-primary/10 text-primary' : 'border-slate-700 bg-white text-slate-500 dark:bg-slate-800'"
+                class="rounded-full border px-4 py-1.5 text-[10px] font-black uppercase tracking-widest">
                 {{ getStatus(fs) }}
               </span>
+
               <div class="flex gap-2">
-                <button (click)="openEditForm(fs)" class="p-2 text-slate-500 hover:text-primary transition-colors">
+                <button (click)="openEditForm(fs)" class="p-2 text-slate-500 transition-colors hover:text-primary" type="button">
                   <span class="material-symbols-outlined text-sm">edit</span>
                 </button>
-                <button (click)="deleteFlashSale(fs.flashSaleId)" class="p-2 text-slate-500 hover:text-red-400 transition-colors">
+                <button (click)="deleteFlashSale(fs.flashSaleId)" class="p-2 text-slate-500 transition-colors hover:text-red-400" type="button">
                   <span class="material-symbols-outlined text-sm">delete</span>
                 </button>
               </div>
             </div>
 
-            <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100 mb-6 group-hover:text-primary transition-colors">{{ fs.title }}</h3>
-            
-            <div class="space-y-4 mb-8">
+            <h3 class="mb-6 text-xl font-bold text-slate-800 transition-colors group-hover:text-primary dark:text-slate-100">
+              {{ fs.title }}
+            </h3>
+
+            <div class="mb-8 space-y-4">
               <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                 <span class="material-symbols-outlined text-sm">calendar_today</span>
                 <span class="text-sm font-medium">{{ fs.startTime | date:'dd/MM/yyyy' }}</span>
@@ -46,14 +53,16 @@
               </div>
               <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                 <span class="material-symbols-outlined text-sm">inventory_2</span>
-                <span class="text-sm font-medium">{{ fs.items.length }} sản phẩm tham gia</span>
+                <span class="text-sm font-medium">{{ fs.items.length }} san pham tham gia</span>
               </div>
             </div>
 
-            <button (click)="openItemsModal(fs)" class="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
-                    [class]="fs.isActive ? 'bg-primary text-background-dark shadow-lg shadow-primary/20 hover:scale-[1.02]' : 'bg-white dark:bg-slate-800 text-slate-500 cursor-not-allowed'"
-                    [disabled]="!fs.isActive">
-              Quản lý sản phẩm
+            <button
+              (click)="openItemsModal(fs)"
+              class="w-full rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-all"
+              [class]="fs.isActive ? 'bg-primary text-background-dark shadow-lg shadow-primary/20 hover:scale-[1.02]' : 'cursor-not-allowed bg-white text-slate-500 dark:bg-slate-800'"
+              [disabled]="!fs.isActive">
+              Quan ly san pham
             </button>
           </div>
         </div>
@@ -62,8 +71,7 @@
   </div>
 </div>
 
-<!-- Flash Sale Form Modal -->
-<app-flash-sale-form 
+<app-flash-sale-form
   [isOpen]="isFormOpen()"
   [isEditMode]="isEditMode()"
   [flashSaleData]="selectedFlashSale()"
@@ -71,11 +79,9 @@
   (close)="closeForm()">
 </app-flash-sale-form>
 
-<!-- Flash Sale Items Modal -->
-<app-flash-sale-items 
+<app-flash-sale-items
   [isOpen]="isItemsOpen()"
   [flashSaleData]="selectedFlashSale()"
   (itemsUpdated)="onFormSave()"
   (close)="closeItemsModal()">
 </app-flash-sale-items>
-

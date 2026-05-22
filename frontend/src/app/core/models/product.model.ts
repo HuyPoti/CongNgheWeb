@@ -16,6 +16,7 @@ export interface ProductListItemDto {
   brandId: string;
   stockQuantity: number;
   warrantyMonths: number;
+  isFlashSale: boolean;
 }
 
 export interface ProductDto {
@@ -138,6 +139,7 @@ export interface ProductCard {
   stockQuantity: number;
   warrantyMonths: number;
   specs: Record<string, string>;
+  isFlashSale: boolean;
 }
 
 // Giu lai de tuong thich voi cac component cu (reviews, comparison)

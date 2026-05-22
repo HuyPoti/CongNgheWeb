@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FlashSaleService } from '../../../core/services/flash-sale.service';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { FlashSaleDto, FlashSaleService } from '../../../core/services/flash-sale.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-flash-sale-form',
@@ -13,50 +14,50 @@ import { takeUntil } from 'rxjs/operators';
     <div class="modal-overlay" *ngIf="isOpen" (click)="onCancel()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>{{ isEditMode ? 'Sửa Flash Sale' : 'Tạo Flash Sale Mới' }}</h2>
-          <button class="close-btn" (click)="onCancel()">✕</button>
+          <h2>{{ isEditMode ? 'Sua Flash Sale' : 'Tao Flash Sale Moi' }}</h2>
+          <button class="close-btn" type="button" (click)="onCancel()">x</button>
         </div>
 
         <form [formGroup]="flashSaleForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
-            <label>Tên Flash Sale</label>
-            <input type="text" formControlName="title" placeholder="VD: Flash Sale Hè 2026" />
-            <span class="error" *ngIf="flashSaleForm.get('title')?.errors && flashSaleForm.get('title')?.touched">
+            <label for="flash-sale-title">Ten Flash Sale</label>
+            <input id="flash-sale-title" type="text" formControlName="title" placeholder="VD: Flash Sale He 2026" />
+            <span class="error" *ngIf="shouldShowFieldError('title')">
               {{ getErrorMessage('title') }}
             </span>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Thời Gian Bắt Đầu</label>
-              <input type="datetime-local" formControlName="startTime" />
-              <span class="error" *ngIf="flashSaleForm.get('startTime')?.errors && flashSaleForm.get('startTime')?.touched">
+              <label for="flash-sale-start-time">Thoi Gian Bat Dau</label>
+              <input id="flash-sale-start-time" type="datetime-local" formControlName="startTime" />
+              <span class="error" *ngIf="shouldShowFieldError('startTime') || flashSaleForm.hasError('startInPast')">
                 {{ getErrorMessage('startTime') }}
               </span>
             </div>
 
             <div class="form-group">
-              <label>Thời Gian Kết Thúc</label>
-              <input type="datetime-local" formControlName="endTime" />
-              <span class="error" *ngIf="flashSaleForm.get('endTime')?.errors && flashSaleForm.get('endTime')?.touched">
+              <label for="flash-sale-end-time">Thoi Gian Ket Thuc</label>
+              <input id="flash-sale-end-time" type="datetime-local" formControlName="endTime" />
+              <span class="error" *ngIf="shouldShowFieldError('endTime') || flashSaleForm.hasError('invalidRange')">
                 {{ getErrorMessage('endTime') }}
               </span>
             </div>
           </div>
 
           <div class="form-group checkbox">
-            <input type="checkbox" formControlName="isActive" />
-            <label>Kích Hoạt</label>
+            <input id="flash-sale-active" type="checkbox" formControlName="isActive" />
+            <label for="flash-sale-active">Kich Hoat</label>
           </div>
 
-          <div class="error-message" *ngIf="apiError">
-            {{ apiError }}
+          <div class="hint">
+            Flash sale dang bat buoc co thoi gian ket thuc sau thoi gian bat dau. Khi tao moi, thoi gian bat dau khong duoc nam trong qua khu.
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn-cancel" (click)="onCancel()">Hủy</button>
-            <button type="submit" class="btn-submit" [disabled]="loading || !flashSaleForm.valid">
-              {{ loading ? 'Đang lưu...' : (isEditMode ? 'Cập Nhật' : 'Tạo') }}
+            <button type="button" class="btn-cancel" (click)="onCancel()">Huy</button>
+            <button type="submit" class="btn-submit" [disabled]="loading() || flashSaleForm.invalid">
+              {{ loading() ? 'Dang luu...' : (isEditMode ? 'Cap Nhat' : 'Tao') }}
             </button>
           </div>
         </form>
@@ -81,7 +82,7 @@ import { takeUntil } from 'rxjs/operators';
       background: white;
       border-radius: 8px;
       width: 90%;
-      max-width: 500px;
+      max-width: 560px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
@@ -103,7 +104,7 @@ import { takeUntil } from 'rxjs/operators';
     .close-btn {
       background: none;
       border: none;
-      font-size: 24px;
+      font-size: 20px;
       cursor: pointer;
       color: #666;
     }
@@ -130,7 +131,7 @@ import { takeUntil } from 'rxjs/operators';
       font-size: 14px;
     }
 
-    input, select {
+    input {
       width: 100%;
       padding: 10px;
       border: 1px solid #d0d0d0;
@@ -139,7 +140,7 @@ import { takeUntil } from 'rxjs/operators';
       font-family: inherit;
     }
 
-    input:focus, select:focus {
+    input:focus {
       outline: none;
       border-color: #007bff;
       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
@@ -160,29 +161,29 @@ import { takeUntil } from 'rxjs/operators';
       margin: 0;
     }
 
-    .error {
-      color: #dc3545;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .error-message {
-      color: #dc3545;
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
+    .hint {
+      color: #64748b;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       padding: 12px;
       border-radius: 4px;
       margin-bottom: 16px;
-      font-size: 14px;
+      font-size: 13px;
+    }
+
+    .error {
+      color: #dc2626;
+      font-size: 12px;
+      margin-top: 4px;
+      display: block;
     }
 
     .modal-footer {
       display: flex;
       gap: 12px;
       justify-content: flex-end;
-      padding: 20px;
+      padding-top: 20px;
       border-top: 1px solid #e0e0e0;
-      background: #f8f9fa;
     }
 
     .btn-cancel, .btn-submit {
@@ -195,46 +196,47 @@ import { takeUntil } from 'rxjs/operators';
     }
 
     .btn-cancel {
-      background: #e0e0e0;
-      color: #333;
-    }
-
-    .btn-cancel:hover {
-      background: #d0d0d0;
+      background: #e2e8f0;
+      color: #334155;
     }
 
     .btn-submit {
-      background: #007bff;
+      background: #2563eb;
       color: white;
     }
 
-    .btn-submit:hover:not(:disabled) {
-      background: #0056b3;
-    }
-
     .btn-submit:disabled {
-      background: #ccc;
+      background: #94a3b8;
       cursor: not-allowed;
     }
   `]
 })
-export class FlashSaleFormComponent implements OnInit, OnDestroy {
+export class FlashSaleFormComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isOpen = false;
   @Input() isEditMode = false;
-  @Input() flashSaleData: any;
-  @Output() save = new EventEmitter<any>();
+  @Input() flashSaleData: FlashSaleDto | null = null;
+  @Output() save = new EventEmitter<FlashSaleDto>();
   @Output() close = new EventEmitter<void>();
 
   flashSaleForm!: FormGroup;
-  loading = false;
-  apiError = '';
-  private destroy$ = new Subject<void>();
+  loading = signal(false);
+  private readonly destroy$ = new Subject<void>();
 
-  private fb = inject(FormBuilder);
-  private flashSaleService = inject(FlashSaleService);
+  private readonly fb = inject(FormBuilder);
+  private readonly flashSaleService = inject(FlashSaleService);
+  private readonly toast = inject(ToastService);
 
   ngOnInit() {
     this.initForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (!this.flashSaleForm) return;
+
+    if (changes['isOpen']?.currentValue || changes['flashSaleData'] || changes['isEditMode']) {
+      this.loading.set(false);
+      this.applyFormState();
+    }
   }
 
   ngOnDestroy() {
@@ -248,63 +250,139 @@ export class FlashSaleFormComponent implements OnInit, OnDestroy {
       startTime: ['', Validators.required],
       endTime: ['', Validators.required],
       isActive: [true]
+    }, {
+      validators: [this.dateRangeValidator(), this.startTimeValidator()]
     });
 
+    this.applyFormState();
+  }
+
+  private applyFormState() {
     if (this.isEditMode && this.flashSaleData) {
-      this.flashSaleForm.patchValue({
-        title: this.flashSaleData.title,
+      this.flashSaleForm.reset({
+        title: this.flashSaleData.title ?? '',
         startTime: this.formatDateForInput(this.flashSaleData.startTime),
         endTime: this.formatDateForInput(this.flashSaleData.endTime),
-        isActive: this.flashSaleData.isActive
+        isActive: this.flashSaleData.isActive ?? true
+      });
+    } else {
+      this.flashSaleForm.reset({
+        title: '',
+        startTime: '',
+        endTime: '',
+        isActive: true
       });
     }
+
+    this.flashSaleForm.markAsPristine();
+    this.flashSaleForm.markAsUntouched();
+  }
+
+  private dateRangeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const startTime = control.get('startTime')?.value;
+      const endTime = control.get('endTime')?.value;
+
+      if (!startTime || !endTime) return null;
+
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return { invalidDate: true };
+      }
+
+      return end > start ? null : { invalidRange: true };
+    };
+  }
+
+  private startTimeValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const startTime = control.get('startTime')?.value;
+      if (!startTime) return null;
+
+      const start = new Date(startTime);
+      if (Number.isNaN(start.getTime())) {
+        return { invalidDate: true };
+      }
+
+      if (!this.isEditMode && start.getTime() < Date.now() - 60_000) {
+        return { startInPast: true };
+      }
+
+      return null;
+    };
   }
 
   private formatDateForInput(date: string | Date): string {
     if (!date) return '';
-    const d = new Date(date);
-    return d.toISOString().slice(0, 16);
+
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) return '';
+
+    const offset = parsed.getTimezoneOffset();
+    const localDate = new Date(parsed.getTime() - offset * 60_000);
+    return localDate.toISOString().slice(0, 16);
+  }
+
+  shouldShowFieldError(fieldName: string): boolean {
+    const field = this.flashSaleForm.get(fieldName);
+    return !!field && field.invalid && (field.dirty || field.touched);
   }
 
   getErrorMessage(fieldName: string): string {
     const field = this.flashSaleForm.get(fieldName);
-    if (field?.hasError('required')) return 'Bắt buộc';
-    if (field?.hasError('minLength')) return `Tối thiểu ${field.errors?.['minLength'].requiredLength} ký tự`;
-    if (field?.hasError('maxLength')) return `Tối đa ${field.errors?.['maxLength'].requiredLength} ký tự`;
-    return 'Không hợp lệ';
+
+    if (field?.hasError('required')) return 'Bat buoc';
+    if (field?.hasError('minlength')) return `Toi thieu ${field.errors?.['minlength'].requiredLength} ky tu`;
+    if (field?.hasError('maxlength')) return `Toi da ${field.errors?.['maxlength'].requiredLength} ky tu`;
+    if (fieldName === 'startTime' && this.flashSaleForm.hasError('startInPast')) return 'Thoi gian bat dau khong duoc nam trong qua khu';
+    if (fieldName === 'endTime' && this.flashSaleForm.hasError('invalidRange')) return 'Thoi gian ket thuc phai sau thoi gian bat dau';
+    if (this.flashSaleForm.hasError('invalidDate')) return 'Ngay gio khong hop le';
+    return 'Khong hop le';
   }
 
   onSubmit() {
-    if (!this.flashSaleForm.valid) return;
+    if (this.loading()) return;
 
-    this.loading = true;
-    this.apiError = '';
+    if (!this.flashSaleForm.valid) {
+      this.flashSaleForm.markAllAsTouched();
+      return;
+    }
 
-    const formValue = this.flashSaleForm.value;
+    this.loading.set(true);
+
+    const formValue = this.flashSaleForm.getRawValue();
     const payload = {
       ...formValue,
+      title: formValue.title.trim(),
       startTime: new Date(formValue.startTime).toISOString(),
       endTime: new Date(formValue.endTime).toISOString()
     };
 
-    const request = this.isEditMode
+    const request = this.isEditMode && this.flashSaleData
       ? this.flashSaleService.update(this.flashSaleData.flashSaleId, payload)
       : this.flashSaleService.create(payload);
 
-    request.pipe(takeUntil(this.destroy$)).subscribe({
+    request.pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        this.loading.set(false);
+      })
+    ).subscribe({
       next: (result) => {
-        this.loading = false;
+        this.toast.success(this.isEditMode ? 'Cap nhat flash sale thanh cong' : 'Tao flash sale thanh cong');
         this.save.emit(result);
         this.onCancel();
       },
       error: (error) => {
-        this.loading = false;
-        this.apiError = error?.error?.message || 'Lỗi khi lưu flash sale';
+        this.toast.error(error?.error?.message || 'Loi khi luu flash sale');
       }
     });
   }
 
   onCancel() {
+    this.loading.set(false);
     this.close.emit();
   }
 }

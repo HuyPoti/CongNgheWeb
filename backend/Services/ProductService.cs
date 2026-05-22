@@ -192,12 +192,16 @@ public class ProductService(
         ProductQueryDto query,
         CancellationToken cancellationToken)
     {
+        var now = DateTime.UtcNow;
+
         var dbQuery = uow.Products.Query()
             .Where(p => p.Status == ProductStatus.Published)
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .Include(p => p.Images)
-            .AsQueryable();
+            .Include(p => p.FlashSaleItems)
+            .ThenInclude(f => f.FlashSale)
+            .AsNoTracking();
 
         // MỚI - lấy cả category cha + con
         if (!string.IsNullOrWhiteSpace(query.CategorySlug))
@@ -223,48 +227,122 @@ public class ProductService(
         if (query.BrandId.HasValue)
             dbQuery = dbQuery.Where(p => p.BrandId == query.BrandId.Value);
 
-        // Filter gia theo gia ban thuc te (SalePrice neu co, nguoc lai RegularPrice)
+        // Lấy tất cả products trước khi filter theo giá
+        var allProducts = await dbQuery.ToListAsync(cancellationToken);
+
+        // Tính giá hiệu lực (FlashPrice nếu có, không SalePrice)
+        var productsWithEffectivePrice = allProducts.Select(p => new
+        {
+            Product = p,
+            EffectivePrice = GetEffectivePrice(p, now)
+        }).ToList();
+
+        // Filter theo giá hiệu lực
         if (query.MinPrice.HasValue)
-            dbQuery = dbQuery.Where(p => (p.SalePrice ?? p.RegularPrice) >= query.MinPrice.Value);
+            productsWithEffectivePrice = productsWithEffectivePrice
+                .Where(x => x.EffectivePrice >= query.MinPrice.Value)
+                .ToList();
 
         if (query.MaxPrice.HasValue)
-            dbQuery = dbQuery.Where(p => (p.SalePrice ?? p.RegularPrice) <= query.MaxPrice.Value);
+            productsWithEffectivePrice = productsWithEffectivePrice
+                .Where(x => x.EffectivePrice <= query.MaxPrice.Value)
+                .ToList();
 
-        // Sort
-        dbQuery = query.SortBy switch
+        // Sort theo giá hiệu lực
+        productsWithEffectivePrice = query.SortBy switch
         {
-            "price_asc" => dbQuery.OrderBy(p => p.SalePrice ?? p.RegularPrice),
-            "price_desc" => dbQuery.OrderByDescending(p => p.SalePrice ?? p.RegularPrice),
-            "name_asc" => dbQuery.OrderBy(p => p.Name),
-            _ => dbQuery.OrderByDescending(p => p.CreatedAt)
+            "price_asc" => productsWithEffectivePrice.OrderBy(x => x.EffectivePrice).ToList(),
+            "price_desc" => productsWithEffectivePrice.OrderByDescending(x => x.EffectivePrice).ToList(),
+            "name_asc" => productsWithEffectivePrice.OrderBy(x => x.Product.Name).ToList(),
+            _ => productsWithEffectivePrice.OrderByDescending(x => x.Product.CreatedAt).ToList()
         };
 
-        return await dbQuery
-            .Select(p => new ProductListItemDto
-            {
-                Id = p.ProductId,
-                Name = p.Name,
-                Slug = p.Slug,
-                Price = p.SalePrice ?? p.RegularPrice,
-                RegularPrice = p.RegularPrice,
-                SalePrice = p.SalePrice,
-                CategoryName = p.Category.Name,
-                CategorySlug = p.Category.Slug,
-                CategoryId = p.CategoryId,
-                BrandName = p.Brand.Name,
-                BrandId = p.BrandId,
-                StockQuantity = p.StockQuantity,
-                WarrantyMonths = p.WarrantyMonths,
-                ThumbnailUrl = p.Images
-                    .Where(i => i.IsPrimary)
+        var totalCount = productsWithEffectivePrice.Count;
+
+        // Pagination
+        var pagedProducts = productsWithEffectivePrice
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToList();
+
+        // Chuyển sang DTO
+        var items = pagedProducts.Select(x => new ProductListItemDto
+        {
+            Id = x.Product.ProductId,
+            Name = x.Product.Name,
+            Slug = x.Product.Slug,
+            Price = x.EffectivePrice,
+            RegularPrice = x.Product.RegularPrice,
+            SalePrice = GetFlashPrice(x.Product, now) ?? x.Product.SalePrice,
+            CategoryName = x.Product.Category.Name,
+            CategorySlug = x.Product.Category.Slug,
+            CategoryId = x.Product.CategoryId,
+            BrandName = x.Product.Brand.Name,
+            BrandId = x.Product.BrandId,
+            StockQuantity = x.Product.StockQuantity,
+            WarrantyMonths = x.Product.WarrantyMonths,
+            IsFlashSale = GetFlashPrice(x.Product, now).HasValue,
+            ThumbnailUrl = x.Product.Images
+                .Where(i => i.IsPrimary)
+                .OrderBy(i => i.SortOrder)
+                .Select(i => i.ImageUrl)
+                .FirstOrDefault()
+                ?? x.Product.Images
                     .OrderBy(i => i.SortOrder)
                     .Select(i => i.ImageUrl)
                     .FirstOrDefault()
-                    ?? p.Images
-                        .OrderBy(i => i.SortOrder)
-                        .Select(i => i.ImageUrl)
-                        .FirstOrDefault()
-            })
-            .ToPagedResultAsync(query.Page, query.PageSize, cancellationToken);
+        }).ToList();
+
+        return new PagedResult<ProductListItemDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = query.Page,
+            PageSize = query.PageSize
+        };
+    }
+
+    /// <summary>
+    /// Lấy giá flash sale (nếu có flash sale đang hoạt động), ngược lại trả về null
+    /// </summary>
+    private decimal? GetFlashPrice(Product product, DateTime now)
+    {
+        var nowUtc = NormalizeDateTime(now);
+        
+        var activeFlashItem = product.FlashSaleItems
+            .Where(f => f.FlashSale != null
+                && f.FlashSale.IsActive
+                && NormalizeDateTime(f.FlashSale.StartTime) <= nowUtc
+                && NormalizeDateTime(f.FlashSale.EndTime) >= nowUtc
+                && f.SoldCount < f.StockLimit)
+            .OrderBy(f => f.FlashPrice)
+            .FirstOrDefault();
+
+        return activeFlashItem?.FlashPrice;
+    }
+
+    /// <summary>
+    /// Normalize DateTime to UTC, handling DateTimeKind.Unspecified from database
+    /// </summary>
+    private DateTime NormalizeDateTime(DateTime dt)
+    {
+        return dt.Kind switch
+        {
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc) // Unspecified - assume UTC
+        };
+    }
+
+    /// <summary>
+    /// Lấy giá hiệu lực (FlashPrice nếu có flash sale, SalePrice nếu có, RegularPrice)
+    /// </summary>
+    private decimal GetEffectivePrice(Product product, DateTime now)
+    {
+        var flashPrice = GetFlashPrice(product, now);
+        if (flashPrice.HasValue)
+            return flashPrice.Value;
+
+        return product.SalePrice ?? product.RegularPrice;
     }
 }
